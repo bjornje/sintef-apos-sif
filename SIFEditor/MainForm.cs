@@ -4,12 +4,12 @@ using System.Reflection;
 
 namespace SIFEditor
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
         private string? _fileName = null;
         private Builder? _builder;
         private readonly string _text;
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
             listBox1.ValueMember = "Message";
