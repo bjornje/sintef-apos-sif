@@ -74,18 +74,19 @@ namespace Sintef.Apos.Sif.Testing
             Assert.Equal("2", initiator2Group.ComponentVoter.K.Value);
 
             var initiator2Component1 = initiator2Group.Components.Single(x => x.Name.Value == "TT-1001");
-            initiator2Component1.SIL.Value = "SIL2";
-            initiator2Component1.ProofTestInterval.Value = "3000";
+            Assert.Equal("SIL2", initiator2Component1.SIL.Value);
+            Assert.Equal("3000", initiator2Component1.ProofTestInterval.Value);
 
             var initiator2Component2 = initiator2Group.Components.Single(x => x.Name.Value == "TT-1002");
-            initiator2Component2.SIL.Value = "SIL2";
-            initiator2Component2.ProofTestInterval.Value = "6000";
+            Assert.Equal("SIL2", initiator2Component2.SIL.Value);
+            Assert.Equal("6000", initiator2Component2.ProofTestInterval.Value);
+
 
             var logicSolver2Component = logicSolver2Group.Components.Single(x => x.Name.Value == "C01");
-            logicSolver2Component.SIL.Value = "SIL1";
+            Assert.Equal("SIL1", logicSolver2Component.SIL.Value);
 
             var finalElement2Component = finalElement2Group.Components.Single(x => x.Name.Value == "ESV-3023");
-            finalElementComponent.SIL.Value = "SIL1";
+            Assert.Equal("SIL1", finalElementComponent.SIL.Value);
 
 
             Assert.True(sif.IsSameAs(sif2));
