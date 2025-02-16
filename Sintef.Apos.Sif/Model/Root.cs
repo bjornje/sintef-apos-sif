@@ -44,38 +44,34 @@ namespace Sintef.Apos.Sif.Model
 
                 foreach(var subsystem in sif.Subsystems)
                 {
-                    if (!subsystem.Components().Any()) list.Add(subsystem);
+                    if (!subsystem.Groups.Any()) list.Add(subsystem);
 
-                    foreach(var component in subsystem.Components())
+                    foreach(var group in subsystem.Groups)
                     {
-                        if (!component.Groups.Any()) list.Add(component);
+                        if (!group.Components.Any()) list.Add(group);
 
-                        foreach(var group in component.Groups)
+                        foreach(var sisComponent in group.Components)
                         {
-                            if (!group.Components.Any()) list.Add(group);
-
-                            foreach(var sisComponent in group.Components)
-                            {
-                                list.Add(sisComponent);
-                            }
+                            list.Add(sisComponent);
                         }
                     }
+                    
                 }
             }
 
             return list;
         }
 
-        public IEnumerable<SISComponent> GetSISComponents()
-        {
-            var list = new List<SISComponent>();
-            foreach(var component in GetSIFComponents())
-            {
-                foreach (var group in component.Groups) list.AddRange(group.Components);
-            }
+        //public IEnumerable<SISComponent> GetSISComponents()
+        //{
+        //    var list = new List<SISComponent>();
+        //    foreach(var component in GetSIFComponents())
+        //    {
+        //        foreach (var group in component.Groups) list.AddRange(group.Components);
+        //    }
 
-            return list;
-        }
+        //    return list;
+        //}
 
         public IEnumerable<SIFSubsystem> GetSIFSubsystems()
         {
@@ -89,18 +85,18 @@ namespace Sintef.Apos.Sif.Model
             return list;
         }
 
-        public IEnumerable<SIFComponent> GetSIFComponents()
-        {
-            var list = new List<SIFComponent>();
-            foreach (var subsystem in GetSIFSubsystems())
-            {
-                if (subsystem.InputDevice != null) list.Add(subsystem.InputDevice);
-                if (subsystem.LogicSolver != null) list.Add(subsystem.LogicSolver);
-                if (subsystem.FinalElement != null) list.Add(subsystem.FinalElement);
-            }
+        //public IEnumerable<SIFComponent> GetSIFComponents()
+        //{
+        //    var list = new List<SIFComponent>();
+        //    foreach (var subsystem in GetSIFSubsystems())
+        //    {
+        //        //if (subsystem.InputDevice != null) list.Add(subsystem.InputDevice);
+        //        //if (subsystem.LogicSolver != null) list.Add(subsystem.LogicSolver);
+        //        //if (subsystem.FinalElement != null) list.Add(subsystem.FinalElement);
+        //    }
 
-            return list;
-        }
+        //    return list;
+        //}
 
         public IEnumerable<ModelError> GetModelErrors()
         {
@@ -112,33 +108,33 @@ namespace Sintef.Apos.Sif.Model
 
                 foreach(var subsystem in sif.Subsystems)
                 {
-                    if (subsystem.LogicSolver == null) list.Add(new ModelError(subsystem, "Missing LogicSolver."));
+                    //if (subsystem.LogicSolver == null) list.Add(new ModelError(subsystem, "Missing LogicSolver."));
 
-                    if (subsystem.InputDevice != null) GetSIFComponentModelErrors(subsystem.InputDevice, list);
-                    if (subsystem.LogicSolver != null) GetSIFComponentModelErrors(subsystem.LogicSolver, list);
-                    if (subsystem.FinalElement != null) GetSIFComponentModelErrors(subsystem.FinalElement, list);
+                    //if (subsystem.InputDevice != null) GetSIFComponentModelErrors(subsystem.InputDevice, list);
+                    //if (subsystem.LogicSolver != null) GetSIFComponentModelErrors(subsystem.LogicSolver, list);
+                    //if (subsystem.FinalElement != null) GetSIFComponentModelErrors(subsystem.FinalElement, list);
                 }
             }
 
             return list;
         }
 
-        private void GetSIFComponentModelErrors(SIFComponent sifComponent, List<ModelError> list)
-        {
-            if (sifComponent.GroupVoter == null) list.Add(new ModelError(sifComponent, "Missing GroupVoter."));
-            if (!sifComponent.Groups.Any()) list.Add(new ModelError(sifComponent, $"Missing {sifComponent.GetType().Name}Group."));
+        //private void GetSIFComponentModelErrors(SIFComponent sifComponent, List<ModelError> list)
+        //{
+        //    if (sifComponent.GroupVoter == null) list.Add(new ModelError(sifComponent, "Missing GroupVoter."));
+        //    if (!sifComponent.Groups.Any()) list.Add(new ModelError(sifComponent, $"Missing {sifComponent.GetType().Name}Group."));
 
-            foreach(var group in sifComponent.Groups)
-            {
-                if (group.ComponentVoter == null) list.Add(new ModelError(group, "Missing ComponentVoter."));
-                if (!group.Components.Any()) list.Add(new ModelError(group, $"Missing Component."));
+        //    foreach(var group in sifComponent.Groups)
+        //    {
+        //        //if (group.ComponentVoter == null) list.Add(new ModelError(group, "Missing ComponentVoter."));
+        //        //if (!group.Components.Any()) list.Add(new ModelError(group, $"Missing Component."));
 
-                foreach(var sisComponent in group.Components)
-                {
+        //        foreach(var sisComponent in group.Components)
+        //        {
 
-                }
-            }
-        }
+        //        }
+        //    }
+        //}
 
         public void Validate(Collection<ModelError> errors)
         {
@@ -190,37 +186,28 @@ namespace Sintef.Apos.Sif.Model
 
         private static void CloneSIF(SIFs clonedSIFs, SIF sif)
         {
-            var clonedSif = clonedSIFs.Append("New SIF");
+            var clonedSif = clonedSIFs.Append();
             CopyAttributeValues(sif, clonedSif);
 
-            foreach(var subsystem in sif.Subsystems)
+            if (sif.InputDevice != null)
             {
-                var clonedSubsystem = clonedSif.Subsystems.Append();
-                CopyAttributeValues(subsystem, clonedSubsystem);
+                var clonedInitiator = clonedSif.Subsystems.AppendInputDevice();
+                CopyAttributeValues(sif.InputDevice, clonedInitiator);
+                foreach (var group in sif.InputDevice.Groups) CloneGroup(clonedInitiator.Groups, group);
+            }
 
-                if (subsystem.InputDevice != null)
-                {
-                    var clonedInitiator = clonedSubsystem.CreateInputDevice();
-                    CopyAttributeValues(subsystem.InputDevice, clonedInitiator);
-                    CopyAttributeValues(subsystem.InputDevice.GroupVoter, clonedInitiator.GroupVoter);
-                    foreach (var group in subsystem.InputDevice.Groups) CloneGroup(clonedInitiator.Groups, group);
-                }
+            if (sif.LogicSolver != null)
+            {
+                var clonedSolver = clonedSif.Subsystems.AppendLogicSolver();
+                CopyAttributeValues(sif.LogicSolver, clonedSolver);
+                foreach (var group in sif.LogicSolver.Groups) CloneGroup(clonedSolver.Groups, group);
+            }
 
-                if (subsystem.LogicSolver != null)
-                {
-                    var clonedSolver = clonedSubsystem.CreateLogicSolver();
-                    CopyAttributeValues(subsystem.LogicSolver, clonedSolver);
-                    CopyAttributeValues(subsystem.LogicSolver.GroupVoter, clonedSolver.GroupVoter);
-                    foreach (var group in subsystem.LogicSolver.Groups) CloneGroup(clonedSolver.Groups, group);
-                }
-
-                if (subsystem.FinalElement != null)
-                {
-                    var clonedFinalElement = clonedSubsystem.CreateFinalElement();
-                    CopyAttributeValues(subsystem.FinalElement, clonedFinalElement);
-                    CopyAttributeValues(subsystem.FinalElement.GroupVoter, clonedFinalElement.GroupVoter);
-                    foreach (var group in subsystem.FinalElement.Groups) CloneGroup(clonedFinalElement.Groups, group);
-                }
+            if (sif.FinalElement != null)
+            {
+                var clonedFinalElement = clonedSif.Subsystems.AppendFinalElement();
+                CopyAttributeValues(sif.FinalElement, clonedFinalElement);
+                foreach (var group in sif.FinalElement.Groups) CloneGroup(clonedFinalElement.Groups, group);
             }
         }
 
@@ -228,11 +215,10 @@ namespace Sintef.Apos.Sif.Model
         {
             var clonedGroup = clonedGroups.Append();
             CopyAttributeValues(group, clonedGroup);
-            CopyAttributeValues(group.ComponentVoter, clonedGroup.ComponentVoter);
 
             foreach (var component in group.Components)
             {
-                var clonedComponent = clonedGroup.Components.Append(component.Name.Value);
+                var clonedComponent = clonedGroup.Components.Append(component.Name.StringValue);
                 CopyAttributeValues(component, clonedComponent);
             }
 
@@ -249,7 +235,7 @@ namespace Sintef.Apos.Sif.Model
             foreach(var fromProperty in fromNode.Attributes)
             {
                 var toProperty = toNode.Attributes.Single(x => x.Name == fromProperty.Name);
-                toProperty.Value = fromProperty.Value;
+                toProperty.StringValue = fromProperty.StringValue;
             }
         }
 

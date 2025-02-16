@@ -3,7 +3,10 @@ using Aml.Engine.CAEX;
 using Sintef.Apos.Sif.Model;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Data;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace Sintef.Apos.Sif
 {
@@ -11,54 +14,79 @@ namespace Sintef.Apos.Sif
     {
         static Definition()
         {
-            try
+            ModelCAEX = CAEXDocument.LoadFromString(Model);
+            Version = ModelCAEX.CAEXFile.SourceDocumentInformation.Select(x => x.OriginVersion).SingleOrDefault();
+
+            var sifUnitClasses = ModelCAEX.CAEXFile.SystemUnitClassLib.FirstOrDefault(x => x.Name == "SIF Unit Classes");
+            var sisUnitClasses = ModelCAEX.CAEXFile.SystemUnitClassLib.FirstOrDefault(x => x.Name == "SIS Unit Classes");
+            var attributeTypes = ModelCAEX.CAEXFile.AttributeTypeLib.FirstOrDefault(x => x.Name == "Types");
+
+            foreach (var item in attributeTypes)
             {
-                ModelCAEX = CAEXDocument.LoadFromString(Model);
-                Version = ModelCAEX.CAEXFile.SourceDocumentInformation.Select(x => x.OriginVersion).SingleOrDefault();
+                if (!string.IsNullOrEmpty(item.Description)) _typeDescriptions.Add(item.Name, item.Description);
 
-                var sifUnitClasses = ModelCAEX.CAEXFile.SystemUnitClassLib.FirstOrDefault(x => x.Name == "SIF Unit Classes");
-                var sisUnitClasses = ModelCAEX.CAEXFile.SystemUnitClassLib.FirstOrDefault(x => x.Name == "SIS Unit Classes");
-                var attributeTypes = ModelCAEX.CAEXFile.AttributeTypeLib.FirstOrDefault(x => x.Name == "Types");
 
-                foreach (var item in attributeTypes)
+                if (item.Constraint.First is AttributeValueRequirementType requirementType &&
+                    requirementType.NominalScaledType.ValueAttributes.Count > 1)
                 {
-                    if (!string.IsNullOrEmpty(item.Description)) _typeDescriptions.Add(item.Name, item.Description);
-
-                    foreach (var element in item.Constraint.Elements)
-                    {
-                        var values = element.Value.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        
-                        _typeValues.Add(item.Name, values);
-                    }
+                    _typeValues.Add(item.Name, requirementType.NominalScaledType.ValueAttributes.Select(x => x.Value.ToString()).ToArray());
                 }
+            }
 
-                foreach (var item in sifUnitClasses)
+            var expectedTypeValues = new[] { 
+                "TypeAB", //handled
+                "SISType", //not in use
+                "SILLevel", //handled
+                "SIFType", //handled
+                "ResetAfterShutdown_FinalElement", //handled
+                "ModeOfOperation", //handled
+                "ManualActivation", //handled
+                "InputDeviceTrigger", //handled
+                "ILLevel", //handled
+                "FinalElementFunction", //handled
+                "FailSafePosition", //handled
+                "EnergizeSource", //not in use
+                "EffectActivationMode", //not in use
+                "E_DEToTrip", //handled
+                "Comparison", //handled
+                "CauseRole", //not in use
+                "BypassControl", //handled
+                "AlarmOrWarning", //handled
+            };
+            if (_typeValues.Count != expectedTypeValues.Length) throw new Exception($"Expected number of attribute types with value list {expectedTypeValues.Length} differes from actual number {_typeValues.Count}.");
+
+            foreach (var type in expectedTypeValues) if (!_typeValues.ContainsKey(type)) throw new Exception($"Attribute type with value list not found: {type}.");
+
+            foreach (var item in sifUnitClasses)
+            {
+                foreach (var attr in item.Attribute)
                 {
-                    foreach (var attr in item.Attribute)
-                    {
                         SetAttribute(item.Name, attr.Name, attr.Description, attr.Class?.Name);
-                    }
-                    foreach (var subItem in item.InternalElement)
-                    {
-                        foreach (var attr in subItem.Attribute) SetAttribute(subItem.Name, attr.Name, attr.Description, attr.Class?.Name);
-                        foreach (var subSubItem in subItem.InternalElement)
-                        {
-                            foreach (var attr in subSubItem.Attribute) SetAttribute(subSubItem.Name, attr.Name, attr.Description, attr.Class?.Name);
-                        }
-                    }
-
                 }
-
-                foreach (var item in sisUnitClasses)
+                foreach (var subItem in item.InternalElement)
                 {
-                    foreach (var attr in item.Attribute) SetAttribute(item.Name, attr.Name, attr.Description, attr.Class?.Name);
+                    foreach (var attr in subItem.Attribute) SetAttribute(subItem.Name, attr.Name, attr.Description, attr.Class?.Name);
+                    foreach (var subSubItem in subItem.InternalElement)
+                    {
+                        foreach (var attr in subSubItem.Attribute) SetAttribute(subSubItem.Name, attr.Name, attr.Description, attr.Class?.Name);
+                    }
                 }
 
             }
-            catch
-            {
-            }
 
+            foreach (var item in sisUnitClasses)
+            {
+
+                foreach (var attr in item.Attribute)
+                {
+                    if (string.IsNullOrEmpty(attr.Class?.Name))
+                    {
+                        Console.Write("hi");
+                    }
+
+                    SetAttribute(item.Name, attr.Name, attr.Description, attr.Class?.Name);
+                }
+            }
 
 
         }
@@ -129,6 +157,45 @@ namespace Sintef.Apos.Sif
                 case "FailSafePosition":
                     attributes.Add(new FailSafePosition(attributeName, attiributeDescription));
                     break;
+                case "PerYear":
+                    attributes.Add(new PerYear(attributeName, attiributeDescription));
+                    break;
+                case "SIFType":
+                    attributes.Add(new SIFType(attributeName, attiributeDescription));
+                    break;
+                case "ModeOfOperation":
+                    attributes.Add(new ModeOfOperation(attributeName, attiributeDescription));
+                    break;
+                case "ILLevel":
+                    attributes.Add(new ILLevel(attributeName, attiributeDescription));
+                    break;
+                case "PerHour":
+                    attributes.Add(new PerHour(attributeName, attiributeDescription));
+                    break;
+                case "ManualActivation":
+                    attributes.Add(new ManualActivation(attributeName, attiributeDescription));
+                    break;
+                case "ResetAfterShutdown_FinalElement":
+                    attributes.Add(new ResetAfterShutdown_FinalElement(attributeName, attiributeDescription));
+                    break;
+                case "AlarmOrWarning":
+                    attributes.Add(new AlarmOrWarning(attributeName, attiributeDescription));
+                    break;
+                case "TagNumber":
+                    attributes.Add(new TagNumber(attributeName, attiributeDescription));
+                    break;
+                case "TypeAB":
+                    attributes.Add(new TypeAB(attributeName, attiributeDescription));
+                    break;
+                case "Comparison":
+                    attributes.Add(new Comparison(attributeName, attiributeDescription));
+                    break;
+                case "BypassControl":
+                    attributes.Add(new BypassControl(attributeName, attiributeDescription));
+                    break;
+                case "kg_s":
+                    attributes.Add(new kg_s(attributeName, attiributeDescription));
+                    break;
                 default:
                     Console.Write("Unknown attribute class: " + className);
                     break;
@@ -143,9 +210,9 @@ namespace Sintef.Apos.Sif
         {
             var attributes = new List<Model.AttributeType>();
 
-            if (node is SIFComponent)
+            if (node is SIFSubsystem)
             {
-                if (_attributes.TryGetValue("SIFComponent", out var sifComponentAttributes)) attributes.AddRange(sifComponentAttributes);
+                if (_attributes.TryGetValue("SIFSubsystem", out var sifComponentAttributes)) attributes.AddRange(sifComponentAttributes);
             }
             else if (node is SISComponent)
             {
@@ -161,725 +228,907 @@ namespace Sintef.Apos.Sif
             return attributes;
         }
 
-        public static string Model = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<CAEXFile SchemaVersion=""3.0"" FileName="""" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns=""http://www.dke.de/CAEX"" xsi:schemaLocation=""http://www.dke.de/CAEX CAEX_ClassModel_V.3.0.xsd"">
-<Description>This document is generated from the AAS SIF Submodel [trunk] #18 [magicdraw02:3579] on 2024-11-11 18:11:35 using the UML2AML template.</Description>
-<AdditionalInformation />
-<SuperiorStandardVersion>AutomationML 2.10</SuperiorStandardVersion>
-<SourceDocumentInformation OriginName=""AAS SIF Submodel [trunk] #18 [magicdraw02:3579] "" OriginID="""" OriginVersion=""18"" LastWritingDateTime=""2024-11-11T18:11:35"" OriginVendor=""KONGSBERG"" OriginVendorURL=""www.kongsberg.com"" />
-<RoleClassLib Name=""CDD"">
-<Description></Description>
-<RoleClass Name=""ProofTestInterval"" ID=""b86e6bf0-6310-4095-a4bb-71c197e718e5"" >
-<Description></Description>
-<Attribute Name=""definition"" ID=""41875dbb-53a7-4d20-856c-cf887b89f94c"" RefAttributeType=""Types/String"">
-<Value>interval between tests for failures which are not automatically revealed</Value> 
-</Attribute>
-<Attribute Name=""IRDI"" ID=""243ea485-d769-4415-a583-e6d419ee7e82"" RefAttributeType=""Types/String"">
-<Value>0112/2///61987#ABB911#005</Value> 
-</Attribute>
-</RoleClass>
-<RoleClass Name=""TagName"" ID=""726acb14-8ca5-41af-b20c-d18fb92a6d3c"" >
-<Description></Description>
-<Attribute Name=""IRDI"" ID=""243ea485-d769-4415-a583-e6d419ee7e82"" RefAttributeType=""Types/String"">
-<Value>0112/2///61987#ABB271#008</Value> 
-</Attribute>
-<Attribute Name=""definition"" ID=""41875dbb-53a7-4d20-856c-cf887b89f94c"" RefAttributeType=""Types/String"">
-<Value>alphanumeric character sequence uniquely identifying a measuring or control point</Value> 
-</Attribute>
-</RoleClass>
-<RoleClass Name=""FailSafePosition"" ID=""174431a9-844e-4ee7-af84-9015dfb120aa"" >
-<Description></Description>
-<Attribute Name=""IRDI"" ID=""243ea485-d769-4415-a583-e6d419ee7e82"" RefAttributeType=""Types/String"">
-<Value>	0112/2///61987#ABE648#002</Value> 
-</Attribute>
-<Attribute Name=""definition"" ID=""41875dbb-53a7-4d20-856c-cf887b89f94c"" RefAttributeType=""Types/String"">
-<Value>position of a valve in de-energized state</Value> 
-</Attribute>
-</RoleClass>
-<RoleClass Name=""SafetyIntegrityLevel"" ID=""b5cd1cc7-f7b8-48d0-9362-d2bda7f1fb35"" >
-<Description></Description>
-<Attribute Name=""IRDI"" ID=""243ea485-d769-4415-a583-e6d419ee7e82"" RefAttributeType=""Types/String"">
-<Value>0112/2///61987#ABB202#007</Value> 
-</Attribute>
-<Attribute Name=""definition"" ID=""41875dbb-53a7-4d20-856c-cf887b89f94c"" RefAttributeType=""Types/String"">
-<Value>discrete level (one out of a possible four), corresponding to a range of safety integrity values, where safety integrity level 4 has the highest level of safety integrity and safety integrity level 1 has the lowest</Value> 
-</Attribute>
-</RoleClass>
-<RoleClass Name=""ValueOfTripPoint"" ID=""db57b7b8-e2de-466f-9ed1-4c8670192049"" >
-<Description></Description>
-<Attribute Name=""IRDI"" ID=""243ea485-d769-4415-a583-e6d419ee7e82"" RefAttributeType=""Types/String"">
-<Value>ABH706</Value> 
-</Attribute>
-<Attribute Name=""definition"" ID=""41875dbb-53a7-4d20-856c-cf887b89f94c"" RefAttributeType=""Types/String"">
-<Value>value of a trip point variable
-(standardized unit of measure for the value of a trip point)</Value> 
-</Attribute>
-</RoleClass>
-<RoleClass Name=""ModeOfOperation"" ID=""edb1d555-1c41-4fe9-9bba-9d7db0218614"" >
-<Description></Description>
-<Attribute Name=""IRDI"" ID=""243ea485-d769-4415-a583-e6d419ee7e82"" RefAttributeType=""Types/String"">
-<Value>ABB910</Value> 
-</Attribute>
-<Attribute Name=""definition"" ID=""41875dbb-53a7-4d20-856c-cf887b89f94c"" RefAttributeType=""Types/String"">
-<Value>way in which a safety-related system is intended to be used, with respect to the frequency of demands made upon it, which may be either low demand mode, where the frequency of demands for operation made on a safety related, system is no greater than one per year and no greater than twice the proof-test, frequency; or high demand or continuous mode, where the frequency of demands for operation made, on a safety-related system is greater than one per year or greater than twice the proof check frequency</Value> 
-</Attribute>
-</RoleClass>
-<RoleClass Name=""ControlCircuitResponseTime"" ID=""0bc47736-e3d4-4137-8f83-f258dd38f75e"" >
-<Description></Description>
-<Attribute Name=""IRDI"" ID=""243ea485-d769-4415-a583-e6d419ee7e82"" RefAttributeType=""Types/String"">
-<Value>0112/2///61987#ABB593#004</Value> 
-</Attribute>
-<Attribute Name=""definition"" ID=""41875dbb-53a7-4d20-856c-cf887b89f94c"" RefAttributeType=""Types/String"">
-<Value>time that elapses between the activation of a control and the response of the device or measuring assembly</Value> 
-</Attribute>
-</RoleClass>
-</RoleClassLib>
-<SystemUnitClassLib Name=""SIF Unit Classes"">
-<Description></Description>
-<SystemUnitClass Name=""SIF"" ID=""7638158c-6cd7-45bb-9ebb-6ee7f584689f"" >
-<Description>The SIF represents a Safety Instrumented System.</Description>
-<Attribute Name=""SIFID"" ID=""de959eff-5da0-4096-8393-0f1b5d45771a"" RefAttributeType=""Types/String"">
-<Description></Description>
-</Attribute>
-<Attribute Name=""DemandRate"" ID=""8dd5ecd0-1fd4-4ffd-a6d8-834c18e7a3b9"" RefAttributeType=""Types/Frequency"">
-<Description></Description>
-</Attribute>
-<Attribute Name=""E_DEToTrip"" ID=""796c22db-bc26-46c0-800b-8021e703b3cd"" RefAttributeType=""Types/E_DEToTrip"">
-<Description>SIL – Safety Integrity Level – is a quantitative target for measuring the level of performance needed for a safety function to achieve a tolerable risk for a process hazard. It is defined in both . Defining a target SIL level for the process should be based on the assessment of the likelihood that an incident will occur and the consequences of the incident. 
+        public static Collection<Model.AttributeType> GetAttributes(Node target, int expectedNumberOfAttributes)
+        {
+            var attributes = GetAttributes(target);
+            if (attributes.Count() != expectedNumberOfAttributes) throw new Exception($"Expected {expectedNumberOfAttributes} attributes but got {attributes.Count()}.");
 
-It is a discrete level (one out of four) for specifying the safety integrity requirements of the safety instrumented functions to be allocated to the safety instrumented systems. SIL 4 has the highest safety integrity and SIL 1 the lowest.
+            var type = target.GetType();
 
-IEC 61511 only defines requirements for SIL 1 to SIL 3, as it is expected that SIL 3 will be a maximum level in the process sector (excepting Nuclear). For SIL 4, IEC 61511 refers the user back to the detail in IEC 61508.
+            var attributeTypes = new Collection<Model.AttributeType>();
 
-IEC 61508 and IEC 61511 both have tables with the Safety Integrity Levels associated with Probability of Failure, Risk Reduction Factor, Hardware Fault Tolerance and Architecture. </Description>
-</Attribute>
-<Attribute Name=""SafeState"" ID=""a73172ec-894e-48b6-b1ee-032db8921e92"" RefAttributeType=""Types/String"">
-<Description></Description>
-</Attribute>
-<Attribute Name=""SILAllocationMethod"" ID=""d1d9677b-9b1c-4ea1-b75e-09a5ea9ef84c"" RefAttributeType=""Types/String"">
-<Description></Description>
-</Attribute>
-<InternalElement Name=""SIFSubsystem"" ID=""cc4ea85d-4109-4154-99a0-bcf006442e46"" >
-<Description>The SIFSubsystem a sub system within a SIF. This could be a part of an ESD, PSD, FG or HIPPS SIS.</Description>
-<Attribute Name=""PFDBudget"" ID=""eb026e59-c779-469b-bc2f-0ca2e8eaa206"" RefAttributeType=""Types/Percent"">
-<Description>Probability of Dangerous Failure on Demand</Description>
-</Attribute>
-<Attribute Name=""ProcessSafetyTime"" ID=""769efdd4-e2f1-4146-8dfd-b7ead9bed208"" RefAttributeType=""Types/Hours"">
-<Description>Partial Stroke Test Interval</Description>
-</Attribute>
-<Attribute Name=""MaxAllowableResponseTime"" ID=""8edd4311-65d9-466a-8986-954b81ccc803"" RefAttributeType=""Types/Seconds"">
-<Description>SIF Response Time is the interval between the SIF set-point being reached, and the hazardous event occurring. The SIF must detect and then operate its primary end elements, usually shutdown valves (SDVs) within this interval and do this quickly enough to keep the process variable below the design value.</Description>
-</Attribute>
-<Attribute Name=""ProofTestInterval"" ID=""b2270eec-a6c3-42c1-8c50-0b9b91e0423e"" RefAttributeType=""Types/Hours"">
-<Description>Manual Proof Test Interval</Description>
-</Attribute>
-<Attribute Name=""SIL"" ID=""d1721788-c044-44d3-88ec-812f76a429a7"" RefAttributeType=""Types/SILLevel"">
-<Description>SIL – Safety Integrity Level – is a quantitative target for measuring the level of performance needed for a safety function to achieve a tolerable risk for a process hazard. It is defined in both . Defining a target SIL level for the process should be based on the assessment of the likelihood that an incident will occur and the consequences of the incident. 
+            foreach (var attribute in attributes)
+            {
+                var propertyInfo = type.GetProperty(attribute.Name);
+                if (propertyInfo == null) throw new Exception($"No property exists for attribute {attribute.Name}.");
 
-It is a discrete level (one out of four) for specifying the safety integrity requirements of the safety instrumented functions to be allocated to the safety instrumented systems. SIL 4 has the highest safety integrity and SIL 1 the lowest.
+                var attributeClone = attribute.Clone();
+                propertyInfo.SetValue(target, attributeClone);
+                attributeTypes.Add(attributeClone);
+            }
 
-IEC 61511 only defines requirements for SIL 1 to SIL 3, as it is expected that SIL 3 will be a maximum level in the process sector (excepting Nuclear). For SIL 4, IEC 61511 refers the user back to the detail in IEC 61508.
+            return attributeTypes;
+        }
 
-IEC 61508 and IEC 61511 both have tables with the Safety Integrity Levels associated with Probability of Failure, Risk Reduction Factor, Hardware Fault Tolerance and Architecture. </Description>
-</Attribute>
-<InternalElement Name=""InputDevice"" ID=""2c353186-d7c8-4162-abbb-56a487ad12e5""  RefBaseSystemUnitPath=""SIF Unit Classes/SIFComponent"" >
-<Description>The Initiator monitors some process parameter or presence of
-a command.</Description>
-<InternalElement Name=""InputDeviceGroup"" ID=""3c6953e2-cfdf-4146-ab5d-60d4da487119""  RefBaseSystemUnitPath=""SIF Unit Classes/Group"" >
-<Description>The InitiatorGroup groups initiators.</Description>
-</InternalElement>
-</InternalElement>
-<InternalElement Name=""LogicSolver"" ID=""342ee984-ec76-4752-9d2f-b20bae66d903""  RefBaseSystemUnitPath=""SIF Unit Classes/SIFComponent"" >
-<Description>The Solver decides if it is necessary to act upon the
-monitored signals.
+        public static readonly string Model = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<CAEXFile SchemaVersion=""3.0"" FileName="""" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""
+    xmlns=""http://www.dke.de/CAEX""
+    xsi:schemaLocation=""http://www.dke.de/CAEX CAEX_ClassModel_V.3.0.xsd"">
+    <Description>This document is generated from the APOS_SIF.qea model version 20 by the
+        EA_UML_to_AML.js transformation script.
+        The model and transformation script are derived from initial SIF model and transformation
+        script from Kongsberg.</Description>
+    <AdditionalInformation />
+    <SuperiorStandardVersion>AutomationML 2.10</SuperiorStandardVersion>
+    <SourceDocumentInformation OriginName=""APOS_SIF.qea"" OriginID="""" OriginVersion=""20""
+        LastWritingDateTime=""2025-02-13T09:13:27.000Z"" OriginVendor=""SINTEF""
+        OriginVendorURL=""www.sintef.no"" />
+    <RoleClassLib Name=""CDD"">
+        <Description></Description>
+        <RoleClass Name=""ControlCircuitResponseTime"" ID=""{00AA35D8-2242-43ae-8596-33CAF8284AB3}"">
+            <Description></Description>
+            <Attribute Name=""IRDI"" RefAttributeType=""Types/String"">
+                <Value>0112/2///61987#ABB593#004</Value>
+            </Attribute>
+            <Attribute Name=""definition"" RefAttributeType=""Types/String"">
+                <Value>time that elapses between the activation of a control and the response of the
+                    device or measuring assembly</Value>
+            </Attribute>
+        </RoleClass>
+        <RoleClass Name=""FailSafePosition"" ID=""{430F8AFC-5388-4622-B3B1-D0EA490C8118}"">
+            <Description></Description>
+            <Attribute Name=""IRDI"" RefAttributeType=""Types/String"">
+                <Value> 0112/2///61987#ABE648#002</Value>
+            </Attribute>
+            <Attribute Name=""definition"" RefAttributeType=""Types/String"">
+                <Value>position of a valve in de-energized state</Value>
+            </Attribute>
+        </RoleClass>
+        <RoleClass Name=""ModeOfOperation"" ID=""{CCA653D2-B72D-4f86-9B2B-1B276BDD5D74}"">
+            <Description></Description>
+            <Attribute Name=""IRDI"" RefAttributeType=""Types/String"">
+                <Value>ABB910</Value>
+            </Attribute>
+            <Attribute Name=""definition"" RefAttributeType=""Types/String"">
+                <Value>way in which a safety-related system is intended to be used, with respect to
+                    the frequency of demands made upon it, which may be either low demand mode,
+                    where the frequency of demands for operation made on a safety related, system is
+                    no greater than one per year and no greater than twice the proof-test, frequency</Value>
+            </Attribute>
+        </RoleClass>
+        <RoleClass Name=""ProofTestInterval"" ID=""{17A4F558-2B47-41c4-B5D1-A3C2E8D4D2BE}"">
+            <Description></Description>
+            <Attribute Name=""definition"" RefAttributeType=""Types/String"">
+                <Value>interval between tests for failures which are not automatically revealed</Value>
+            </Attribute>
+            <Attribute Name=""IRDI"" RefAttributeType=""Types/String"">
+                <Value>0112/2///61987#ABB911#005</Value>
+            </Attribute>
+        </RoleClass>
+        <RoleClass Name=""SafetyIntegrityLevel"" ID=""{A4F4C523-7478-4928-B5A6-2E67CEFB1941}"">
+            <Description></Description>
+            <Attribute Name=""IRDI"" RefAttributeType=""Types/String"">
+                <Value>0112/2///61987#ABB202#007</Value>
+            </Attribute>
+            <Attribute Name=""definition"" RefAttributeType=""Types/String"">
+                <Value>discrete level (one out of a possible four), corresponding to a range of
+                    safety integrity values, where safety integrity level 4 has the highest level of
+                    safety integrity and safety integrity level 1 has the lowest</Value>
+            </Attribute>
+        </RoleClass>
+        <RoleClass Name=""TagName"" ID=""{9C3C0638-F8B6-40c2-9BF0-E0B061B2C374}"">
+            <Description></Description>
+            <Attribute Name=""IRDI"" RefAttributeType=""Types/String"">
+                <Value>0112/2///61987#ABB271#008</Value>
+            </Attribute>
+            <Attribute Name=""definition"" RefAttributeType=""Types/String"">
+                <Value>alphanumeric character sequence uniquely identifying a measuring or control
+                    point</Value>
+            </Attribute>
+        </RoleClass>
+        <RoleClass Name=""ValueOfTripPoint"" ID=""{B92D1719-AE81-4c81-8360-A137CF22AFD2}"">
+            <Description></Description>
+            <Attribute Name=""IRDI"" RefAttributeType=""Types/String"">
+                <Value>ABH706</Value>
+            </Attribute>
+            <Attribute Name=""definition"" RefAttributeType=""Types/String"">
+                <Value>value of a trip point variable
+                    (standardized unit of measure for the value of a trip point)</Value>
+            </Attribute>
+        </RoleClass>
+    </RoleClassLib>
+    <SystemUnitClassLib Name=""CE Unit Classes"">
+        <Description></Description>
+        <SystemUnitClass Name=""CESIS"" ID=""{ED0ED9D9-1395-4e4d-9AD9-40159675B208}"">
+            <Description>Make vendor, client, builder more explicit</Description>
+            <Attribute Name=""ApprovedBy"" ID=""{17834909-4510-4a10-8CE9-8D81ADA7B39F}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""CheckedBy"" ID=""{D61B0279-1701-4bec-AB60-E583747B181E}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""FacilityName"" ID=""{DAB5A8B6-4E12-4e1d-994A-A6301972883D}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""IssuedBy"" ID=""{D6EC148A-C77F-4ca4-B25C-0982D37807FC}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""Vendor"" ID=""{A7079785-058B-4313-A476-020F9E91BEEB}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <InternalElement Name=""CELevel"" ID=""{B18952CE-5580-4aaa-9036-4041F3EBE8DE}"">
+                <Description></Description>
+                <Attribute Name=""ApprovedBy"" ID=""{2A4B91EC-879B-4a22-A854-BE7E1FDC0439}""
+                    RefAttributeType=""Types/String"">
+                    <Description>Approver</Description>
+                </Attribute>
+                <Attribute Name=""AreaDescription"" ID=""{B4A71E56-3AB7-468f-960E-B42329A1849C}""
+                    RefAttributeType=""Types/String"">
+                    <Description>Description of the area</Description>
+                </Attribute>
+                <Attribute Name=""CheckedBy"" ID=""{82AEB5A5-5FA9-477c-A793-6949AE9C59D0}""
+                    RefAttributeType=""Types/String"">
+                    <Description>Checker</Description>
+                </Attribute>
+                <Attribute Name=""IssuedBy"" ID=""{1BC022C2-4F73-40bd-8F1F-95C16BC3E6C7}""
+                    RefAttributeType=""Types/String"">
+                    <Description>Issuer</Description>
+                </Attribute>
+                <InternalElement Name=""CauseGroup"" ID=""{B5E9D115-160C-43df-B5BC-569C96AFC264}"">
+                    <Description>Solve voting between CauseGroups</Description>
+                    <InternalElement Name=""InitiatorReference""
+                        ID=""{F92DFC59-D31F-407f-9226-73503E3BB7FA}"">
+                        <Description></Description>
+                    </InternalElement>
+                    <InternalElement Name=""Cause"" ID=""{C986E7A2-2C6D-44a7-832B-A6131F76FDA4}"">
+                        <Description></Description>
+                        <Attribute Name=""AreaDescription""
+                            ID=""{B8E5BBCA-A775-4d45-9711-7E322EF08A65}""
+                            RefAttributeType=""Types/String"">
+                            <Description></Description>
+                        </Attribute>
+                        <Attribute Name=""DocumentRef"" ID=""{53917589-D98D-4b93-9177-221FAAAB7267}""
+                            RefAttributeType=""Types/String"">
+                            <Description></Description>
+                        </Attribute>
+                        <InternalElement Name=""LocalEffectReference""
+                            ID=""{E307E716-A9C2-49ca-946B-04C062EBF2D1}"">
+                            <Description></Description>
+                            <Attribute Name=""EffectID"" ID=""{4A42B33A-449F-4fe8-805A-AE2059C5D855}""
+                                RefAttributeType=""Types/Integer"">
+                                <Description></Description>
+                            </Attribute>
+                        </InternalElement>
+                        <InternalElement Name=""GlobalEffectReference""
+                            ID=""{94CB94ED-ECF6-4064-AC0F-B552D100E2AB}"">
+                            <Description></Description>
+                            <Attribute Name=""EffectTag"" ID=""{2094D02A-5A5C-4afa-A577-D2803D176378}""
+                                RefAttributeType=""Types/String"">
+                                <Description></Description>
+                            </Attribute>
+                        </InternalElement>
+                    </InternalElement>
+                </InternalElement>
+                <InternalElement Name=""EffectGroup"" ID=""{A36698C3-84CA-43f4-A07E-3B9142DE24CC}"">
+                    <Description></Description>
+                    <InternalElement Name=""Effect"" ID=""{150BC1AB-3F4D-4c15-BF17-F5F3EFBEAFB9}"">
+                        <Description></Description>
+                        <Attribute Name=""DocumentRef"" ID=""{1226B4FB-0DA6-46db-A01E-C7D58CFCFA4E}""
+                            RefAttributeType=""Types/String"">
+                            <Description></Description>
+                        </Attribute>
+                        <Attribute Name=""Tag"" ID=""{B9037E88-21CD-42c7-8D0D-44479C5D4CD9}""
+                            RefAttributeType=""Types/String"">
+                            <Description></Description>
+                        </Attribute>
+                        <InternalElement Name=""FinalElementReference""
+                            ID=""{2147C8FA-2973-4b06-84A5-45AFFE224069}"">
+                            <Description></Description>
+                        </InternalElement>
+                    </InternalElement>
+                </InternalElement>
+            </InternalElement>
+        </SystemUnitClass>
+    </SystemUnitClassLib>
+    <SystemUnitClassLib Name=""SIF Unit Classes"">
+        <Description></Description>
+        <SystemUnitClass Name=""Group"" ID=""{91B2A42C-84AD-4c59-9520-E18974D4B24B}"">
+            <Description>The Group is an abstract class holding common properties for a group.</Description>
+            <Attribute Name=""VoteWithinGroup_K_in_KooN"" ID=""{9F5BA9BA-7FAA-45f9-910A-F5862E1695FB}""
+                RefAttributeType=""Types/Integer"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""NumberOfComponentsOrSubgroups_N""
+                ID=""{F034ACC7-4B73-42c5-A89E-4EC61DCC639A}"" RefAttributeType=""Types/Integer"">
+                <Description></Description>
+            </Attribute>
+        </SystemUnitClass>
+        <SystemUnitClass Name=""SIF"" ID=""{33E2F2BF-C9F7-4ac5-8B0B-6C216BD4B771}"">
+            <Description>The SIF represents a Safety Instrumented System.</Description>
+            <Attribute Name=""DemandRate"" ID=""{85F435A5-3D42-443b-8CF0-164DAE95CAE9}""
+                RefAttributeType=""Types/PerYear"">
+                <Description>Maximum allowable demand rate</Description>
+            </Attribute>
+            <Attribute Name=""MaxAllowableResponseTime"" ID=""{029EE774-2441-495d-9620-3C0DAF70D95C}""
+                RefAttributeType=""Types/Seconds"">
+                <Description>Maximum allowable response time
+
+                    SIF Response Time is the interval between the SIF set-point being reached, and
+                    the hazardous event occurring. The SIF must detect and then operate its primary
+                    end elements, usually shutdown valves (SDVs) within this interval and do this
+                    quickly enough to keep the process variable below the design value.</Description>
+            </Attribute>
+            <Attribute Name=""SafeProcessState"" ID=""{DEBD4AAE-D31F-4e6b-BD46-C3A8AEEE0BEB}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""SIFID"" ID=""{6D45C9AF-E507-4f24-9174-73086558496E}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""SILLevel"" ID=""{78A8B42B-6001-4f06-9CED-F5E7210A85E1}""
+                RefAttributeType=""Types/SILLevel"">
+                <Description>SIL – Safety Integrity Level – is a quantitative target for measuring
+                    the level of performance needed for a safety function to achieve a tolerable
+                    risk for a process hazard. It is defined in both . Defining a target SIL level
+                    for the process should be based on the assessment of the likelihood that an
+                    incident will occur and the consequences of the incident.
+
+                    It is a discrete level (one out of four) for specifying the safety integrity
+                    requirements of the safety instrumented functions to be allocated to the safety
+                    instrumented systems. SIL 4 has the highest safety integrity and SIL 1 the
+                    lowest.
+
+                    IEC 61511 only defines requirements for SIL 1 to SIL 3, as it is expected that
+                    SIL 3 will be a maximum level in the process sector (excepting Nuclear). For SIL
+                    4, IEC 61511 refers the user back to the detail in IEC 61508.
+
+                    IEC 61508 and IEC 61511 both have tables with the Safety Integrity Levels
+                    associated with Probability of Failure, Risk Reduction Factor, Hardware Fault
+                    Tolerance and Architecture. </Description>
+            </Attribute>
+            <Attribute Name=""SILAllocationMethod"" ID=""{91D515DA-1C3E-428e-8820-45A9DC5C7DA1}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""SIFDescription"" ID=""{29F0BCBD-8483-48fa-8630-D3F32FB47D0B}""
+                RefAttributeType=""Types/String"">
+                <Description>Design intent</Description>
+            </Attribute>
+            <Attribute Name=""SIFName"" ID=""{A0E538F3-6F27-476d-8FDF-8FD31444441A}""
+                RefAttributeType=""Types/String"">
+                <Description>Short name</Description>
+            </Attribute>
+            <Attribute Name=""SIFType"" ID=""{8E9F05B7-CAEB-420e-B5EA-8E41099A501B}""
+                RefAttributeType=""Types/SIFType"">
+                <Description>Local or global</Description>
+            </Attribute>
+            <Attribute Name=""ModeOfOperation"" ID=""{DCFB6E80-4EC8-4f55-989F-2A01B6AD7087}""
+                RefAttributeType=""Types/ModeOfOperation"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""Cause"" ID=""{CE8E154B-674E-40a1-9BD4-9E9F4CBD4CD3}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""Effect"" ID=""{4B7289A7-2C11-4737-BDDF-1CD5520016FF}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""QuantificationMethod"" ID=""{60B82A16-13F8-48e5-A993-E429C5DB87FC}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""EILLevel"" ID=""{6A963F8D-A12D-4a29-9C85-5FEF7CB75A2A}""
+                RefAttributeType=""Types/ILLevel"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""AILLevel"" ID=""{40CEA4E0-D76E-45c5-8600-C08F387F130A}""
+                RefAttributeType=""Types/ILLevel"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""PFDRequirement"" ID=""{4BE0501A-3E0F-4c2d-93E9-9EECF215F1DB}""
+                RefAttributeType=""Types/Frequency"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""PlantOperatingMode"" ID=""{17C19438-2B6D-4407-8700-631E7695C6AA}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""PFHRequirement"" ID=""{7CBCC5DF-724B-433b-AA4B-B5893A9BE9E5}""
+                RefAttributeType=""Types/PerHour"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""DemandSource"" ID=""{AB1AFDE9-3A3F-4607-B1E0-C0363EB54B2A}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""SpuriousTripRate"" ID=""{CE771A94-AB81-4417-90BE-6D274B48A3E2}""
+                RefAttributeType=""Types/PerHour"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""ManualActivation"" ID=""{28168C89-5378-40be-841B-4058965B39F0}""
+                RefAttributeType=""Types/ManualActivation"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""MeasureToAvoidCCF"" ID=""{FAFD4587-C5E2-45ac-BBC1-4B8A4CB2368B}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""SurvaivabilityRequirement"" ID=""{039EE23D-5153-488d-8930-62F1FFA8D4BB}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""EnvironmentalExtremes"" ID=""{44BFC2B3-3B32-4e36-AD7B-C6F79FA2961D}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""SIFTypicalID"" ID=""{70F9AE68-B985-47db-853C-93D2D2A02A1F}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <InternalElement Name=""InputDeviceSubsystem"" ID=""{63D8A4F8-DEF5-4ead-BA95-B3F8399A1B77}""
+                RefBaseSystemUnitPath=""SIF Unit Classes/SIFSubsystem"">
+                <Description>The Initiator monitors some process parameter or presence of
+                    a command.</Description>
+            </InternalElement>
+            <InternalElement Name=""LogicSolverSubsystem"" ID=""{E8D9FD92-23B6-4ed8-8E97-088523E92953}""
+                RefBaseSystemUnitPath=""SIF Unit Classes/SIFSubsystem"">
+                <Description>The Solver decides if it is necessary to act upon the
+                    monitored signals.
 </Description>
-<InternalElement Name=""LogicSolverGroup"" ID=""f12c2a2b-bb30-4d27-9a81-c7febad92f53""  RefBaseSystemUnitPath=""SIF Unit Classes/Group"" >
-<Description>The SolverGroup groups solvers.</Description>
-</InternalElement>
-</InternalElement>
-<InternalElement Name=""FinalElement"" ID=""1b937414-429d-4656-94ec-c2da4c14e1f5""  RefBaseSystemUnitPath=""SIF Unit Classes/SIFComponent"" >
-<Description>The FinalElement carries out the
-necessary tasks, if decided to act.</Description>
-<Attribute Name=""FailSafePosition"" ID=""66277064-cf9f-400c-9ca4-4ba8ddf5530f"" RefAttributeType=""Types/FailSafePosition"">
-<Description>The safe state of a controlled device is the device state that contributes to reach the SIF's safe state. The actual device state that is deemed safe depends on the device and it's responsibility within the SIF.   </Description>
-</Attribute>
-<InternalElement Name=""FinalElementGroup"" ID=""ae8d7c7e-86eb-4df6-84b1-b0e04b62a00a""  RefBaseSystemUnitPath=""SIF Unit Classes/Group"" >
-<Description>The FinalGroup groups final elements.</Description>
-</InternalElement>
-</InternalElement>
-</InternalElement>
-</SystemUnitClass>
-<SystemUnitClass Name=""SIFComponent"" ID=""2194945a-21e8-4090-896b-f25ced345cbf"" >
-<Description>The SIFComponent  is an abstract class holding common properties. </Description>
-<Attribute Name=""DC"" ID=""dfeba74f-be14-42fe-9014-89a8fb80e090"" RefAttributeType=""Types/Percent"">
-<Description>Diagnostic coverage is a measure of effectiveness of the diagnostics implemented in the system.
-DC = (Σ λDD)/(Σ λDD + Σ λDU)</Description>
-</Attribute>
-<Attribute Name=""LoopTypical"" ID=""89f7e9f2-dad5-4a1b-9e1f-8510a45a5b7a"" RefAttributeType=""Types/String"">
-<Description>A  loop typical is a reference to the connection diagram used to implement the SIF loop.</Description>
-</Attribute>
-<Attribute Name=""UsefulLifetime"" ID=""d15933a6-5a8e-4493-a1d7-734f8527d3de"" RefAttributeType=""Types/Hours"">
-<Description>Useful Life Time is the period of time after early life failures (i.e. burn-in, infant mortality) and before end-of-life failures (i.e. wear-out) during which the failure rate can be assumed to be relatively constant under certain conditions.</Description>
-</Attribute>
-<Attribute Name=""MTTR"" ID=""cac803b8-6e73-4f19-a49d-9b1c9c5ff301"" RefAttributeType=""Types/Hours"">
-<Description>Mean Time To Repair</Description>
-</Attribute>
-<Attribute Name=""PFDBudget"" ID=""24b40c43-0cdc-426e-86f5-614f87a4a1fb"" RefAttributeType=""Types/Percent"">
-<Description>PFD contribution of an individual element to the SIF.</Description>
-</Attribute>
-<Attribute Name=""PTC"" ID=""bafb5d3b-9c40-40d4-9e45-02460b59282e"" RefAttributeType=""Types/Percent"">
-<Description>Proof Test Coverage (PTC) is the term given to the percentage of dangerous undetected failures that are exposed by a defined proof test procedure.</Description>
-</Attribute>
-<Attribute Name=""ProofTestInterval"" ID=""289bfe8d-4400-497b-bc57-1909486a51af"" RefAttributeType=""Types/Hours"">
-<Description>Proof testing is a routine action that is critical to ensuring the integrity of a safety instrumented system (SIS) throughout its lifecycle. For any SIS proof testing must be performed at a specified interval, known as the proof test interval (PTI).
+            </InternalElement>
+            <InternalElement Name=""FinalElementSubsystem""
+                ID=""{8A647C27-BADF-4690-85BC-4FE8DE6B7178}""
+                RefBaseSystemUnitPath=""SIF Unit Classes/SIFSubsystem"">
+                <Description>The FinalElement carries out the
+                    necessary tasks, if decided to act.</Description>
+            </InternalElement>
+        </SystemUnitClass>
+        <SystemUnitClass Name=""SIFSubsystem"" ID=""{CF723864-9C1F-4347-98E5-1F4F1044E931}"">
+            <Description>The SIFSubsystem a sub system within a SIF. This could be a part of an ESD,
+                PSD, FG or HIPPS SIS.</Description>
+            <Attribute Name=""PFDBudget"" ID=""{659C7645-93DB-438d-961E-A514F4E9722F}""
+                RefAttributeType=""Types/Percent"">
+                <Description>Probability of Dangerous Failure on Demand</Description>
+            </Attribute>
+            <Attribute Name=""VoteBetweenGroups_M_in_MooN""
+                ID=""{67DD139F-A86B-45c5-ABD8-92801CAACD51}"" RefAttributeType=""Types/Integer"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""NumberOfGroups_N""
+                ID=""{881BFE8C-D278-4105-9AB0-3030EFC871DE}"" RefAttributeType=""Types/Integer"">
+                <Description></Description>
+            </Attribute>
+        </SystemUnitClass>
+    </SystemUnitClassLib>
+    <SystemUnitClassLib Name=""SIS Unit Classes"">
+        <Description></Description>
+        <SystemUnitClass Name=""ESD"" ID=""{908C6D3A-3EF5-4a72-9E3C-235EF45A45BA}""
+            RefBaseClassPath=""SIS Unit Classes/SIS"">
+            <Description>Emergency Shutdown Safety Instrumented System</Description>
+        </SystemUnitClass>
+        <SystemUnitClass Name=""FG"" ID=""{FB636EC0-2CEC-47e0-9A7A-E22E64FE0F23}""
+            RefBaseClassPath=""SIS Unit Classes/SIS"">
+            <Description>Fire and Gas</Description>
+        </SystemUnitClass>
+        <SystemUnitClass Name=""FinalElementComponent"" ID=""{F3E586A2-A7B6-4d03-A990-887E933A10A3}""
+            RefBaseClassPath=""SIS Unit Classes/SISComponent"">
+            <Description></Description>
+            <Attribute Name=""MaximumAllowableLeakageRate""
+                ID=""{2301FBEE-D799-4265-9ADE-5BEC70CF354B}"" RefAttributeType=""Types/kg_s"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""ResetAfterShutdown"" ID=""{04ABDB88-2FA3-458b-859C-ADC31E3E5137}""
+                RefAttributeType=""Types/ResetAfterShutdown_FinalElement"">
+                <Description></Description>
+            </Attribute>
+        </SystemUnitClass>
+        <SystemUnitClass Name=""HIPPS"" ID=""{16A6B9E3-5548-4db6-B275-5D9807E07F09}""
+            RefBaseClassPath=""SIS Unit Classes/SIS"">
+            <Description>High Integrity Preassure Protection System</Description>
+        </SystemUnitClass>
+        <SystemUnitClass Name=""InputDeviceComponent"" ID=""{D0101401-669D-4476-8960-CB1FE6BE378E}""
+            RefBaseClassPath=""SIS Unit Classes/SISComponent"">
+            <Description></Description>
+            <Attribute Name=""TripPointLevel"" ID=""{685D2522-9C9F-4060-AFD9-F84E36A4E4E9}""
+                RefAttributeType=""Types/InputDeviceTrigger"">
+                <Description>Trigger criteria for this Initiator</Description>
+            </Attribute>
+            <Attribute Name=""UnitOfMeasure"" ID=""{BAD5EF7D-EE9D-40f0-9ECD-A9F2887BAF60}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""AlarmPriority"" ID=""{CC32188F-2441-4364-AE6F-8CF8613B2015}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""AlarmOrWarningText"" ID=""{2FA0F75E-4D8B-4747-8F48-3CCECDA61079}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""AlarmOrWarning"" ID=""{24284B48-0E60-411a-B09E-2CD7F6755CCF}""
+                RefAttributeType=""Types/AlarmOrWarning"">
+                <Description></Description>
+            </Attribute>
+        </SystemUnitClass>
+        <SystemUnitClass Name=""LogicSolverComponent"" ID=""{9E3D868A-21B5-479a-B2D1-BB6AFAAB9383}""
+            RefBaseClassPath=""SIS Unit Classes/SISComponent"">
+            <Description></Description>
+        </SystemUnitClass>
+        <SystemUnitClass Name=""PSD"" ID=""{43DB928B-A6AC-4e8b-B1D1-4A6044E0B735}""
+            RefBaseClassPath=""SIS Unit Classes/SIS"">
+            <Description>Process Shutdown</Description>
+        </SystemUnitClass>
+        <SystemUnitClass Name=""SIS"" ID=""{C4C0E4FC-4D62-47a1-8458-FCA48F4F945D}"">
+            <Description>Safety Instrumented System abstract class that holds the common properties</Description>
+            <Attribute Name=""SISID"" ID=""{85E6E820-BA06-4596-98D8-3586736B4079}""
+                RefAttributeType=""Types/String"">
+                <Description>Identifier of the Safety Instrumented System</Description>
+            </Attribute>
+        </SystemUnitClass>
+        <SystemUnitClass Name=""SISComponent"" ID=""{FF6852CF-0D99-4105-9F7C-8C12781E0A0C}"">
+            <Description></Description>
+            <Attribute Name=""ProofTestIntervalSILCompliance""
+                ID=""{75F443E8-85CF-4769-9A6F-61DDD6C8B208}"" RefAttributeType=""Types/Hours"">
+                <Description>Proof testing is a routine action that is critical to ensuring the
+                    integrity of a safety instrumented system (SIS) throughout its lifecycle. For
+                    any SIS proof testing must be performed at a specified interval, known as the
+                    proof test interval (PTI).
 
-A SIS with a long proof test interval is a system that remains safe to operate over a longer period of time, or in other words, the integrity of the safety system degrades more slowly over time. This is a very important consideration for owners and operators of machinery because it means that their operational/production processes can continue to operate for longer without being interrupted for proof testing.""</Description>
-</Attribute>
-<Attribute Name=""ResponseTime"" ID=""2970271e-2997-4c0f-b091-ddb7b3eb8926"" RefAttributeType=""Types/Seconds"">
-<Description>Response Time of a single SIF element (i.e. Initiator, Solver or FinalElement). This response time contributes to the overall SRT.</Description>
-</Attribute>
-<Attribute Name=""SFF"" ID=""7ef7cc60-1775-45ec-8b63-e08423f235b3"" RefAttributeType=""Types/Percent"">
-<Description>Safe Failure Fraction (SFF) is defined as the ratio of the average rate of safe failures plus dangerous detected failures of the subsystem to the total average failure rate of the subsystem. It is defined for a single channel (no redundancy, 1oo1). It is a measurement of the likelihood of getting a dangerous failure that is NOT detected by automatic self diagnostics, shown in the folliowing equation:  SFF = (λSD + λSU + λDD) / (λSD + λSU + λDD+ λDU)</Description>
-</Attribute>
-<Attribute Name=""SIL"" ID=""940657d0-ca5d-4b08-8177-d4da66929580"" RefAttributeType=""Types/SILLevel"">
-<Description>SIL – Safety Integrity Level – is a quantitative target for measuring the level of performance needed for a safety function to achieve a tolerable risk for a process hazard. It is defined in both . Defining a target SIL level for the process should be based on the assessment of the likelihood that an incident will occur and the consequences of the incident. 
+                    A SIS with a long proof test interval is a system that remains safe to operate
+                    over a longer period of time, or in other words, the integrity of the safety
+                    system degrades more slowly over time. This is a very important consideration
+                    for owners and operators of machinery because it means that their
+                    operational/production processes can continue to operate for longer without
+                    being interrupted for proof testing.""</Description>
+            </Attribute>
+            <Attribute Name=""PFDBudget"" ID=""{5948DF31-E6BF-433b-92F9-F04BF89BD48D}""
+                RefAttributeType=""Types/Percent"">
+                <Description>PFD contribution of an individual element to the SIF.</Description>
+            </Attribute>
+            <Attribute Name=""TagNumber"" ID=""{BF330542-95C1-45ff-891A-C325EF1E24FD}""
+                RefAttributeType=""Types/TagNumber"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""TagDescription"" ID=""{179BFC6E-EA57-4b2b-A82D-848425B076B9}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""SafeState"" ID=""{B17188F0-9532-4e38-A9BB-D0D5BBF3D735}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""TypeAB"" ID=""{78567E3D-737F-48c6-AF69-600EF2910A94}""
+                RefAttributeType=""Types/TypeAB"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""APOSL2Group"" ID=""{888C8FD7-934A-403a-8592-3E5B92266376}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""PFHBudget"" ID=""{9498669D-53B7-469f-ACAF-ABE4B9A3AC42}""
+                RefAttributeType=""Types/PerHour"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""SystematicCapability"" ID=""{19A99F65-098C-43c3-A130-3A7498E94EA5}""
+                RefAttributeType=""Types/SILLevel"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""ProofTestCoverage"" ID=""{FDE4FDDE-6355-4acb-A53F-E12CF32993FD}""
+                RefAttributeType=""Types/Percent"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""MRT"" ID=""{EC241F8B-A8A0-474f-8222-FCFDAC723872}""
+                RefAttributeType=""Types/Hours"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""ProofTestIntervalOperatorSpec""
+                ID=""{7A6CC76B-D147-4459-9259-3A08824195B6}"" RefAttributeType=""Types/Hours"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""MaxAllowableResponseTime"" ID=""{E082AFFE-62D6-47ea-AD37-985ED15A3233}""
+                RefAttributeType=""Types/Seconds"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""FailPass_Requirement"" ID=""{5E740012-D12C-43ae-A9BA-E6854C8A6A34}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""FailPass_Unit"" ID=""{EDD79564-6174-4c90-99B3-559C2E11A49C}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""FailPass_ComparisonToPass"" ID=""{C26F54AE-337D-4bb5-9D21-5D6BD12F0814}""
+                RefAttributeType=""Types/Comparison"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""FailPass_Masurement"" ID=""{B30678A9-F14D-4c5b-A2B1-E10C333DB210}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""Bypass_MaxAllowableBypassTime""
+                ID=""{B5E92439-7FFD-4964-91DB-D4E5875E01DF}"" RefAttributeType=""Types/Seconds"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""Bypass_Control"" ID=""{D7CC04FB-37D0-480a-954A-FEF76FBD3A8A}""
+                RefAttributeType=""Types/BypassControl"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""TimeDelay"" ID=""{382D9BDA-D26E-422d-8297-5DEF5FA26AC1}""
+                RefAttributeType=""Types/Seconds"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""E_DEToTrip"" ID=""{3FC7CB67-CDA0-47d0-9E39-9B2F610B0EA9}""
+                RefAttributeType=""Types/E_DEToTrip"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""TripAction"" ID=""{536B57B1-4DA5-46eb-BD91-CAAC7E26567B}""
+                RefAttributeType=""Types/String"">
+                <Description></Description>
+            </Attribute>
+            <Attribute Name=""SurvaibabilityRequirement"" ID=""{0D4DE559-767E-4293-B5BB-224D2D1BE40B}""
+                RefAttributeType=""Types/String"">
+                <Description>e.g. required time to remain operational in fire</Description>
+            </Attribute>
+            <Attribute Name=""DiagnosticRequirementsForImplementation""
+                ID=""{75D259C0-55B7-46cd-9D42-9A26C734D1DF}"" RefAttributeType=""Types/String"">
+                <Description>(for implementation)</Description>
+            </Attribute>
+            <Attribute Name=""DiagnosticRequired"" ID=""{16B8DDD2-AF20-46cf-929A-3263D72D2572}""
+                RefAttributeType=""Types/String"">
+                <Description>e.g. comparison alarm, line monitoring, etc.</Description>
+            </Attribute>
+        </SystemUnitClass>
+    </SystemUnitClassLib>
+    <SystemUnitClassLib Name=""Specification"">
+        <Description></Description>
+        <SystemUnitClass Name=""FunctionalRequirements"" ID=""{8467702F-4F6F-4490-B3EE-4B461261BD87}"">
+            <Description></Description>
+            <Attribute Name=""Required MTBF"" ID=""{7D9288E6-424C-4b7c-8850-DA0704FD92F1}""
+                RefAttributeType=""Types/Hours"">
+                <Description>Mean Time Before Failure</Description>
+            </Attribute>
+            <Attribute Name=""Required PST"" ID=""{02AA37D8-9A8D-4939-A8F4-42F44D977936}""
+                RefAttributeType=""Types/Hours"">
+                <Description>Partial Stroke Test Interval</Description>
+            </Attribute>
+            <Attribute Name=""Required MaxAllowableResponseTime""
+                ID=""{460BA3ED-616B-4cf2-B07B-329737E999EA}"" RefAttributeType=""Types/Seconds"">
+                <Description>SIF Response Time is the interval between the SIF set-point being
+                    reached, and the hazardous event occurring. The SIF must detect and then operate
+                    its primary end elements, usually shutdown valves (SDVs) within this interval
+                    and do this quickly enough to keep the process variable below the design value.</Description>
+            </Attribute>
+            <Attribute Name=""Required ProofTestInterval"" ID=""{E30EE2FB-93A3-4493-965F-63CBB4691A09}""
+                RefAttributeType=""Types/Seconds"">
+                <Description>Manual Proof Test Interval</Description>
+            </Attribute>
+            <Attribute Name=""Required SIL"" ID=""{957D2F68-41EF-4393-89D3-273AD4CE4143}""
+                RefAttributeType=""Types/ILLevel"">
+                <Description>SIL – Safety Integrity Level – is a quantitative target for measuring
+                    the level of performance needed for a safety function to achieve a tolerable
+                    risk for a process hazard. It is defined in both . Defining a target SIL level
+                    for the process should be based on the assessment of the likelihood that an
+                    incident will occur and the consequences of the incident.
 
-It is a discrete level (one out of four) for specifying the safety integrity requirements of the safety instrumented functions to be allocated to the safety instrumented systems. SIL 4 has the highest safety integrity and SIL 1 the lowest.
+                    It is a discrete level (one out of four) for specifying the safety integrity
+                    requirements of the safety instrumented functions to be allocated to the safety
+                    instrumented systems. SIL 4 has the highest safety integrity and SIL 1 the
+                    lowest.
 
-IEC 61511 only defines requirements for SIL 1 to SIL 3, as it is expected that SIL 3 will be a maximum level in the process sector (excepting Nuclear). For SIL 4, IEC 61511 refers the user back to the detail in IEC 61508.
+                    IEC 61511 only defines requirements for SIL 1 to SIL 3, as it is expected that
+                    SIL 3 will be a maximum level in the process sector (excepting Nuclear). For SIL
+                    4, IEC 61511 refers the user back to the detail in IEC 61508.
 
-IEC 61508 and IEC 61511 both have tables with the Safety Integrity Levels associated with Probability of Failure, Risk Reduction Factor, Hardware Fault Tolerance and Architecture. </Description>
-</Attribute>
-<Attribute Name=""β"" ID=""8f944253-d615-42ea-ad6a-52a3ed2944aa"" RefAttributeType=""Types/Percent"">
-<Description>Factor Beta quantifies possible common cause failures in redundant architectures such as 1oo2 or 2oo3.</Description>
-</Attribute>
-<Attribute Name=""λDD"" ID=""b35a5360-bbb4-4604-8ca2-cd2217f111ae"" RefAttributeType=""Types/FITs"">
-<Description>Detectable dangerous failure rate in functional safety expressed in the unit of measurement of FITs which can be determined through FMEDA.</Description>
-</Attribute>
-<Attribute Name=""λDU"" ID=""9ad01db9-6dc7-4291-905a-d7cf5fa15d85"" RefAttributeType=""Types/FITs"">
-<Description>Undetectable dangerous failure rate in functional safety expressed in the unit of measurement of FITs which can be determined through FMEDA.</Description>
-</Attribute>
-<Attribute Name=""λS"" ID=""286e1ce4-c801-40a2-9b8d-845578c5f711"" RefAttributeType=""Types/FITs"">
-<Description>The number of safe of spurious failures per unit time for a piece of equipment. A spurious trip or safe failure would be a time when the process is in normal operation and the system acts as if there is a problem and goes to the safe state when it is not necessary.
+                    IEC 61508 and IEC 61511 both have tables with the Safety Integrity Levels
+                    associated with Probability of Failure, Risk Reduction Factor, Hardware Fault
+                    Tolerance and Architecture. </Description>
+            </Attribute>
+        </SystemUnitClass>
+    </SystemUnitClassLib>
+    <AttributeTypeLib Name=""Types"">
+        <Description></Description>
+        <AttributeType Name=""FITs"" ID=""{C8850987-83A2-4c23-8527-09BD42D1AC6A}""
+            AttributeDataType=""xs:decimal"">
+            <Description>Failure In Time or Failure UnIT (λ) are failures per billion hours for a
+                piece of equipment, expressed by 10-9 hours.</Description>
+        </AttributeType>
+        <AttributeType Name=""Frequency"" ID=""{9B4B2F2E-D56B-4377-B591-D7EEDCA0745E}""
+            AttributeDataType=""xs:decimal"">
+            <Description>Percent as a decimal number</Description>
+        </AttributeType>
+        <AttributeType Name=""Hours"" ID=""{3B360754-DE57-4e7c-BC69-EF2DCB603B16}""
+            AttributeDataType=""xs:duration"">
+            <Description>Hours as a decimal number</Description>
+        </AttributeType>
+        <AttributeType Name=""Integer"" ID=""{A4662FA1-C30C-4dbb-8003-70950AEFC83C}""
+            AttributeDataType=""xs:intenger"">
+            <Description></Description>
+        </AttributeType>
+        <AttributeType Name=""kg_s"" ID=""{A2546FE1-4ACA-47a5-A1AA-F913C06620CC}""
+            AttributeDataType=""xs:decimal"">
+            <Description></Description>
+        </AttributeType>
+        <AttributeType Name=""MaxAllowableResponseTime"" ID=""{6F26A217-9D0C-4689-A6AA-3EBD629B3C57}""
+            AttributeDataType=""xs:decimal"">
+            <Description></Description>
+            <RefSemantic CorrespondingAttributePath=""CDD/ControlCircuitResponseTime"" />
+        </AttributeType>
+        <AttributeType Name=""Percent"" ID=""{1E32BB38-B1A9-4276-BED7-BECC41E448FA}""
+            AttributeDataType=""xs:decimal"">
+            <Description>Percent as a decimal number</Description>
+        </AttributeType>
+        <AttributeType Name=""PerHour"" ID=""{680F155E-B352-423c-8DD8-E408B7D8423E}""
+            AttributeDataType=""xs:decimal"">
+            <Description></Description>
+        </AttributeType>
+        <AttributeType Name=""PerYear"" ID=""{50D4F3B5-5ADD-41e7-BB29-4E7991FBA063}""
+            AttributeDataType=""xs:decimal"">
+            <Description></Description>
+        </AttributeType>
+        <AttributeType Name=""ProofTestInterval"" ID=""{E9D5A738-1D4D-48d8-A035-50AC4078C815}""
+            AttributeDataType=""xs:decimal"">
+            <Description></Description>
+            <RefSemantic CorrespondingAttributePath=""CDD/ProofTestInterval"" />
+        </AttributeType>
+        <AttributeType Name=""Seconds"" ID=""{1B18EB3E-1E0D-47e5-BCC8-F9DA3CB4F09A}""
+            AttributeDataType=""xs:decimal"">
+            <Description>Seconds as a decimal number</Description>
+        </AttributeType>
+        <AttributeType Name=""String"" ID=""{A5BB6E10-32EC-4581-A89D-2ED558FFB8CB}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+        </AttributeType>
+        <AttributeType Name=""TagNumber"" ID=""{1CCBE575-AEE3-40f0-991D-9E81E3D7A751}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <RefSemantic CorrespondingAttributePath=""CDD/TagName"" />
+        </AttributeType>
+        <AttributeType Name=""AlarmOrWarning"" ID=""{B0BDD8DE-DB79-4d55-AD2F-5DB980D60DC3}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>alarm</RequiredValue>
+                    <RequiredValue>warning</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""BypassControl"" ID=""{76DBD4CC-19E4-4a11-A4A4-C0E89A539F4E}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>approve</RequiredValue>
+                    <RequiredValue>set</RequiredValue>
+                    <RequiredValue>remove</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""CauseRole"" ID=""{519F254E-537A-4224-8A36-5C45E5088343}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>Voted 1ooN</RequiredValue>
+                    <RequiredValue>Voted 2ooN</RequiredValue>
+                    <RequiredValue>Voted 3ooN</RequiredValue>
+                    <RequiredValue>Low</RequiredValue>
+                    <RequiredValue>LowLow</RequiredValue>
+                    <RequiredValue>High</RequiredValue>
+                    <RequiredValue>HighHigh</RequiredValue>
+                    <RequiredValue>DigitalHigh</RequiredValue>
+                    <RequiredValue>DigitalLow</RequiredValue>
+                    <RequiredValue>IO Fault 1ooN</RequiredValue>
+                    <RequiredValue>IO Fault 2ooN</RequiredValue>
+                    <RequiredValue>IO Fault NooN</RequiredValue>
+                    <RequiredValue>IO Fault + Alarm</RequiredValue>
+                    <RequiredValue>No Capability</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""Comparison"" ID=""{838053F1-DE1D-44ec-8925-9F868A53C72B}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>greater than</RequiredValue>
+                    <RequiredValue>less than or equal</RequiredValue>
+                    <RequiredValue>less than</RequiredValue>
+                    <RequiredValue>greater than or equal</RequiredValue>
+                    <RequiredValue>yes</RequiredValue>
+                    <RequiredValue>no</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""E_DEToTrip"" ID=""{02E17D1E-DBEF-4c28-9BCC-86B95C4A9328}""
+            AttributeDataType=""xs:string"">
+            <Description>States that can be applied to a device</Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>DE</RequiredValue>
+                    <RequiredValue>E</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""EffectActivationMode"" ID=""{EF371AB3-0CFB-4de0-A68E-CE5EC70610FD}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>Automatic activation</RequiredValue>
+                    <RequiredValue>Automatic activation. Reset allowed</RequiredValue>
+                    <RequiredValue>Activation if not acknowledged</RequiredValue>
+                    <RequiredValue>Activation force no delay</RequiredValue>
+                    <RequiredValue>Suggested</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""EnergizeSource"" ID=""{CF88DB84-9D39-4dfc-B07F-7E497D26B055}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>electrical</RequiredValue>
+                    <RequiredValue>pneumatic</RequiredValue>
+                    <RequiredValue>hydraulic</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""FailSafePosition"" ID=""{1D90A95A-6066-433e-B370-A3A429DCF9F8}""
+            AttributeDataType=""xs:string"">
+            <Description>States that can be applied to a device</Description>
+            <RefSemantic CorrespondingAttributePath=""CDD/FailSafePosition"" />
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>NDE</RequiredValue>
+                    <RequiredValue>NE</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""FinalElementFunction"" ID=""{EB429728-AA30-45b1-B0C5-5AF1058912FD}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>Start</RequiredValue>
+                    <RequiredValue>Stop</RequiredValue>
+                    <RequiredValue>Open</RequiredValue>
+                    <RequiredValue>Close</RequiredValue>
+                    <RequiredValue>Activate</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""ILLevel"" ID=""{5E890B18-BC15-4c28-BFCC-9057FDA9E807}""
+            AttributeDataType=""xs:string"">
+            <Description>SIL – Safety Integrity Level – is a quantitative target for measuring the
+                level of performance needed for a safety function to achieve a tolerable risk for a
+                process hazard. It is defined in both . Defining a target SIL level for the process
+                should be based on the assessment of the likelihood that an incident will occur and
+                the consequences of the incident.
 
-λS = λSD + λSU</Description>
-</Attribute>
-<Attribute Name=""MRT"" ID=""455e0a3a-e570-4c30-9d22-e09a22c45243"" RefAttributeType=""Types/Hours"">
-<Description></Description>
-</Attribute>
-<Attribute Name=""MaxAllowableResponseTime"" ID=""106ac893-ac42-47c5-aaec-6654e79f89b0"" RefAttributeType=""Types/Seconds"">
-<Description></Description>
-</Attribute>
-<InternalElement Name=""GroupVoter"" ID=""17675e52-eb95-4d8a-b60b-2a8de40fcffc"" >
-<Description>The GroupVoter votes between groups of Initiators, Solvers or Final Elements.</Description>
-<Attribute Name=""M"" ID=""4806ab6d-7d9f-4c4a-ace5-7e2d379d5370"" RefAttributeType=""Types/Integer"">
-<Description>MooN Groups</Description>
-</Attribute>
-</InternalElement>
-</SystemUnitClass>
-<SystemUnitClass Name=""Group"" ID=""81b2ed4b-ae97-4a32-b3f1-e2b677323a1a"" >
-<Description>The Group is an abstract class holding common properties for a group.</Description>
-<InternalElement Name=""ComponentVoter"" ID=""e14df429-c17d-4dab-aa84-73bc5224a6b3"" >
-<Description>The ComponentVoter votes between components within a group.</Description>
-<Attribute Name=""K"" ID=""7f98a2e5-d894-486f-910d-93e9277ec9d8"" RefAttributeType=""Types/Integer"">
-<Description>MooN Components</Description>
-</Attribute>
-</InternalElement>
-</SystemUnitClass>
-</SystemUnitClassLib>
-<SystemUnitClassLib Name=""SIS Unit Classes"">
-<Description></Description>
-<SystemUnitClass Name=""SISComponent"" ID=""30addbba-c8b2-49e7-bcba-162b4d8ccbe7"" >
-<Description></Description>
-<Attribute Name=""ProofTestInterval"" ID=""e35b518c-cbe8-4afe-9865-ab213b04d592"" RefAttributeType=""Types/Hours"">
-<Description>Proof testing is a routine action that is critical to ensuring the integrity of a safety instrumented system (SIS) throughout its lifecycle. For any SIS proof testing must be performed at a specified interval, known as the proof test interval (PTI).
+                It is a discrete level (one out of four) for specifying the safety integrity
+                requirements of the safety instrumented functions to be allocated to the safety
+                instrumented systems. SIL 4 has the highest safety integrity and SIL 1 the lowest.
+                IEC 61511 only defines requirements for SIL 1 to SIL 3, as it is expected that SIL 3
+                will be a maximum level in the process sector (excepting Nuclear). For SIL 4, IEC
+                61511 refers the user back to the detail in IEC 61508.
 
-A SIS with a long proof test interval is a system that remains safe to operate over a longer period of time, or in other words, the integrity of the safety system degrades more slowly over time. This is a very important consideration for owners and operators of machinery because it means that their operational/production processes can continue to operate for longer without being interrupted for proof testing.""</Description>
-</Attribute>
-<Attribute Name=""SIL"" ID=""a4ae3489-1d21-45cb-af8e-1d27af85d8e3"" RefAttributeType=""Types/SILLevel"">
-<Description>SIL – Safety Integrity Level – is a quantitative target for measuring the level of performance needed for a safety function to achieve a tolerable risk for a process hazard. It is defined in both . Defining a target SIL level for the process should be based on the assessment of the likelihood that an incident will occur and the consequences of the incident. 
-
-It is a discrete level (one out of four) for specifying the safety integrity requirements of the safety instrumented functions to be allocated to the safety instrumented systems. SIL 4 has the highest safety integrity and SIL 1 the lowest.
-
-IEC 61511 only defines requirements for SIL 1 to SIL 3, as it is expected that SIL 3 will be a maximum level in the process sector (excepting Nuclear). For SIL 4, IEC 61511 refers the user back to the detail in IEC 61508.
-
-IEC 61508 and IEC 61511 both have tables with the Safety Integrity Levels associated with Probability of Failure, Risk Reduction Factor, Hardware Fault Tolerance and Architecture. </Description>
-</Attribute>
-</SystemUnitClass>
-<SystemUnitClass Name=""SIS"" ID=""8da2b6d0-6660-4952-9f9b-3087dafd1568"" >
-<Description>Safety Instrumented System abstract class that holds the common properties</Description>
-<Attribute Name=""SISID"" ID=""2b905400-2540-48e8-bc4e-95b9d08d0ed5"" RefAttributeType=""Types/String"">
-<Description>Identifier of the Safety Instrumented System</Description>
-</Attribute>
-</SystemUnitClass>
-<SystemUnitClass Name=""ESD"" ID=""9014acf2-a437-4ffa-91b2-826bb5610ac3""  RefBaseClassPath=""SIS Unit Classes/SIS"" >
-<Description>Emergency Shutdown Safety Instrumented System</Description>
-</SystemUnitClass>
-<SystemUnitClass Name=""PSD"" ID=""634cb918-ad57-45b1-937f-17e7f154c699""  RefBaseClassPath=""SIS Unit Classes/SIS"" >
-<Description>Process Shutdown</Description>
-</SystemUnitClass>
-<SystemUnitClass Name=""FG"" ID=""534508a3-d97b-414a-b737-11d5d030dc72""  RefBaseClassPath=""SIS Unit Classes/SIS"" >
-<Description>Fire and Gas</Description>
-</SystemUnitClass>
-<SystemUnitClass Name=""HIPPS"" ID=""174c3555-8282-48a4-85c5-e0b625c98216""  RefBaseClassPath=""SIS Unit Classes/SIS"" >
-<Description>High Integrity Preassure Protection System</Description>
-</SystemUnitClass>
-<SystemUnitClass Name=""InitiatorComponent"" ID=""40c542cc-d475-4fdf-ac0c-d05f586a903d""  RefBaseClassPath=""SIS Unit Classes/SISComponent"" >
-<Description></Description>
-<Attribute Name=""Criteria"" ID=""13dc3bb1-cb2a-4f74-aafd-85d2db7711d9"" RefAttributeType=""Types/InputDeviceTrigger"">
-<Description>Trigger criteria for this Initiator</Description>
-<Constraint Name=""Criteria constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>-1</RequiredMaxValue> 
-<RequiredMinValue>1</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""LoopTypical"" ID=""b5b22d90-25e3-42d9-bc37-f68102669e57"" RefAttributeType=""Types/String"">
-<Description>A  loop typical is a reference to the connection diagram used to implement the SIF loop.</Description>
-</Attribute>
-</SystemUnitClass>
-<SystemUnitClass Name=""LogicSolverComponent"" ID=""c14acf45-e4e9-414d-b71b-6338b052212c""  RefBaseClassPath=""SIS Unit Classes/SISComponent"" >
-<Description></Description>
-</SystemUnitClass>
-<SystemUnitClass Name=""FinalElementComponent"" ID=""eb671eb0-e0de-4f8b-badf-bcf477484ca8""  RefBaseClassPath=""SIS Unit Classes/SISComponent"" >
-<Description></Description>
-<Attribute Name=""Function"" ID=""1c22cdfa-dc63-4c16-b14a-328cba7c115a"" RefAttributeType=""Types/FinalElementFunction"">
-<Description>The function performed by this Final Element</Description>
-</Attribute>
-<Attribute Name=""LoopTypical"" ID=""78286292-f66b-4f5c-8525-4971517ce8fc"" RefAttributeType=""Types/String"">
-<Description>A  loop typical is a reference to the connection diagram used to implement the SIF loop.</Description>
-</Attribute>
-<Attribute Name=""FailSafePosition"" ID=""a5a642d0-ffb1-4814-88a0-8173ad9b8517"" RefAttributeType=""Types/FailSafePosition"">
-<Description>The safe state of a controlled device is the device state that contributes to reach the SIF's safe state. The actual device state that is deemed safe depends on the device and it's responsibility within the SIF.   </Description>
-</Attribute>
-</SystemUnitClass>
-</SystemUnitClassLib>
-<SystemUnitClassLib Name=""CE Unit Classes"">
-<Description></Description>
-<SystemUnitClass Name=""CESIS"" ID=""5a542e0e-44e4-405f-aced-2a7ce95ad760"" >
-<Description></Description>
-<Attribute Name=""ApprovedBy"" ID=""7a586804-3e1c-4c64-825b-5c94d8c7c52f"" RefAttributeType=""Types/String"">
-<Description></Description>
-</Attribute>
-<Attribute Name=""Builder"" ID=""41918c23-0cd0-4b94-8f88-a5526d881752"" RefAttributeType=""Types/String"">
-<Description>ProjectBuilder</Description>
-<Constraint Name=""Builder constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""CheckedBy"" ID=""b6508723-2efe-4bf6-955b-40bf9940fad8"" RefAttributeType=""Types/String"">
-<Description></Description>
-</Attribute>
-<Attribute Name=""Client"" ID=""4831345f-5f5b-4c3a-888b-a1b4d267d7b8"" RefAttributeType=""Types/String"">
-<Description>ProjectClient</Description>
-<Constraint Name=""Client constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""Description"" ID=""a8d5b667-d8a2-4010-ac12-28b675746479"" RefAttributeType=""Types/String"">
-<Description>AppIDDesc</Description>
-<Constraint Name=""Description constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""EngineeringCompany"" ID=""2eaee180-1278-4d28-9402-09ef38677706"" RefAttributeType=""Types/String"">
-<Description>ProjectEngComp</Description>
-<Constraint Name=""EngineeringCompany constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""FacilityName"" ID=""6a54ebf1-9a6e-4bfa-996a-018bc7d9ddb0"" RefAttributeType=""Types/String"">
-<Description></Description>
-<Constraint Name=""FacilityName constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""HullNumber"" ID=""7a011c63-f564-4eff-a482-13ba018dc65f"" RefAttributeType=""Types/String"">
-<Description>ProjectHullNr</Description>
-<Constraint Name=""HullNumber constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""IssuedBy"" ID=""4266297f-cf7b-46ef-87f4-c00e6d90cc8d"" RefAttributeType=""Types/String"">
-<Description></Description>
-</Attribute>
-<Attribute Name=""ProjectDescription"" ID=""4edef152-2f78-4138-972c-f27b293a940a"" RefAttributeType=""Types/String"">
-<Description>ProjectDesc</Description>
-<Constraint Name=""ProjectDescription constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""ProjectName"" ID=""1eb2bd6a-8306-46c3-b790-d1913cfd0e93"" RefAttributeType=""Types/String"">
-<Description>ProjectName</Description>
-</Attribute>
-<Attribute Name=""Type"" ID=""2daa3968-0bfe-4e8e-b330-a33f06ea1c0c"" RefAttributeType=""Types/SISType"">
-<Description>AppID</Description>
-</Attribute>
-<Attribute Name=""Vendor"" ID=""68a5de0d-60b3-4828-9c39-42b4d644c19e"" RefAttributeType=""Types/String"">
-<Description></Description>
-<Constraint Name=""Vendor constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<InternalElement Name=""CELevel"" ID=""125f246c-bee0-4dfe-948a-4648ca8f3ff9"" >
-<Description></Description>
-<Attribute Name=""ApprovedBy"" ID=""52093c8e-aa01-44f5-bd45-353fc11eadc5"" RefAttributeType=""Types/String"">
-<Description>Approver</Description>
-</Attribute>
-<Attribute Name=""AreaDescription"" ID=""01653b03-12c3-44c3-95de-63fd3bf37735"" RefAttributeType=""Types/String"">
-<Description>Description of the area</Description>
-<Constraint Name=""AreaDescription constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""CheckedBy"" ID=""03b9b898-c3b0-4ed5-90c8-b41983289762"" RefAttributeType=""Types/String"">
-<Description>Checker</Description>
-</Attribute>
-<Attribute Name=""Description"" ID=""ccb48060-4409-481a-9105-c635898f6d78"" RefAttributeType=""Types/String"">
-<Description>LevelDesc</Description>
-</Attribute>
-<Attribute Name=""ID"" ID=""73c62fe2-087b-4614-9123-08ef87762e69"" RefAttributeType=""Types/String"">
-<Description></Description>
-</Attribute>
-<Attribute Name=""IssuedBy"" ID=""47ea2ae0-e5c6-4777-888f-423c37307ace"" RefAttributeType=""Types/String"">
-<Description>Issuer</Description>
-</Attribute>
-<Attribute Name=""Note"" ID=""7d299379-953f-45fc-8eaa-6e41f2238583"" RefAttributeType=""Types/String"">
-<Description>Note</Description>
-<Constraint Name=""Note constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<InternalElement Name=""CauseGroup"" ID=""191e8ade-ce9e-4582-a181-ff7fb40ffed2"" >
-<Description></Description>
-<Attribute Name=""Description"" ID=""8b268bdb-02e2-42c8-993f-f0c0e78f0434"" RefAttributeType=""Types/String"">
-<Description>TypicalDesc</Description>
-<Constraint Name=""Description constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""LineNumber"" ID=""a369cf2b-18e8-42ad-af40-d0ce93a5effc"" RefAttributeType=""Types/Integer"">
-<Description></Description>
-</Attribute>
-<InternalElement Name=""InitiatorReference"" ID=""19464b46-ae8b-4c53-8313-720db7cfa1d7"" >
-<Description></Description>
-<Attribute Name=""InitiatorTag"" ID=""5ecbe3f1-e987-45cd-8c63-efa5c9b31030"" RefAttributeType=""Types/String"">
-<Description>Tags</Description>
-</Attribute>
-<Attribute Name=""Trigger"" ID=""0156683e-8203-4333-a414-0b3f70e90c74"" RefAttributeType=""Types/InputDeviceTrigger"">
-<Description>FuncCode</Description>
-</Attribute>
-</InternalElement>
-<InternalElement Name=""Cause"" ID=""aefecca5-91f6-4e37-9613-de65febd3950"" >
-<Description></Description>
-<Attribute Name=""AreaDescription"" ID=""1da66830-cfb4-49cd-b7f1-f5c2f35ac4cb"" RefAttributeType=""Types/String"">
-<Description></Description>
-<Constraint Name=""AreaDescription constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""Delay"" ID=""fd402761-785e-41fd-872e-4a48e5dc050c"" RefAttributeType=""Types/Seconds"">
-<Description>CauseTimeDel</Description>
-<Constraint Name=""Delay constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""Description"" ID=""895888a2-2ec0-4dac-84c4-eb285dada422"" RefAttributeType=""Types/String"">
-<Description>CauseDesc</Description>
-</Attribute>
-<Attribute Name=""DocumentRef"" ID=""1fdabe90-e06f-46fe-852e-78a81742b743"" RefAttributeType=""Types/String"">
-<Description></Description>
-<Constraint Name=""DocumentRef constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""ID"" ID=""1b55ba82-eb86-4f85-8a15-b9587c69e05b"" RefAttributeType=""Types/Integer"">
-<Description>CauseNr</Description>
-</Attribute>
-<Attribute Name=""LineNumber"" ID=""84134d45-c7c9-4402-9031-c5634eb7f8f5"" RefAttributeType=""Types/Integer"">
-<Description>CauseLineNr</Description>
-</Attribute>
-<Attribute Name=""Note"" ID=""ab6ee1a8-c067-4ce2-adcf-1c5c24d46498"" RefAttributeType=""Types/String"">
-<Description></Description>
-<Constraint Name=""Note constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""Role"" ID=""f7599429-3a11-483a-96a5-843cfebd5ed3"" RefAttributeType=""Types/CauseRole"">
-<Description></Description>
-</Attribute>
-<InternalElement Name=""LocalEffectReference"" ID=""4385cf77-f038-4d42-a8b3-36e5fc9f0929"" >
-<Description></Description>
-<Attribute Name=""ActivationMode"" ID=""17db15b1-4a0f-46f6-bd8a-cfe1b7e7eaba"" RefAttributeType=""Types/EffectActivationMode"">
-<Description></Description>
-</Attribute>
-<Attribute Name=""EffectID"" ID=""776dc377-bd02-477c-9f1c-ef05470d51bd"" RefAttributeType=""Types/Integer"">
-<Description></Description>
-</Attribute>
-</InternalElement>
-<InternalElement Name=""GlobalEffectReference"" ID=""65f45632-8589-45d4-9dac-b99175518786"" >
-<Description></Description>
-<Attribute Name=""EffectTag"" ID=""3e6c752e-d5d9-43f5-ab18-d5d30aa51ea1"" RefAttributeType=""Types/String"">
-<Description></Description>
-</Attribute>
-</InternalElement>
-</InternalElement>
-</InternalElement>
-<InternalElement Name=""EffectGroup"" ID=""196cebfb-c1fa-4ecb-81a2-29f047078ced"" >
-<Description></Description>
-<Attribute Name=""Description"" ID=""5257bb3b-687c-425b-a7d9-c5c811eea041"" RefAttributeType=""Types/String"">
-<Description>EffectTypDesc</Description>
-<Constraint Name=""Description constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""LineNumber"" ID=""bea7dec5-d3c3-4a30-8b0a-0a03e2b32752"" RefAttributeType=""Types/Integer"">
-<Description>EffectTypLine</Description>
-</Attribute>
-<InternalElement Name=""Effect"" ID=""29cdd5b2-b309-4d9d-bc73-de01d0d82902"" >
-<Description></Description>
-<Attribute Name=""Description"" ID=""48dec9eb-3c6c-488f-8658-7f225b5c7ebb"" RefAttributeType=""Types/String"">
-<Description>EffectDesc</Description>
-</Attribute>
-<Attribute Name=""DocumentRef"" ID=""e27fca5b-cb4b-40ce-950d-a67bac88156c"" RefAttributeType=""Types/String"">
-<Description></Description>
-<Constraint Name=""DocumentRef constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""ID"" ID=""89972577-7a78-4b84-9c56-76e324bc81bf"" RefAttributeType=""Types/Integer"">
-<Description>EffectNr</Description>
-</Attribute>
-<Attribute Name=""LineNumber"" ID=""c9d7633f-432d-40a9-b6fb-56a0ec2b9738"" RefAttributeType=""Types/Integer"">
-<Description>EffectLineNr</Description>
-</Attribute>
-<Attribute Name=""Note"" ID=""787260c0-ca68-4e91-a37b-8ad7148bc4eb"" RefAttributeType=""Types/String"">
-<Description></Description>
-<Constraint Name=""Note constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<Attribute Name=""Tag"" ID=""0208aaf5-85fa-4990-b929-868c9fcc588d"" RefAttributeType=""Types/String"">
-<Description></Description>
-<Constraint Name=""Tag constraints"">
-<OrdinalScaledType>
-<RequiredMaxValue>1</RequiredMaxValue> 
-<RequiredMinValue>0</RequiredMinValue> 
-</OrdinalScaledType>
-</Constraint>
-</Attribute>
-<InternalElement Name=""FinalElementReference"" ID=""e1739a9f-8a69-4478-b6af-0266e49e0290"" >
-<Description></Description>
-<Attribute Name=""FinalElementTag"" ID=""038dcff1-1d8b-4665-abac-7728666abd59"" RefAttributeType=""Types/String"">
-<Description>Tags</Description>
-</Attribute>
-<Attribute Name=""Function"" ID=""c3b974b8-26f7-4477-88ff-714be18ab8e8"" RefAttributeType=""Types/FinalElementFunction"">
-<Description>FuncCode</Description>
-</Attribute>
-</InternalElement>
-</InternalElement>
-</InternalElement>
-</InternalElement>
-</SystemUnitClass>
-</SystemUnitClassLib>
-<AttributeTypeLib Name=""Types"">
-<Description></Description>
-<AttributeType Name=""SILLevel"" ID=""318f8c3b-9c2e-49ca-8dce-f84cff571253"" AttributeDataType=""xs:string"">
-<Description>SIL – Safety Integrity Level – is a quantitative target for measuring the level of performance needed for a safety function to achieve a tolerable risk for a process hazard. It is defined in both . Defining a target SIL level for the process should be based on the assessment of the likelihood that an incident will occur and the consequences of the incident. 
-
-It is a discrete level (one out of four) for specifying the safety integrity requirements of the safety instrumented functions to be allocated to the safety instrumented systems. SIL 4 has the highest safety integrity and SIL 1 the lowest.
-
-IEC 61511 only defines requirements for SIL 1 to SIL 3, as it is expected that SIL 3 will be a maximum level in the process sector (excepting Nuclear). For SIL 4, IEC 61511 refers the user back to the detail in IEC 61508.
-
-IEC 61508 and IEC 61511 both have tables with the Safety Integrity Levels associated with Probability of Failure, Risk Reduction Factor, Hardware Fault Tolerance and Architecture. </Description>
-<RefSemantic CorrespondingAttributePath=""CDD/SafetyIntegrityLevel"" />
-<Constraint Name=""Enumeration"">
-<NominalScaledType>
-<RequiredValue>SIL1</RequiredValue>
-<RequiredValue>SIL2</RequiredValue>
-<RequiredValue>SIL3</RequiredValue>
-<RequiredValue>SIL4</RequiredValue>
-</NominalScaledType>
-</Constraint>
-</AttributeType>
-<AttributeType Name=""Hours"" ID=""d50cc174-51c7-45df-8e1b-7c223fe8f572""  AttributeDataType=""xs:duration"" >
-<Description>Hours as a decimal number</Description>
-</AttributeType>
-<AttributeType Name=""Integer"" ID=""33dea04c-7ffa-456e-942a-abe165083b87""  AttributeDataType=""xs:intenger"" >
-<Description></Description>
-</AttributeType>
-<AttributeType Name=""SISType"" ID=""5cb16b6c-c197-4b0d-b0bf-25c3677589e9"" AttributeDataType=""xs:string"">
-<Description></Description>
-<Constraint Name=""Enumeration"">
-<NominalScaledType>
-<RequiredValue>ESD</RequiredValue>
-<RequiredValue>PSD</RequiredValue>
-<RequiredValue>HIPPS</RequiredValue>
-<RequiredValue>FG</RequiredValue>
-<RequiredValue>Other</RequiredValue>
-</NominalScaledType>
-</Constraint>
-</AttributeType>
-<AttributeType Name=""FITs"" ID=""29ab4f46-7a63-4083-a8cb-de39034c5669""  AttributeDataType=""xs:decimal"" >
-<Description>Failure In Time or Failure UnIT (λ) are failures per billion hours for a piece of equipment, expressed by 10-9 hours.</Description>
-</AttributeType>
-<AttributeType Name=""String"" ID=""8c164521-a0c7-4e5f-a8d1-735ee262e554""  AttributeDataType=""xs:string"" >
-<Description></Description>
-</AttributeType>
-<AttributeType Name=""EffectActivationMode"" ID=""a8988cb4-d877-425f-ba01-dc102c19e9fd"" AttributeDataType=""xs:string"">
-<Description></Description>
-<Constraint Name=""Enumeration"">
-<NominalScaledType>
-<RequiredValue>Automatic activation</RequiredValue>
-<RequiredValue>Automatic activation. Reset allowed</RequiredValue>
-<RequiredValue>Activation if not acknowledged</RequiredValue>
-<RequiredValue>Activation force no delay</RequiredValue>
-<RequiredValue>Suggested</RequiredValue>
-</NominalScaledType>
-</Constraint>
-</AttributeType>
-<AttributeType Name=""Percent"" ID=""0f142297-4f05-424b-9f5b-927293d172a3""  AttributeDataType=""xs:decimal"" >
-<Description>Percent as a decimal number</Description>
-</AttributeType>
-<AttributeType Name=""InputDeviceTrigger"" ID=""300b041f-653b-4386-b46a-02c1bff04d65"" AttributeDataType=""xs:string"">
-<Description>Events that trigger the initiator</Description>
-<Constraint Name=""Enumeration"">
-<NominalScaledType>
-<RequiredValue>AnalogHighHigh</RequiredValue>
-<RequiredValue>AnalogHigh</RequiredValue>
-<RequiredValue>AnalogLow</RequiredValue>
-<RequiredValue>AnalogLowLow</RequiredValue>
-<RequiredValue>DigitalHigh</RequiredValue>
-<RequiredValue>DigitalLow</RequiredValue>
-</NominalScaledType>
-</Constraint>
-</AttributeType>
-<AttributeType Name=""TagName"" ID=""08f0612a-4f1b-4d50-9394-4d743e39c308""  AttributeDataType=""xs:string"" >
-<Description></Description>
-<RefSemantic CorrespondingAttributePath=""CDD/TagName"" />
-</AttributeType>
-<AttributeType Name=""Seconds"" ID=""0eab77a1-612d-445d-b9aa-a44226531d8d""  AttributeDataType=""xs:decimal"" >
-<Description>Seconds as a decimal number</Description>
-</AttributeType>
-<AttributeType Name=""FinalElementFunction"" ID=""8037a974-16b8-41b8-9457-451b195cd8f0"" AttributeDataType=""xs:string"">
-<Description></Description>
-<Constraint Name=""Enumeration"">
-<NominalScaledType>
-<RequiredValue>Start</RequiredValue>
-<RequiredValue>Stop</RequiredValue>
-<RequiredValue>Open</RequiredValue>
-<RequiredValue>Close</RequiredValue>
-<RequiredValue>Activate</RequiredValue>
-</NominalScaledType>
-</Constraint>
-</AttributeType>
-<AttributeType Name=""ProofTestInterval"" ID=""b1f3417e-999f-46e2-bb5c-84bfd156ac7d""  AttributeDataType=""xs:decimal"" >
-<Description></Description>
-<RefSemantic CorrespondingAttributePath=""CDD/ProofTestInterval"" />
-</AttributeType>
-<AttributeType Name=""CauseRole"" ID=""db6e6965-a032-4f9b-aa09-55306f92d3a3"" AttributeDataType=""xs:string"">
-<Description></Description>
-<Constraint Name=""Enumeration"">
-<NominalScaledType>
-<RequiredValue>Voted 1ooN</RequiredValue>
-<RequiredValue>Voted 2ooN</RequiredValue>
-<RequiredValue>Voted 3ooN</RequiredValue>
-<RequiredValue>Low</RequiredValue>
-<RequiredValue>LowLow</RequiredValue>
-<RequiredValue>High</RequiredValue>
-<RequiredValue>HighHigh</RequiredValue>
-<RequiredValue>DigitalHigh</RequiredValue>
-<RequiredValue>DigitalLow</RequiredValue>
-<RequiredValue>IO Fault 1ooN</RequiredValue>
-<RequiredValue>IO Fault 2ooN</RequiredValue>
-<RequiredValue>IO Fault NooN</RequiredValue>
-<RequiredValue>IO Fault + Alarm</RequiredValue>
-<RequiredValue>No Capability</RequiredValue>
-</NominalScaledType>
-</Constraint>
-</AttributeType>
-<AttributeType Name=""FailSafePosition"" ID=""cfb06118-9cc1-47f7-b4bd-ab5823ebf399"" AttributeDataType=""xs:string"">
-<Description>States that can be applied to a device</Description>
-<RefSemantic CorrespondingAttributePath=""CDD/FailSafePosition"" />
-<Constraint Name=""Enumeration"">
-<NominalScaledType>
-<RequiredValue>NDE</RequiredValue>
-<RequiredValue>NE</RequiredValue>
-</NominalScaledType>
-</Constraint>
-</AttributeType>
-<AttributeType Name=""MaxAllowableResponseTime"" ID=""1b53ab6f-3b74-47f6-a727-4a83432d7499""  AttributeDataType=""xs:decimal"" >
-<Description></Description>
-<RefSemantic CorrespondingAttributePath=""CDD/ControlCircuitResponseTime"" />
-</AttributeType>
-<AttributeType Name=""E_DEToTrip"" ID=""356fecfe-ad51-4064-9d56-22ca44fa9dfd"" AttributeDataType=""xs:string"">
-<Description>States that can be applied to a device</Description>
-<Constraint Name=""Enumeration"">
-<NominalScaledType>
-<RequiredValue>DE</RequiredValue>
-<RequiredValue>E</RequiredValue>
-</NominalScaledType>
-</Constraint>
-</AttributeType>
-<AttributeType Name=""Frequency"" ID=""fe215ed3-3c7f-4d3e-8056-ed05b0e18101""  AttributeDataType=""xs:decimal"" >
-<Description>Percent as a decimal number</Description>
-</AttributeType>
-</AttributeTypeLib>
+                IEC 61508 and IEC 61511 both have tables with the Safety Integrity Levels associated
+                with Probability of Failure, Risk Reduction Factor, Hardware Fault Tolerance and
+                Architecture. </Description>
+            <RefSemantic CorrespondingAttributePath=""CDD/SafetyIntegrityLevel"" />
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>IL1</RequiredValue>
+                    <RequiredValue>IL2</RequiredValue>
+                    <RequiredValue>IL3</RequiredValue>
+                    <RequiredValue>IL4</RequiredValue>
+                    <RequiredValue>no IL</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""InputDeviceTrigger"" ID=""{F6EE3886-84AA-48c6-B5C6-9FE733FAA597}""
+            AttributeDataType=""xs:string"">
+            <Description>Events that trigger the initiator</Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>AnalogHighHigh</RequiredValue>
+                    <RequiredValue>AnalogHigh</RequiredValue>
+                    <RequiredValue>AnalogLow</RequiredValue>
+                    <RequiredValue>AnalogLowLow</RequiredValue>
+                    <RequiredValue>DigitalHigh</RequiredValue>
+                    <RequiredValue>DigitalLow</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""ManualActivation"" ID=""{2EA660A1-C6A6-4fb1-818D-369F311CDBAD}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>local activation</RequiredValue>
+                    <RequiredValue>GUI_faceplate</RequiredValue>
+                    <RequiredValue>CAP</RequiredValue>
+                    <RequiredValue>none</RequiredValue>
+                    <RequiredValue>other</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""ModeOfOperation"" ID=""{6F7C3CDE-30BC-4644-8C34-30BEE5823BA2}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>low demand</RequiredValue>
+                    <RequiredValue>high demand</RequiredValue>
+                    <RequiredValue>continuous demand</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""ResetAfterShutdown_FinalElement""
+            ID=""{91AC4F6A-F734-4767-890D-755385E27876}"" AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>reset in logic</RequiredValue>
+                    <RequiredValue>reest in field</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""SIFType"" ID=""{FD2354A7-D96F-49fc-9006-741440576B96}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>Global</RequiredValue>
+                    <RequiredValue>Local</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""SILLevel"" ID=""{0FF0E7E0-9EA4-4700-AB4A-659F54DF1ADF}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>SIL 1</RequiredValue>
+                    <RequiredValue>SIL 2</RequiredValue>
+                    <RequiredValue>SIL 3</RequiredValue>
+                    <RequiredValue>SIL 4</RequiredValue>
+                    <RequiredValue>no SIL</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""SISType"" ID=""{FDDC5919-FDA7-4285-A98C-52D1E408D11D}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>ESD</RequiredValue>
+                    <RequiredValue>PSD</RequiredValue>
+                    <RequiredValue>HIPPS</RequiredValue>
+                    <RequiredValue>FG</RequiredValue>
+                    <RequiredValue>Other</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""TypeAB"" ID=""{BA6FCCBD-F15D-4500-8352-AC7E28102CC0}""
+            AttributeDataType=""xs:string"">
+            <Description></Description>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>A</RequiredValue>
+                    <RequiredValue>B</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+    </AttributeTypeLib>
 </CAEXFile>";
     }
 }

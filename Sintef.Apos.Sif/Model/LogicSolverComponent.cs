@@ -10,10 +10,8 @@ namespace Sintef.Apos.Sif.Model
     {
         public new const string RefBaseSystemUnitPath = "SIS Unit Classes/LogicSolverComponent";
 
-        public LogicSolverComponent(LogicSolverGroup parent, string name) : base(parent, name)
+        public LogicSolverComponent(Group parent, string name) : base(parent, name, 0)
         {
-            const int expectedNumberOfAttributes = 2;
-            if (Attributes.Count() != expectedNumberOfAttributes) throw new Exception($"Expected {expectedNumberOfAttributes} attributes but got {Attributes.Count()}.");
         }
     }
 }

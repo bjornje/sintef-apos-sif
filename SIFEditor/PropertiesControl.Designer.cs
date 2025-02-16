@@ -37,7 +37,7 @@
             this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-            this.flowLayoutPanel1.Size = new System.Drawing.Size(387, 189);
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(431, 280);
             this.flowLayoutPanel1.TabIndex = 0;
             this.flowLayoutPanel1.Click += new System.EventHandler(this.flowLayoutPanel1_Click);
             // 
@@ -49,7 +49,7 @@
             this.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.Controls.Add(this.flowLayoutPanel1);
             this.Name = "PropertiesControl";
-            this.Size = new System.Drawing.Size(387, 189);
+            this.Size = new System.Drawing.Size(431, 280);
             this.ResumeLayout(false);
 
         }

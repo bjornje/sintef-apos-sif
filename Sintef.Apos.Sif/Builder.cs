@@ -1,4 +1,5 @@
 ﻿using Aml.Engine.CAEX;
+using Aml.Engine.CAEX.Extensions;
 using Sintef.Apos.Sif.Model;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace Sintef.Apos.Sif
     public class Builder
     {
         public Roots Roots { get; } = new Roots();
-        private Roots _rootsClone = new Roots();
+        private Roots _rootsClone;
 
         public IEnumerable<ModelError> Errors => _errors;
         private Collection<ModelError> _errors { get; } = new Collection<ModelError>();
@@ -20,19 +21,12 @@ namespace Sintef.Apos.Sif
 
         public Builder() 
         {
-            var x = SIFs;
+            Roots.Append();
             _rootsClone = Roots.Clone();
         }
 
 
-        public SIFs SIFs
-        { 
-            get
-            {
-                if (!Roots.Any()) return Roots.Append().SIFs;
-                return Roots.First().SIFs;
-            }
-        }
+        public SIFs SIFs => Roots.First().SIFs;
 
         public bool Validate()
         {
@@ -73,135 +67,93 @@ namespace Sintef.Apos.Sif
         {
             Node childNode = null;
 
-            switch (ie.RefBaseSystemUnitPath)
-            {
+             switch (ie.RefBaseSystemUnitPath)
+             {
                 case "SIF Unit Classes/SIF":
                     if (node is Root root)
                     {
-                        var newSif = root.SIFs.Append("New SIF");
-                        childNode = newSif;
-
-                        foreach(var item in newSif.Attributes)
-                        {
-                            item.Value = ReadAttribute(item.Name, ie);
-                        }
+                        childNode = root.SIFs.Append();
                     }
                     else errors.Add(new ModelError(node, $"A SIF can only be added at root level in the hierarchy.\n{ie.Node}"));
                     break;
-                case "SIF Unit Classes/SIFComponent":
-                    if (node is SIFSubsystem subsystem)
+                case "SIF Unit Classes/SIFComponent": // depricated, kept for backward compatibility
+                case "SIF Unit Classes/SIFSubsystem":
+                    if (node is SIF sif)
                     {
-                        if (ie.Name == "InputDevice" || ie.Name == "Initiator")
+                        if (ie.Name == "InputDeviceSubsystem" || ie.Name == "InputDevice" || ie.Name == "Initiator")
                         {
-                            var newInputDevice = subsystem.CreateInputDevice();
-                            childNode = newInputDevice;
-                            foreach (var item in newInputDevice.Attributes)
-                            {
-                                item.Value = ReadAttribute(item.Name, ie);
-                            }
+                            childNode = sif.Subsystems.AppendInputDevice();
                         }
-                        else if (ie.Name == "LogicSolver" || ie.Name == "Solver")
+                        else if (ie.Name == "LogicSolverSubsystem" || ie.Name == "LogicSolver" || ie.Name == "Solver")
                         {
-                            var newLogicSolver = subsystem.CreateLogicSolver();
-                            childNode = newLogicSolver;
-                            foreach (var item in newLogicSolver.Attributes)
-                            {
-                                item.Value = ReadAttribute(item.Name, ie);
-                            }
+                            childNode = sif.Subsystems.AppendLogicSolver();
                         }
-                        else if (ie.Name == "FinalElement")
+                        else if (ie.Name == "FinalElementSubsystem" || ie.Name == "FinalElement")
                         {
-                            var newFinalElement = subsystem.CreateFinalElement();
-                            childNode = newFinalElement;
-                            foreach (var item in newFinalElement.Attributes)
-                            {
-                                item.Value = ReadAttribute(item.Name, ie);
-                            }
+                            childNode = sif.Subsystems.AppendFinalElement();
                         }
                         else errors.Add(new ModelError(node, $"Bad name for InternalElement: {ie.Name}. A SIF Unit Class of type SIFComponent must have name InputDevice, LogicSolver or FinalElement.\n{ie.Node}"));
                     }
-                    else errors.Add(new ModelError(node, $"A SIFComponent can only be added to a SIFSubsystem in the hierarchy.\n{ie.Node}"));
+                    else
+                    {
+                        if (ie.RefBaseSystemUnitPath == "SIF Unit Classes/SIFComponent") errors.Add(new ModelError(node, $"A SIFComponent can only be added to a SIFSubsystem in the hierarchy.\n{ie.Node}"));
+                        else errors.Add(new ModelError(node, $"A SIFSubsystem can only be added to a SIF in the hierarchy.\n{ie.Node}"));
+                    }
                     break;
                 case "SIF Unit Classes/Group":
-                    if (node is InputDevice inputDevice)
+                    if (node is InputDeviceSubsystem inputDevice)
                     {
-                        var newInputDeviceGroup = inputDevice.Groups.Append();
-                        childNode = newInputDeviceGroup;
+                        childNode = inputDevice.Groups.Append();
                     }
-                    else if (node is LogicSolver logicSolver)
+                    else if (node is LogicSolverSubsystem logicSolver)
                     {
-                        var newLogicSolverGroup = logicSolver.Groups.Append();
-                        childNode = newLogicSolverGroup;
+                        childNode = logicSolver.Groups.Append();
                     }
-                    else if (node is FinalElement finalElement)
+                    else if (node is FinalElementSubsystem finalElement)
                     {
-                        var newFinalElementGroup = finalElement.Groups.Append();
-                        childNode = newFinalElementGroup;
+                        childNode = finalElement.Groups.Append();
                     }
                     else if (node is Group group)
                     {
-                        var newSubGroup = group.Groups.Append();
-                        childNode = newSubGroup;
+                        childNode = group.Groups.Append();
                     }
-                    else errors.Add(new ModelError(node, $"An instance of Group can only be added to an instance of InputDevice, LogicSolver, FinalElement or Group.\n{ie.Node}"));
+                    else errors.Add(new ModelError(node, $"An instance of Group can only be added to an instance of SIFSubsystem or Group.\n{ie.Node}"));
                     break;
-                case "SIS Unit Classes/InitiatorComponent":
-                    if (node is InputDeviceGroup initiatorGroup)
+                case "SIS Unit Classes/InitiatorComponent": //depricated, kept for backward compatibility
+                case "SIS Unit Classes/InputDeviceComponent":
+                    if (node is Group initiatorGroup)
                     {
-                        var newInitiatorComponent = initiatorGroup.Components.Append(ie.Name) as InitiatorComponent;
-                        childNode = newInitiatorComponent;
-
-                        foreach (var item in newInitiatorComponent.Attributes)
-                        {
-                            item.Value = ReadAttribute(item.Name, ie);
-                        }
+                        childNode = initiatorGroup.Components.Append(ie.Name) as InputDeviceComponent;
                     }
-                    else errors.Add(new ModelError(node, $"An instance of InitiatorComponent can only by added to an instance of InitiatorGroup.\n{ie.Node}"));
+                    else errors.Add(new ModelError(node, $"An instance of InitiatorDeviceComponent can only by added to an instance of Group.\n{ie.Node}"));
                     break;
-                case "SIS Unit Classes/SolverComponent":
+                case "SIS Unit Classes/SolverComponent": // depricated, kept for backward compatibility
                 case "SIS Unit Classes/LogicSolverComponent":
-                    if (node is LogicSolverGroup logicSolverGroup)
+                    if (node is Group logicSolverGroup)
                     {
-                        var newLogicSolverComponent = logicSolverGroup.Components.Append(ie.Name);
-                        childNode = newLogicSolverComponent;
-
-                        foreach (var item in newLogicSolverComponent.Attributes)
-                        {
-                            item.Value = ReadAttribute(item.Name, ie);
-                        }
+                        childNode = logicSolverGroup.Components.Append(ie.Name);
                     }
-                    else errors.Add(new ModelError(node, $"An instance of LogicSolverComponent can only by added to an instance of LogicSolverGroup.\n{ie.Node}"));
+                    else errors.Add(new ModelError(node, $"An instance of LogicSolverComponent can only by added to an instance of Group.\n{ie.Node}"));
                     break;
-                case "SIS Unit Classes/FinalComponent":
+                case "SIS Unit Classes/FinalComponent": // depricated, kept for backward compatibility
                 case "SIS Unit Classes/FinalElementComponent":
-                    if (node is FinalElementGroup finalElementGroup)
+                    if (node is Group finalElementGroup)
                     {
-                        var newFinalElementComponent = finalElementGroup.Components.Append(ie.Name) as FinalElementComponent;
-                        childNode = newFinalElementComponent;
-
-                        foreach (var item in newFinalElementComponent.Attributes)
-                        {
-                            item.Value = ReadAttribute(item.Name, ie);
-                        }
+                        childNode = finalElementGroup.Components.Append(ie.Name) as FinalElementComponent;
                     }
-                    else errors.Add(new ModelError(node, $"An instance of FinalElementComponent can only by added to an instance of FinalElementGroup.\n{ie.Node}"));
+                    else errors.Add(new ModelError(node, $"An instance of FinalElementComponent can only by added to an instance of Group.\n{ie.Node}"));
                     break;
                 default:
-                    if (node is SIF sif)
+                    if (node is SIF sif2)
                     {
-                        var newSubsystem = sif.Subsystems.Append();
-                        childNode = newSubsystem;
-
-                        foreach (var item in newSubsystem.Attributes)
-                        {
-                            item.Value = ReadAttribute(item.Name, ie);
-                        }
+                        childNode = sif2; // used to have a subsystem between sif and SIFComponent, skip to next internal element
                     }
-                    else if (node is SIFComponent sifComponent && (ie.Name == "GroupVoter" || ie.Name == "ComponentVoter"))
+                    else if (node is SIFSubsystem sifSubsystem && (ie.Name == "GroupVoter" || ie.Name == "ComponentVoter"))
                     {
                         var m = ReadAttribute("M", ie);
-                        sifComponent.GroupVoter.M.Value = m;
-                        childNode = sifComponent.GroupVoter;
+
+                        sifSubsystem.VoteBetweenGroups_M_in_MooN.StringValue = m;
+                        return;
                     }
                     else if (node is Group group && (ie.Name == "ComponentVoter" || ie.Name == "GroupVoter"))
                     {
@@ -209,8 +161,8 @@ namespace Sintef.Apos.Sif
 
                         if (k == null) k = ReadAttribute("M", ie); // for backward compatibility
 
-                        group.ComponentVoter.K.Value = k;
-                        childNode = group.ComponentVoter;
+                        group.VoteWithinGroup_K_in_KooN.StringValue = k;
+                        return;
                     }
                     break;
             }
@@ -219,6 +171,10 @@ namespace Sintef.Apos.Sif
             {
                 errors.Add(new ModelError(node, $"Unexpected InternalElement.\n{ie.Node}"));
                 return;
+            }
+            else
+            {
+                foreach (var item in childNode.Attributes) item.StringValue = item.StringValue ?? ReadAttribute(item.Name, ie);
             }
 
             foreach (var childIe in ie.InternalElement) ReadInternalElement(childNode, childIe, errors);
@@ -248,11 +204,7 @@ namespace Sintef.Apos.Sif
                     sifElement.Name = sif.GetType().Name;
                     sifElement.RefBaseSystemUnitPath = SIF.RefBaseSystemUnitPath;
 
-                    foreach(var item in sif.Attributes)
-                    {
-                        WriteAttribute(item, sifElement);
-                    }
-
+                    foreach(var item in sif.Attributes) WriteAttribute(item, sifElement);
                     foreach (var subsystem in sif.Subsystems) WriteSubsystem(subsystem, sifElement.InternalElement.Append());
                 }
             }
@@ -262,67 +214,34 @@ namespace Sintef.Apos.Sif
             _rootsClone = Roots.Clone();
         }
 
-        private void WriteSubsystem(SIFSubsystem subsystem, InternalElementType subsystemElement)
+        private static void WriteSubsystem(SIFSubsystem subsystem, InternalElementType subsystemElement)
         {
             subsystemElement.Name = subsystem.GetType().Name;
-            foreach (var item in subsystem.Attributes)
-            {
-                WriteAttribute(item, subsystemElement);
-            }
+            subsystemElement.RefBaseSystemUnitPath = SIFSubsystem.RefBaseSystemUnitPath;
 
-            if (subsystem.InputDevice != null) WriteSIFComponent(subsystem.InputDevice, subsystemElement.InternalElement.Append());
-            if (subsystem.LogicSolver != null) WriteSIFComponent(subsystem.LogicSolver, subsystemElement.InternalElement.Append());
-            if (subsystem.FinalElement != null) WriteSIFComponent(subsystem.FinalElement, subsystemElement.InternalElement.Append());
+            foreach (var item in subsystem.Attributes) WriteAttribute(item, subsystemElement);
+            foreach (var group in subsystem.Groups) WriteGroup(group, subsystemElement.InternalElement.Append());
         }
 
-        private void WriteSIFComponent(SIFComponent component, InternalElementType componentElement)
-        {
-            componentElement.Name = component.GetType().Name;
-            componentElement.RefBaseSystemUnitPath = SIFComponent.RefBaseSystemUnitPath;
-
-            foreach (var item in component.Attributes)
-            {
-                WriteAttribute(item, componentElement);
-            }
-
-            if (component.GroupVoter != null)
-            {
-                var groupVoterElement = componentElement.InternalElement.Append();
-                groupVoterElement.Name = component.GroupVoter.GetType().Name;
-                WriteAttribute(component.GroupVoter.M, groupVoterElement);
-            }
-
-            foreach (var group in component.Groups) WriteGroup(group, componentElement.InternalElement.Append());
-        }
-
-        private void WriteGroup(Group group, InternalElementType groupElement)
+        private static void WriteGroup(Group group, InternalElementType groupElement)
         {
             groupElement.Name = group.GetType().Name;
             groupElement.RefBaseSystemUnitPath = Group.RefBaseSystemUnitPath;
 
-            if (group.ComponentVoter != null)
-            {
-                var componentVoterElement = groupElement.InternalElement.Append();
-                componentVoterElement.Name = group.ComponentVoter.GetType().Name;
-                WriteAttribute(group.ComponentVoter.K, componentVoterElement);
-            }
-
+            foreach (var item in group.Attributes) WriteAttribute(item, groupElement);
             foreach (var component in group.Components) WriteSISComponent(component, groupElement.InternalElement.Append());
             foreach (var subGroup in group.Groups) WriteGroup(subGroup, groupElement.InternalElement.Append());
         }
 
-        private void WriteSISComponent(SISComponent component, InternalElementType componentElement)
+        private static void WriteSISComponent(SISComponent component, InternalElementType componentElement)
         {
-            componentElement.Name = component.Name.Value;
+            componentElement.Name = component.Name.StringValue;
 
-            foreach (var item in component.Attributes)
-            {
-                WriteAttribute(item, componentElement);
-            }
+            foreach (var item in component.Attributes) WriteAttribute(item, componentElement);
 
-            if (component is InitiatorComponent)
+            if (component is InputDeviceComponent)
             {
-                componentElement.RefBaseSystemUnitPath = InitiatorComponent.RefBaseSystemUnitPath;
+                componentElement.RefBaseSystemUnitPath = InputDeviceComponent.RefBaseSystemUnitPath;
             }
             else if (component is LogicSolverComponent)
             {
@@ -334,15 +253,15 @@ namespace Sintef.Apos.Sif
             }
         }
 
-        private void WriteAttribute(Model.AttributeType attribute, InternalElementType ie)
+        private static void WriteAttribute(Model.AttributeType attribute, InternalElementType ie)
         {
             if (attribute == null) return;
-            if (attribute.Value == null) return;
+            if (attribute.StringValue == null) return;
 
             var att = ie.Attribute.Append();
             att.Name = attribute.Name;
             att.ID = Guid.NewGuid().ToString();
-            att.Value = attribute.Value;
+            att.Value = attribute.StringValue;
             att.RefAttributeType = attribute.RefAttributeType;
         }
 

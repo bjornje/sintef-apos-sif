@@ -1,6 +1,7 @@
 using Sintef.Apos.Sif;
 using Sintef.Apos.Sif.Model;
 using System.Reflection;
+using System.Windows.Forms;
 
 namespace SIFEditor
 {
@@ -9,6 +10,8 @@ namespace SIFEditor
         private string? _fileName = null;
         private Builder? _builder;
         private readonly string _text;
+        private readonly List<PropertiesControl> _nodeDetails = new();
+        private readonly PropertiesControl _propertieBlankPage = new();
         public MainForm()
         {
             InitializeComponent();
@@ -17,6 +20,12 @@ namespace SIFEditor
             var version = Assembly.GetExecutingAssembly().GetName().Version;
             _text = $"APOS SIF Editor {version.Major}.{version.Minor}.{version.Build} UML Model {Definition.Version}";
             Text = _text;
+
+            _propertieBlankPage.Width = splitContainer2.Panel1.Width;
+            _propertieBlankPage.Height = splitContainer2.Panel1.Height;
+            _propertieBlankPage.Dock = DockStyle.Fill;
+
+            splitContainer2.Panel1.Controls.Add(_propertieBlankPage);
         }
 
         private void RefreshTreeView()
@@ -76,32 +85,7 @@ namespace SIFEditor
                 childNode.Tag = subsystem;
                 node.Nodes.Add(childNode);
 
-                if (subsystem.InputDevice != null)
-                {
-                    var grandChildNode = new TreeNode(subsystem.InputDevice.DisplayName());
-                    grandChildNode.ContextMenuStrip = contextMenuStripSIFComponent;
-                    grandChildNode.Tag = subsystem.InputDevice;
-                    childNode.Nodes.Add(grandChildNode);
-                    AddGroups(subsystem.InputDevice.Groups, grandChildNode);
-                }
-
-                if (subsystem.LogicSolver != null)
-                {
-                    var grandChildNode = new TreeNode(subsystem.LogicSolver.DisplayName());
-                    grandChildNode.ContextMenuStrip = contextMenuStripSIFComponent;
-                    grandChildNode.Tag = subsystem.LogicSolver;
-                    childNode.Nodes.Add(grandChildNode);
-                    AddGroups(subsystem.LogicSolver.Groups, grandChildNode);
-                }
-
-                if (subsystem.FinalElement != null)
-                {
-                    var grandChildNode = new TreeNode(subsystem.FinalElement.DisplayName());
-                    grandChildNode.ContextMenuStrip = contextMenuStripSIFComponent;
-                    grandChildNode.Tag = subsystem.FinalElement;
-                    childNode.Nodes.Add(grandChildNode);
-                    AddGroups(subsystem.FinalElement.Groups, grandChildNode);
-                }
+                AddGroups(subsystem.Groups, childNode);
             }
         }
 
@@ -157,13 +141,49 @@ namespace SIFEditor
             }
         }
 
+        private bool _ignoreTextChanged = false;
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
             if (treeView1.SelectedNode == null) return;
 
             if (treeView1.SelectedNode.Tag is not Node node) return;
 
-            propertiesControl1.Show(node);
+            _ignoreTextChanged = true;
+
+            var control = _nodeDetails.FirstOrDefault(x => x.Type == node.GetType());
+            if (control == null)
+            {
+                control = new PropertiesControl(node);
+                control.TextChanged += Control_TextChanged;
+                control.Width = splitContainer2.Panel1.Width;
+                control.Height = splitContainer2.Panel1.Height;
+                control.Dock = DockStyle.Fill;
+                _nodeDetails.Add(control);
+            }
+
+            splitContainer2.Panel1.Controls.Clear();
+            splitContainer2.Panel1.Controls.Add(control);
+            control.Show(node);
+
+            _ignoreTextChanged = false;
+        }
+
+        private void Control_TextChanged(object? sender, EventArgs e)
+        {
+            if (_ignoreTextChanged) return;
+
+            if (sender is TextBox textBox && textBox.Tag is AttributeType attributeType)
+            {
+                if (string.IsNullOrEmpty(textBox.Text)) attributeType.StringValue = null;
+                else attributeType.StringValue = textBox.Text;
+            }
+            else if (sender is ComboBox comboBox && comboBox.Tag is AttributeType attributeType2)
+            {
+                if (string.IsNullOrEmpty(comboBox.Text)) attributeType2.StringValue = null;
+                else attributeType2.StringValue = comboBox.Text;
+            }
+
+            TreeChanged();
         }
 
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
@@ -188,10 +208,14 @@ namespace SIFEditor
             _builder = new Builder();
 
             listBox1.Items.Clear();
-            propertiesControl1.Clear();
 
             AddRoot(_builder.SIFs.Parent);
             addSifToolStripMenuItem_Click(sender, e);
+
+            splitContainer2.Panel1.Controls.Clear();
+            splitContainer2.Panel1.Controls.Add(_propertieBlankPage);
+
+            TreeChanged();
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
@@ -211,18 +235,23 @@ namespace SIFEditor
                 _builder.LoadFromFile(openFileDialog.FileName);
 
                 listBox1.Items.Clear();
-                propertiesControl1.Clear();
 
                 foreach (var error in _builder.Errors) listBox1.Items.Add(error);
 
                 var root = _builder.Roots.FirstOrDefault();
                 if (root != null) AddRoot(root);
+
+                splitContainer2.Panel1.Controls.Clear();
+                splitContainer2.Panel1.Controls.Add(_propertieBlankPage);
+
+                TreeChanged();
             }
         }
 
         private bool _hasChanges;
-        private void timer1_Tick(object sender, EventArgs e)
+        private void TreeChanged()
         {
+
             saveToolStripMenuItem.Enabled = _builder != null;
             saveAsToolStripMenuItem.Enabled = _builder != null;
             if (_builder == null) return;
@@ -255,39 +284,55 @@ namespace SIFEditor
                 var sif = root.SIFs.Append("New SIF");
                 var sifTreeNode = AppendTreeNode(sif, treeView1.TopNode, contextMenuStripSIF);
 
-                //SIFSubsystem
-                var subsystem = sif.Subsystems.Append();
-                var subsystemTreeNode = AppendTreeNode(subsystem, sifTreeNode, contextMenuStripSubsystem);
-                
-                //InputDevice
-                var inputDevice = subsystem.CreateInputDevice();
-                var inputDeviceTreeNode = AppendTreeNode(inputDevice, subsystemTreeNode, contextMenuStripSIFComponent);
+                //InputDeviceSubsystem
+                var inputDeviceSubsystem = sif.Subsystems.AppendInputDevice();
+                inputDeviceSubsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
+                inputDeviceSubsystem.NumberOfGroups_N.ObjectValue = 1;
 
-                var inputDeviceGroup = inputDevice.Groups.Append();
-                var inputDeviceGroupTreeNode = AppendTreeNode(inputDeviceGroup, inputDeviceTreeNode, contextMenuStripGroup);
+                var inputDeviceSubsystemTreeNode = AppendTreeNode(inputDeviceSubsystem, sifTreeNode, contextMenuStripSubsystem);
 
-                var initiatorComponent = inputDeviceGroup.Components.Append("New Initiator Component");
+                var inputDeviceGroup = inputDeviceSubsystem.Groups.Append();
+                inputDeviceGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
+                inputDeviceGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
+
+                var inputDeviceGroupTreeNode = AppendTreeNode(inputDeviceGroup, inputDeviceSubsystemTreeNode, contextMenuStripGroup);
+
+                var initiatorComponent = inputDeviceGroup.Components.Append();
                 AppendTreeNode(initiatorComponent, inputDeviceGroupTreeNode, contextMenuStripSISComponent);
 
-                //LogicSolver
-                var logicSolver = subsystem.CreateLogicSolver();
-                var logicSolverTreeNode = AppendTreeNode(logicSolver, subsystemTreeNode, contextMenuStripSIFComponent);
+                //LogicSolverSubsystem
+                var logicSolverSubsystem = sif.Subsystems.AppendLogicSolver();
+                logicSolverSubsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
+                logicSolverSubsystem.NumberOfGroups_N.ObjectValue = 1;
 
-                var logicSolverGroup = logicSolver.Groups.Append();
-                var logicSolverGroupTreeNode = AppendTreeNode(logicSolverGroup, logicSolverTreeNode, contextMenuStripGroup);
+                var logicSolverSubsystemTreeNode = AppendTreeNode(logicSolverSubsystem, sifTreeNode, contextMenuStripSubsystem);
 
-                var solverComponent = logicSolverGroup.Components.Append("New Solver Component");
+                var logicSolverGroup = logicSolverSubsystem.Groups.Append();
+                logicSolverGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
+                logicSolverGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
+
+                var logicSolverGroupTreeNode = AppendTreeNode(logicSolverGroup, logicSolverSubsystemTreeNode, contextMenuStripGroup);
+
+                var solverComponent = logicSolverGroup.Components.Append();
                 AppendTreeNode(solverComponent, logicSolverGroupTreeNode, contextMenuStripSISComponent);
 
-                //FinalElement
-                var finalElement = subsystem.CreateFinalElement();
-                var finalElementTreeNode = AppendTreeNode(finalElement, subsystemTreeNode, contextMenuStripSIFComponent);
+                //FinalElementSubsystem
+                var finalElementSubsystem = sif.Subsystems.AppendFinalElement();
+                finalElementSubsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
+                finalElementSubsystem.NumberOfGroups_N.ObjectValue = 1;
 
-                var finalElementGroup = finalElement.Groups.Append();
-                var finalElementGroupTreeNode = AppendTreeNode(finalElementGroup, finalElementTreeNode, contextMenuStripGroup);
+                var finalElementSubsystemTreeNode = AppendTreeNode(finalElementSubsystem, sifTreeNode, contextMenuStripSubsystem);
 
-                var fianlComponent = finalElementGroup.Components.Append("New Final Component");
-                AppendTreeNode(fianlComponent, finalElementGroupTreeNode, contextMenuStripSISComponent);
+                var finalElementGroup = finalElementSubsystem.Groups.Append();
+                finalElementGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
+                finalElementGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
+
+                var finalElementGroupTreeNode = AppendTreeNode(finalElementGroup, finalElementSubsystemTreeNode, contextMenuStripGroup);
+
+                var finalComponent = finalElementGroup.Components.Append();
+                AppendTreeNode(finalComponent, finalElementGroupTreeNode, contextMenuStripSISComponent);
+
+                TreeChanged();
             }
         }
 
@@ -301,167 +346,96 @@ namespace SIFEditor
             return treeNode;
         }
 
-        private void addSubsystemToolStripMenuItem_Click(object sender, EventArgs e)
+        private static void AdjustMenuItem(ContextMenuStrip menuStrip, string key, bool isEnabled)
         {
-            if (treeView1.SelectedNode == null) return;
+            var item = menuStrip.Items.Find(key, true).FirstOrDefault();
+            if (item == null) return;
 
-            if (treeView1.SelectedNode.Tag is SIF sif)
-            {
-                var subsystem = sif.Subsystems.Append();
-                AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
-            }
+            item.Enabled = isEnabled;
         }
 
         private void treeView1_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
             {
+                if (e.Node.Tag is SIF sif)
+                {
+                    AdjustMenuItem(e.Node.ContextMenuStrip, "inputDeviceToolStripMenuItem", sif.InputDevice == null);
+                    AdjustMenuItem(e.Node.ContextMenuStrip, "logicSolverToolStripMenuItem", sif.LogicSolver == null);
+                    AdjustMenuItem(e.Node.ContextMenuStrip, "finalElementToolStripMenuItem", sif.FinalElement == null);
+                }
+
                 treeView1.SelectedNode = e.Node;
-            }
-        }
-
-        private void addInitiatorToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (treeView1.SelectedNode == null) return;
-
-            if (treeView1.SelectedNode.Tag is SIFSubsystem subsystem)
-            {
-                if (subsystem.InputDevice != null)
-                {
-                    MessageBox.Show("InputDevice already exists.");
-                    return;
-                }
-                var inputDevice = subsystem.CreateInputDevice();
-                AppendTreeNode(inputDevice, treeView1.SelectedNode, contextMenuStripSIFComponent);
-            }
-        }
-
-        private void addSolverToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (treeView1.SelectedNode == null) return;
-
-            if (treeView1.SelectedNode.Tag is SIFSubsystem subsystem)
-            {
-                if (subsystem.LogicSolver != null)
-                {
-                    MessageBox.Show("LogicSolver already exists.");
-                    return;
-                }
-                var logicSolver = subsystem.CreateLogicSolver();
-                AppendTreeNode(logicSolver, treeView1.SelectedNode, contextMenuStripSIFComponent);
-            }
-        }
-
-        private void addFinalElementToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (treeView1.SelectedNode == null) return;
-
-            if (treeView1.SelectedNode.Tag is SIFSubsystem subsystem)
-            {
-                if (subsystem.FinalElement != null)
-                {
-                    MessageBox.Show("FinalElement already exists.");
-                    return;
-                }
-                var finalElement = subsystem.CreateFinalElement();
-                AppendTreeNode(finalElement, treeView1.SelectedNode, contextMenuStripSIFComponent);
             }
         }
 
         private void addGroupToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode == null) return;
-
-            if (treeView1.SelectedNode.Tag is SIFComponent component)
+            if (treeView1.SelectedNode?.Tag is SIFSubsystem subsystem)
             {
-                var group = component.Groups.Append();
+                var group = subsystem.Groups.Append();
+                group.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
+                group.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
+
                 AppendTreeNode(group, treeView1.SelectedNode, contextMenuStripGroup);
+                TreeChanged();
             }
         }
 
         private void addComponentToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode == null) return;
-
             if (treeView1.SelectedNode.Tag is Group group)
             {
-                var name = "New Component";
-                if (group.Parent is InputDevice) name = "New Initiator Component";
-                else if (group.Parent is LogicSolver) name = "New Solver Component";
-                else if (group.Parent is FinalElement) name = "New Final Component";
-
-                var component = group.Components.Append(name);
+                var component = group.Components.Append();
                 AppendTreeNode(component, treeView1.SelectedNode, contextMenuStripSISComponent);
+                TreeChanged();
             }
         }
 
         private void removeComponentToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode == null) return;
-
-            if (treeView1.SelectedNode.Tag is SISComponent component)
+            if (treeView1.SelectedNode?.Tag is SISComponent component && component.Parent is Group group)
             {
-                if (component.Parent is Group group) 
-                {
-                    group.Remove(component);
-                    treeView1.Nodes.Remove(treeView1.SelectedNode);
-                }
+                group.Remove(component);
+                treeView1.Nodes.Remove(treeView1.SelectedNode);
+                TreeChanged();
             }
         }
 
         private void removeComponentToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode == null) return;
-
-            if (treeView1.SelectedNode.Tag is Group group)
+            if (treeView1.SelectedNode.Tag is Group group && group.Parent is Group parentGroup)
             {
-                if (group.Parent is Group parentGroup)
-                {
-                    parentGroup.Remove(group);
-                    treeView1.Nodes.Remove(treeView1.SelectedNode);
-                }
+                parentGroup.Remove(group);
+                treeView1.Nodes.Remove(treeView1.SelectedNode);
+                TreeChanged();
+            }
+            else if (treeView1.SelectedNode.Tag is Group subsystemGroup && subsystemGroup.Parent is SIFSubsystem subsystem)
+            {
+                subsystem.Groups.Remove(subsystemGroup);
+                treeView1.Nodes.Remove(treeView1.SelectedNode);
+                TreeChanged();
             }
         }
 
-        private void removeSIFComponentToolStripMenuItem_Click(object sender, EventArgs e)
+
+        private void removeSubsystemToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode == null) return;
-
-            if (treeView1.SelectedNode.Tag is SIFComponent component)
+            if (treeView1.SelectedNode?.Tag is SIFSubsystem subsystem && subsystem.Parent is SIF sif)
             {
-                if (component.Parent is SIFSubsystem subsystem)
-                {
-                    subsystem.Remove(component);
-                    treeView1.Nodes.Remove(treeView1.SelectedNode);
-                }
-            }
-        }
-
-        private void removeSIFSubsystemToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (treeView1.SelectedNode == null) return;
-
-            if (treeView1.SelectedNode.Tag is SIFSubsystem subsystem)
-            {
-                if (subsystem.Parent is SIF sif)
-                {
-                    sif.Remove(subsystem);
-                    treeView1.Nodes.Remove(treeView1.SelectedNode);
-                }
+                sif.Remove(subsystem);
+                treeView1.Nodes.Remove(treeView1.SelectedNode);
+                TreeChanged();
             }
         }
 
         private void removeSIFToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode == null) return;
-
-            if (treeView1.SelectedNode.Tag is SIF sif)
+            if (treeView1.SelectedNode?.Tag is SIF sif && sif.Parent is Root root)
             {
-                if (sif.Parent is Root root)
-                {
-                    root.SIFs.Remove(sif);
-                    treeView1.Nodes.Remove(treeView1.SelectedNode);
-                }
+                root.SIFs.Remove(sif);
+                treeView1.Nodes.Remove(treeView1.SelectedNode);
+                TreeChanged();
             }
         }
 
@@ -497,12 +471,15 @@ namespace SIFEditor
 
         private void addGroupToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode == null) return;
-
-            if (treeView1.SelectedNode.Tag is Group group)
+            if (treeView1.SelectedNode?.Tag is Group group)
             {
                 var subGroup = group.Groups.Append();
+                subGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
+                subGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
+
                 AppendTreeNode(subGroup, treeView1.SelectedNode, contextMenuStripGroup);
+
+                TreeChanged();
             }
 
         }
@@ -527,6 +504,45 @@ namespace SIFEditor
                 {
                     saveToolStripMenuItem_Click(sender, e);
                 }
+            }
+        }
+
+        private void inputDeviceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode?.Tag is SIF sif)
+            {
+                var subsystem = sif.Subsystems.AppendInputDevice();
+                subsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
+                subsystem.NumberOfGroups_N.ObjectValue = 1;
+
+                AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
+                TreeChanged();
+            }
+        }
+
+        private void logicSolverToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode?.Tag is SIF sif)
+            {
+                var subsystem = sif.Subsystems.AppendLogicSolver();
+                subsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
+                subsystem.NumberOfGroups_N.ObjectValue = 1;
+
+                AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
+                TreeChanged();
+            }
+        }
+
+        private void finalElementToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode?.Tag is SIF sif)
+            {
+                var subsystem = sif.Subsystems.AppendFinalElement();
+                subsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
+                subsystem.NumberOfGroups_N.ObjectValue = 1;
+
+                AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
+                TreeChanged();
             }
         }
     }

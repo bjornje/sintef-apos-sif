@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -9,22 +8,27 @@ namespace Sintef.Apos.Sif.Model
     public class Group : Node
     {
         public Groups Groups { get; }
-        public ComponentVoter ComponentVoter { get; }
         public SISComponents Components { get; }
+        public Integer VoteWithinGroup_K_in_KooN { get; protected set; }
+        public Integer NumberOfComponentsOrSubgroups_N { get; protected set; }
 
         public const string RefBaseSystemUnitPath = "SIF Unit Classes/Group";
-        public Group(SIFComponent parent, string name) : base(parent, $"{name}{parent.Groups.Count() + 1}")
+
+        private readonly Voter _voter;
+
+        public Group(Node parent, string name) : base(parent, name)
         {
-            ComponentVoter = new ComponentVoter(this);
+            SetAttributes(Definition.GetAttributes(this, 2));
             Components = new SISComponents(this);
             Groups = new Groups(this);
+
+            _voter = new Voter(this, VoteWithinGroup_K_in_KooN, "K", NumberOfComponentsOrSubgroups_N, "N");
         }
 
-        public Group(Group parent, string name) : base(parent, $"{name}{parent.Groups.Count() + 1}")
+        public void VoteWithinGroup(int K, int N)
         {
-            ComponentVoter = new ComponentVoter(this);
-            Components = new SISComponents(this);
-            Groups = new Groups(this);
+            VoteWithinGroup_K_in_KooN.Value = K;
+            NumberOfComponentsOrSubgroups_N.Value = N;
         }
 
         public bool Remove(SISComponent item)
@@ -40,7 +44,6 @@ namespace Sintef.Apos.Sif.Model
         public bool IsSameAs(Group group)
         {
             if (!HaveSameAttributeValues(group)) return false;
-            if (!ComponentVoter.HaveSameAttributeValues(group.ComponentVoter)) return false;
 
             if (!Components.IsSameAs(group.Components)) return false;
             if (!Groups.IsSameAs(group.Groups)) return false;
@@ -50,15 +53,15 @@ namespace Sintef.Apos.Sif.Model
 
         public void Validate(Collection<ModelError> errors)
         {
-            if (!Components.Any() && !Groups.Any()) errors.Add(new ModelError(this, "Group is empty."));
-            if (long.TryParse(ComponentVoter.K.Value, out var k))
+            foreach (var property in Attributes) property.Validate(this, errors);
+
+            if (!Components.Any() && !Groups.Any())
             {
-                if (k > (Components.Count() + Groups.Count())) errors.Add(new ModelError(this, "Number of components and/or groups is less than voting parameter K."));
-                if (k < 1) errors.Add(new ModelError(this, "Voting parameter K must be >= 1."));
+                errors.Add(new ModelError(this, "Group is empty."));
             }
             else
             {
-                errors.Add(new ModelError(this, $"The value {ComponentVoter.K.Value} provided for K for voting within {GetType().Name} is not an integer number."));
+                _voter.Validate(errors);
             }
 
             Groups.Validate(errors);
@@ -70,27 +73,14 @@ namespace Sintef.Apos.Sif.Model
     {
         private readonly Collection<Group> _items = new Collection<Group>();
         private readonly Node _parent;
-        public Groups(SIFComponent parent)
-        {
-            _parent = parent;
-        }
-
-        public Groups(Group parent)
+        public Groups(Node parent)
         {
             _parent = parent;
         }
 
         public Group Append()
         {
-            Group group;
-
-            if (_parent is InputDevice inputDevice) group = new InputDeviceGroup(inputDevice);
-            else if (_parent is LogicSolver logicSolver) group = new LogicSolverGroup(logicSolver);
-            else if (_parent is FinalElement finalElement) group = new FinalElementGroup(finalElement);
-            else if (_parent is InputDeviceGroup inputDeviceGroup) group = new InputDeviceGroup(inputDeviceGroup);
-            else if (_parent is LogicSolverGroup logicSolverGroup) group = new LogicSolverGroup(logicSolverGroup);
-            else if (_parent is FinalElementGroup finalElementGroup) group = new FinalElementGroup(finalElementGroup);
-            else throw new Exception($"Unexpected Node: {_parent.GetType()}");
+            Group group = new Group(_parent, "Group");
 
             _items.Add(group);
             return group;

@@ -33,7 +33,6 @@
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
-            this.propertiesControl1 = new SIFEditor.PropertiesControl();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -41,20 +40,17 @@
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.contextMenuStripSIFs = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addSifToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStripSIF = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addSubsystemToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.inputDeviceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.logicSolverToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.finalElementToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeSIFToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStripSubsystem = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.addInitiatorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.addSolverToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.addFinalElementToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.removeSIFSubsystemToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.contextMenuStripSIFComponent = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addGroupToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.removeSIFComponentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.removeSubsystemToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStripGroup = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addGroupToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.addComponentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -66,14 +62,12 @@
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
-            this.splitContainer2.Panel1.SuspendLayout();
             this.splitContainer2.Panel2.SuspendLayout();
             this.splitContainer2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.contextMenuStripSIFs.SuspendLayout();
             this.contextMenuStripSIF.SuspendLayout();
             this.contextMenuStripSubsystem.SuspendLayout();
-            this.contextMenuStripSIFComponent.SuspendLayout();
             this.contextMenuStripGroup.SuspendLayout();
             this.contextMenuStripSISComponent.SuspendLayout();
             this.SuspendLayout();
@@ -126,26 +120,12 @@
             this.splitContainer2.Name = "splitContainer2";
             this.splitContainer2.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
-            // splitContainer2.Panel1
-            // 
-            this.splitContainer2.Panel1.Controls.Add(this.propertiesControl1);
-            // 
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.listBox1);
             this.splitContainer2.Size = new System.Drawing.Size(734, 677);
             this.splitContainer2.SplitterDistance = 355;
             this.splitContainer2.TabIndex = 0;
-            // 
-            // propertiesControl1
-            // 
-            this.propertiesControl1.BackColor = System.Drawing.SystemColors.Window;
-            this.propertiesControl1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.propertiesControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.propertiesControl1.Location = new System.Drawing.Point(0, 0);
-            this.propertiesControl1.Name = "propertiesControl1";
-            this.propertiesControl1.Size = new System.Drawing.Size(734, 355);
-            this.propertiesControl1.TabIndex = 0;
             // 
             // menuStrip1
             // 
@@ -172,28 +152,28 @@
             // newToolStripMenuItem
             // 
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.newToolStripMenuItem.Text = "New";
             this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
             // 
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.saveToolStripMenuItem.Text = "Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
             // 
             // saveAsToolStripMenuItem
             // 
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.saveAsToolStripMenuItem.Text = "Save As...";
             this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
             // 
@@ -202,12 +182,6 @@
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
             this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
             this.editToolStripMenuItem.Text = "Edit";
-            // 
-            // timer1
-            // 
-            this.timer1.Enabled = true;
-            this.timer1.Interval = 1000;
-            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // contextMenuStripSIFs
             // 
@@ -233,10 +207,34 @@
             // 
             // addSubsystemToolStripMenuItem
             // 
+            this.addSubsystemToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.inputDeviceToolStripMenuItem,
+            this.logicSolverToolStripMenuItem,
+            this.finalElementToolStripMenuItem});
             this.addSubsystemToolStripMenuItem.Name = "addSubsystemToolStripMenuItem";
             this.addSubsystemToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.addSubsystemToolStripMenuItem.Text = "Add SIFSubsystem";
-            this.addSubsystemToolStripMenuItem.Click += new System.EventHandler(this.addSubsystemToolStripMenuItem_Click);
+            // 
+            // inputDeviceToolStripMenuItem
+            // 
+            this.inputDeviceToolStripMenuItem.Name = "inputDeviceToolStripMenuItem";
+            this.inputDeviceToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.inputDeviceToolStripMenuItem.Text = "InputDevice";
+            this.inputDeviceToolStripMenuItem.Click += new System.EventHandler(this.inputDeviceToolStripMenuItem_Click);
+            // 
+            // logicSolverToolStripMenuItem
+            // 
+            this.logicSolverToolStripMenuItem.Name = "logicSolverToolStripMenuItem";
+            this.logicSolverToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.logicSolverToolStripMenuItem.Text = "LogicSolver";
+            this.logicSolverToolStripMenuItem.Click += new System.EventHandler(this.logicSolverToolStripMenuItem_Click);
+            // 
+            // finalElementToolStripMenuItem
+            // 
+            this.finalElementToolStripMenuItem.Name = "finalElementToolStripMenuItem";
+            this.finalElementToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.finalElementToolStripMenuItem.Text = "FinalElement";
+            this.finalElementToolStripMenuItem.Click += new System.EventHandler(this.finalElementToolStripMenuItem_Click);
             // 
             // removeSIFToolStripMenuItem
             // 
@@ -248,62 +246,24 @@
             // contextMenuStripSubsystem
             // 
             this.contextMenuStripSubsystem.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.addInitiatorToolStripMenuItem,
-            this.addSolverToolStripMenuItem,
-            this.addFinalElementToolStripMenuItem,
-            this.removeSIFSubsystemToolStripMenuItem});
-            this.contextMenuStripSubsystem.Name = "contextMenuStripSubsystem";
-            this.contextMenuStripSubsystem.Size = new System.Drawing.Size(193, 92);
-            // 
-            // addInitiatorToolStripMenuItem
-            // 
-            this.addInitiatorToolStripMenuItem.Name = "addInitiatorToolStripMenuItem";
-            this.addInitiatorToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
-            this.addInitiatorToolStripMenuItem.Text = "Add InputDevice";
-            this.addInitiatorToolStripMenuItem.Click += new System.EventHandler(this.addInitiatorToolStripMenuItem_Click);
-            // 
-            // addSolverToolStripMenuItem
-            // 
-            this.addSolverToolStripMenuItem.Name = "addSolverToolStripMenuItem";
-            this.addSolverToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
-            this.addSolverToolStripMenuItem.Text = "Add LogicSolver";
-            this.addSolverToolStripMenuItem.Click += new System.EventHandler(this.addSolverToolStripMenuItem_Click);
-            // 
-            // addFinalElementToolStripMenuItem
-            // 
-            this.addFinalElementToolStripMenuItem.Name = "addFinalElementToolStripMenuItem";
-            this.addFinalElementToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
-            this.addFinalElementToolStripMenuItem.Text = "Add FinalElement";
-            this.addFinalElementToolStripMenuItem.Click += new System.EventHandler(this.addFinalElementToolStripMenuItem_Click);
-            // 
-            // removeSIFSubsystemToolStripMenuItem
-            // 
-            this.removeSIFSubsystemToolStripMenuItem.Name = "removeSIFSubsystemToolStripMenuItem";
-            this.removeSIFSubsystemToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
-            this.removeSIFSubsystemToolStripMenuItem.Text = "Remove SIFSubsystem";
-            this.removeSIFSubsystemToolStripMenuItem.Click += new System.EventHandler(this.removeSIFSubsystemToolStripMenuItem_Click);
-            // 
-            // contextMenuStripSIFComponent
-            // 
-            this.contextMenuStripSIFComponent.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.addGroupToolStripMenuItem,
-            this.removeSIFComponentToolStripMenuItem});
-            this.contextMenuStripSIFComponent.Name = "contextMenuStripSIFComponent";
-            this.contextMenuStripSIFComponent.Size = new System.Drawing.Size(200, 48);
+            this.removeSubsystemToolStripMenuItem});
+            this.contextMenuStripSubsystem.Name = "contextMenuStripSIFComponent";
+            this.contextMenuStripSubsystem.Size = new System.Drawing.Size(178, 48);
             // 
             // addGroupToolStripMenuItem
             // 
             this.addGroupToolStripMenuItem.Name = "addGroupToolStripMenuItem";
-            this.addGroupToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
+            this.addGroupToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
             this.addGroupToolStripMenuItem.Text = "Add Group";
             this.addGroupToolStripMenuItem.Click += new System.EventHandler(this.addGroupToolStripMenuItem_Click);
             // 
-            // removeSIFComponentToolStripMenuItem
+            // removeSubsystemToolStripMenuItem
             // 
-            this.removeSIFComponentToolStripMenuItem.Name = "removeSIFComponentToolStripMenuItem";
-            this.removeSIFComponentToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
-            this.removeSIFComponentToolStripMenuItem.Text = "Remove SIFComponent";
-            this.removeSIFComponentToolStripMenuItem.Click += new System.EventHandler(this.removeSIFComponentToolStripMenuItem_Click);
+            this.removeSubsystemToolStripMenuItem.Name = "removeSubsystemToolStripMenuItem";
+            this.removeSubsystemToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
+            this.removeSubsystemToolStripMenuItem.Text = "Remove Subsystem";
+            this.removeSubsystemToolStripMenuItem.Click += new System.EventHandler(this.removeSubsystemToolStripMenuItem_Click);
             // 
             // contextMenuStripGroup
             // 
@@ -312,26 +272,26 @@
             this.addComponentToolStripMenuItem,
             this.removeComponentToolStripMenuItem});
             this.contextMenuStripGroup.Name = "contextMenuStripGroup";
-            this.contextMenuStripGroup.Size = new System.Drawing.Size(164, 70);
+            this.contextMenuStripGroup.Size = new System.Drawing.Size(181, 92);
             // 
             // addGroupToolStripMenuItem1
             // 
             this.addGroupToolStripMenuItem1.Name = "addGroupToolStripMenuItem1";
-            this.addGroupToolStripMenuItem1.Size = new System.Drawing.Size(163, 22);
+            this.addGroupToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
             this.addGroupToolStripMenuItem1.Text = "Add Group";
             this.addGroupToolStripMenuItem1.Click += new System.EventHandler(this.addGroupToolStripMenuItem1_Click);
             // 
             // addComponentToolStripMenuItem
             // 
             this.addComponentToolStripMenuItem.Name = "addComponentToolStripMenuItem";
-            this.addComponentToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
+            this.addComponentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.addComponentToolStripMenuItem.Text = "Add Component";
             this.addComponentToolStripMenuItem.Click += new System.EventHandler(this.addComponentToolStripMenuItem_Click);
             // 
             // removeComponentToolStripMenuItem
             // 
             this.removeComponentToolStripMenuItem.Name = "removeComponentToolStripMenuItem";
-            this.removeComponentToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
+            this.removeComponentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.removeComponentToolStripMenuItem.Text = "Remove Group";
             this.removeComponentToolStripMenuItem.Click += new System.EventHandler(this.removeComponentToolStripMenuItem_Click);
             // 
@@ -349,7 +309,7 @@
             this.removeComponentToolStripMenuItem1.Text = "Remove Component";
             this.removeComponentToolStripMenuItem1.Click += new System.EventHandler(this.removeComponentToolStripMenuItem1_Click);
             // 
-            // Form1
+            // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -357,14 +317,13 @@
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
-            this.Name = "Form1";
+            this.Name = "MainForm";
             this.Text = "APOS SIF Editor";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
-            this.splitContainer2.Panel1.ResumeLayout(false);
             this.splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
             this.splitContainer2.ResumeLayout(false);
@@ -373,7 +332,6 @@
             this.contextMenuStripSIFs.ResumeLayout(false);
             this.contextMenuStripSIF.ResumeLayout(false);
             this.contextMenuStripSubsystem.ResumeLayout(false);
-            this.contextMenuStripSIFComponent.ResumeLayout(false);
             this.contextMenuStripGroup.ResumeLayout(false);
             this.contextMenuStripSISComponent.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -387,7 +345,6 @@
         private ListBox listBox1;
         private SplitContainer splitContainer1;
         private SplitContainer splitContainer2;
-        private PropertiesControl propertiesControl1;
         private MenuStrip menuStrip1;
         private ToolStripMenuItem fileToolStripMenuItem;
         private ToolStripMenuItem newToolStripMenuItem;
@@ -395,25 +352,22 @@
         private ToolStripMenuItem saveToolStripMenuItem;
         private ToolStripMenuItem saveAsToolStripMenuItem;
         private ToolStripMenuItem editToolStripMenuItem;
-        private System.Windows.Forms.Timer timer1;
         private ContextMenuStrip contextMenuStripSIFs;
         private ToolStripMenuItem addSifToolStripMenuItem;
         private ContextMenuStrip contextMenuStripSIF;
         private ToolStripMenuItem addSubsystemToolStripMenuItem;
         private ToolStripMenuItem removeSIFToolStripMenuItem;
         private ContextMenuStrip contextMenuStripSubsystem;
-        private ToolStripMenuItem addInitiatorToolStripMenuItem;
-        private ToolStripMenuItem addSolverToolStripMenuItem;
-        private ToolStripMenuItem addFinalElementToolStripMenuItem;
-        private ToolStripMenuItem removeSIFSubsystemToolStripMenuItem;
-        private ContextMenuStrip contextMenuStripSIFComponent;
         private ToolStripMenuItem addGroupToolStripMenuItem;
-        private ToolStripMenuItem removeSIFComponentToolStripMenuItem;
+        private ToolStripMenuItem removeSubsystemToolStripMenuItem;
         private ContextMenuStrip contextMenuStripGroup;
         private ToolStripMenuItem addComponentToolStripMenuItem;
         private ToolStripMenuItem removeComponentToolStripMenuItem;
         private ContextMenuStrip contextMenuStripSISComponent;
         private ToolStripMenuItem removeComponentToolStripMenuItem1;
         private ToolStripMenuItem addGroupToolStripMenuItem1;
+        private ToolStripMenuItem inputDeviceToolStripMenuItem;
+        private ToolStripMenuItem logicSolverToolStripMenuItem;
+        private ToolStripMenuItem finalElementToolStripMenuItem;
     }
 }

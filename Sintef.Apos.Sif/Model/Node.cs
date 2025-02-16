@@ -11,20 +11,25 @@ namespace Sintef.Apos.Sif.Model
     public class Node
     {
         public Node Parent { get; }
-        public IEnumerable<AttributeType> Attributes => _attributes;
+        public IEnumerable<AttributeType> Attributes => _attributes ?? Enumerable.Empty<AttributeType>();
         public string PathStepX { get; }
 
-        private readonly Collection<AttributeType> _attributes = new Collection<AttributeType>();
+        private Collection<AttributeType> _attributes;
         public Node(Node parent, string pathStep)
         {
             Parent = parent;
             PathStepX = pathStep;
         }
 
-
-        protected void AddAttribute(AttributeType attribute)
+        public int GetNumberOfGroupsAndComponents()
         {
-            _attributes.Add(attribute.Clone());
+            if (this is Group group) return group.Components.Count() + group.Groups.Count();
+            if (this is SIFSubsystem subsystem) return subsystem.Groups.Count();
+            return 0;
+        }
+        protected void SetAttributes(Collection<AttributeType> attributes)
+        {
+            _attributes = attributes;
         }
 
         public string Path
@@ -38,8 +43,8 @@ namespace Sintef.Apos.Sif.Model
                 {
                     var pathStep = node.PathStepX;
 
-                    if (node is SIF sif) pathStep = sif.SIFID.Value;
-                    else if (node is SISComponent sISComponent) pathStep = sISComponent.Name.Value;
+                    if (node is SIF sif) pathStep = sif.SIFID.StringValue;
+                    else if (node is SISComponent sISComponent) pathStep = sISComponent.Name.StringValue;
 
                     path = $"/{pathStep}{path}";
                     node = node.Parent;
@@ -58,8 +63,8 @@ namespace Sintef.Apos.Sif.Model
                 if (node is SIF sif)
                 {
                     if (sif.SIFID == null) return "<missing>";
-                    if (string.IsNullOrWhiteSpace(sif.SIFID.Value)) return "<blank>";
-                    return sif.SIFID.Value;
+                    if (string.IsNullOrWhiteSpace(sif.SIFID.StringValue)) return "<blank>";
+                    return sif.SIFID.StringValue;
                 }
                 node = node.Parent;
             }
@@ -67,49 +72,24 @@ namespace Sintef.Apos.Sif.Model
             return null;
         }
 
-        public ComponentVoter GetComponentVoter()
-        {
-            var node = this;
-
-            while (node != null)
-            {
-                if (node is Group group) return group.ComponentVoter;
-                node = node.Parent;
-            }
-
-            return null;
-        }
-
-        public GroupVoter GetGroupVoter()
-        {
-            var node = this;
-
-            while (node != null)
-            {
-                if (node is SIFComponent sifComponent) return sifComponent.GroupVoter;
-                node = node.Parent;
-            }
-
-            return null;
-        }
 
         public bool HaveSameAttributeValues(Node node)
         {
-            if (node.Attributes.Count() != _attributes.Count) return false;
+            if (node.Attributes.Count() != Attributes.Count()) return false;
 
             foreach(var attribute in node.Attributes)
             {
-                var myAttribute = _attributes.FirstOrDefault(x => x.Name == attribute.Name);
+                var myAttribute = Attributes.FirstOrDefault(x => x.Name == attribute.Name);
                 if (myAttribute == null)
                     return false;
 
-                if (string.IsNullOrEmpty(myAttribute.Value) && !string.IsNullOrEmpty(attribute.Value))
+                if (string.IsNullOrEmpty(myAttribute.StringValue) && !string.IsNullOrEmpty(attribute.StringValue))
                     return false;
 
-                if (!string.IsNullOrEmpty(myAttribute.Value) && string.IsNullOrEmpty(attribute.Value))
+                if (!string.IsNullOrEmpty(myAttribute.StringValue) && string.IsNullOrEmpty(attribute.StringValue))
                     return false;
 
-                if (!string.IsNullOrEmpty(myAttribute.Value) && !string.IsNullOrEmpty(attribute.Value) && myAttribute.Value != attribute.Value)
+                if (!string.IsNullOrEmpty(myAttribute.StringValue) && !string.IsNullOrEmpty(attribute.StringValue) && myAttribute.StringValue != attribute.StringValue)
                     return false;
 
             }

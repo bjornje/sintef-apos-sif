@@ -3,112 +3,40 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sintef.Apos.Sif.Model
 {
     public class SIFSubsystem : Node
     {
-        public InputDevice InputDevice { get; private set; }
-        public LogicSolver LogicSolver { get; private set; }
-        public FinalElement FinalElement { get; private set; }
+        public const string RefBaseSystemUnitPath = "SIF Unit Classes/SIFSubsystem";
+        public Groups Groups { get; }
+        public Percent PFDBudget { get; protected set; }
+        public Integer VoteBetweenGroups_M_in_MooN { get; protected set; }
+        public Integer NumberOfGroups_N { get; protected set; }
 
-        public Percent PFDBudget { get; }
-        public Hours ProcessSafetyTime { get; }
-        public Seconds MaxAllowableResponseTime { get; }
-        public Hours ProofTestInterval { get; }
-        public SILLevel SIL { get; }
-        public InputDevice CreateInputDevice()
+        private readonly Voter _voter;
+        public SIFSubsystem(SIF parent, bool isTemporary = false) : base(parent, $"SIFSubsystem{parent.Subsystems.Count() + 1}")
         {
-            InputDevice = new InputDevice(this);
-            return InputDevice;
+            if (isTemporary) return;
+
+            SetAttributes(Definition.GetAttributes(this, 3));
+
+            _voter = new Voter(this, VoteBetweenGroups_M_in_MooN, "M", NumberOfGroups_N, "N");
+
+            Groups = new Groups(this);
         }
 
-        public LogicSolver CreateLogicSolver()
+        public void VoteBetweenGroups(int M, int N)
         {
-            LogicSolver = new LogicSolver(this);
-            return LogicSolver;
-        }
-
-        public FinalElement CreateFinalElement()
-        {
-            FinalElement = new FinalElement(this);
-            return FinalElement;
-        }
-
-        public bool Remove(SIFComponent item)
-        {
-            if (item is InputDevice)
-            {
-                var exists = InputDevice != null;
-                InputDevice = null;
-                return exists;
-            }
-            else if (item is LogicSolver)
-            {
-                var exists = LogicSolver != null;
-                LogicSolver = null;
-                return exists;
-            }
-            else if (item is FinalElement)
-            {
-                var exists = FinalElement != null;
-                FinalElement = null;
-                return exists;
-            }
-
-            return false;
-        }
-
-        public SIFSubsystem(SIF parent) : base(parent, $"SIFSubsystem{parent.Subsystems.Count() + 1}")
-        {
-            var attributes = Definition.GetAttributes(this);
-
-            foreach (var attribute in attributes)
-            {
-                AddAttribute(attribute);
-            }
-
-            PFDBudget = Attributes.Single(x => x.Name == nameof(PFDBudget)) as Percent; // 1
-            ProcessSafetyTime = Attributes.Single(x => x.Name == nameof(ProcessSafetyTime)) as Hours;
-            MaxAllowableResponseTime = Attributes.Single(x => x.Name == nameof(MaxAllowableResponseTime)) as Seconds;
-            ProofTestInterval = Attributes.Single(x => x.Name == nameof(ProofTestInterval)) as Hours;
-            SIL = Attributes.Single(x => x.Name == nameof(SIL)) as SILLevel; // 5
-
-            const int expectedNumberOfAttributes = 5;
-            if (Attributes.Count() != expectedNumberOfAttributes) throw new Exception($"Expected {expectedNumberOfAttributes} attributes but got {Attributes.Count()}.");
-        }
-
-        public IEnumerable<SIFComponent> Components()
-        {
-            var list = new List<SIFComponent>();
-
-            if (InputDevice != null) list.Add(InputDevice);
-            if (LogicSolver != null) list.Add(LogicSolver);
-            if (FinalElement != null) list.Add(FinalElement);
-
-            return list;
+            VoteBetweenGroups_M_in_MooN.Value = M;
+            NumberOfGroups_N.Value = N;
         }
 
         public bool IsSameAs(SIFSubsystem subsystem)
         {
             if (!HaveSameAttributeValues(subsystem)) return false;
+            if (!Groups.IsSameAs(subsystem.Groups)) return false;
 
-            if (!HaveSameComponent(InputDevice, subsystem.InputDevice)) return false;
-            if (!HaveSameComponent(LogicSolver, subsystem.LogicSolver)) return false;
-            if (!HaveSameComponent(FinalElement, subsystem.FinalElement)) return false;
-
-            return true;
-        }
-
-        private static bool HaveSameComponent(SIFComponent myComponent, SIFComponent component)
-        {
-            if (myComponent == null && component != null) return false;
-            if (myComponent != null && component == null) return false;
-            if (myComponent == null && component == null) return true;
-
-            if (!myComponent.IsSameAs(component)) return false;
             return true;
         }
 
@@ -116,17 +44,16 @@ namespace Sintef.Apos.Sif.Model
         {
             foreach (var property in Attributes) property.Validate(this, errors);
 
-            var n = 0;
+            if (!Groups.Any())
+            {
+                errors.Add(new ModelError(this, "Subsystem has no groups."));
+            }
+            else
+            {
+                _voter.Validate(errors);
+            }
 
-            if (InputDevice != null) n++;
-            if (LogicSolver != null) n++;
-            if (FinalElement != null) n++;
-
-            if (n == 0) errors.Add(new ModelError(this, "Missing SIFComponent. (InputDevice, LogicSolver or FinalElement.)"));
-
-            InputDevice?.Validate(errors);
-            LogicSolver?.Validate(errors);
-            FinalElement?.Validate(errors);
+            Groups.Validate(errors);
         }
     }
 
@@ -138,12 +65,38 @@ namespace Sintef.Apos.Sif.Model
         {
             _parent = parent;
         }
-        public SIFSubsystem Append()
+
+        public InputDeviceSubsystem AppendInputDevice()
         {
-            var subsystem = new SIFSubsystem(_parent);
+            if (_parent.InputDevice != null) throw new Exception("InputDevice already exists.");
+
+            var subsystem = new InputDeviceSubsystem(_parent);
             _items.Add(subsystem);
+
             return subsystem;
         }
+
+        public LogicSolverSubsystem AppendLogicSolver()
+        {
+            if (_parent.LogicSolver != null) throw new Exception("LogicSolver already exists.");
+
+            var subsystem = new LogicSolverSubsystem(_parent);
+            _items.Add(subsystem);
+
+            return subsystem;
+        }
+
+        public FinalElementSubsystem AppendFinalElement()
+        {
+            if (_parent.FinalElement != null) throw new Exception("FinalElement already exists.");
+
+            var subsystem = new FinalElementSubsystem(_parent);
+            _items.Add(subsystem);
+
+            return subsystem;
+        }
+
+
 
         public bool Remove(SIFSubsystem item)
         {

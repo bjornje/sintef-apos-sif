@@ -11,36 +11,53 @@ namespace Sintef.Apos.Sif.Model
     public class SIF : Node
     {
         public SIFSubsystems Subsystems { get; }
-        public String SIFID { get; }
-        public Frequecy DemandRate { get; }
-        public E_DEToTrip E_DEToTrip { get; }
-        public String SafeState { get; }
-        public String SILAllocationMethod { get; }
+
+        public Groups CrossSubsystemGroups { get; }
+
+        public InputDeviceSubsystem InputDevice => Subsystems.SingleOrDefault(x => x is InputDeviceSubsystem) as InputDeviceSubsystem;
+        public LogicSolverSubsystem LogicSolver => Subsystems.SingleOrDefault(x => x is LogicSolverSubsystem) as LogicSolverSubsystem;
+        public FinalElementSubsystem FinalElement => Subsystems.SingleOrDefault(x => x is FinalElementSubsystem) as FinalElementSubsystem;
+
+
+        //Attributes
+        public ILLevel AILLevel { get; private set; } //1
+        public String Cause { get; private set; }
+        public PerYear DemandRate { get; private set; }
+        public String DemandSource { get; private set; }
+        public String Effect { get; private set; } //5
+        public ILLevel EILLevel { get; private set; }
+        public String EnvironmentalExtremes { get; private set; }
+        public ManualActivation ManualActivation { get; private set; }
+        public Seconds MaxAllowableResponseTime { get; private set; }
+        public String MeasureToAvoidCCF { get; private set; } //10
+        public ModeOfOperation ModeOfOperation { get; private set; }
+        public Frequecy PFDRequirement { get; private set; }
+        public PerHour PFHRequirement { get; private set; }
+        public String PlantOperatingMode { get; private set; }
+        public String QuantificationMethod { get; private set; } //15
+        public String SafeProcessState { get; private set; }
+        public String SIFDescription { get; private set; }
+        public String SIFID { get; private set; }
+        public String SIFName { get; private set; }
+        public SIFType SIFType { get; private set; } //20
+        public String SIFTypicalID { get; private set; }
+        public String SILAllocationMethod { get; private set; }
+        public SILLevel SILLevel { get; private set; }
+        public PerHour SpuriousTripRate { get; private set; }
+        public String SurvaivabilityRequirement { get; private set; } //25
 
         public const string RefBaseSystemUnitPath = "SIF Unit Classes/SIF";
 
         public SIF(Root parent) : base(parent, $"SIF{parent.SIFs.Count() + 1}")
         {
+            SetAttributes(Definition.GetAttributes(this, 25));
+
             Subsystems = new SIFSubsystems(this);
 
-            var attributes = Definition.GetAttributes(this);
-
-            foreach (var attribute in attributes)
-            {
-                AddAttribute(attribute);
-            }
-
-
-            SIFID = Attributes.Single(x => x.Name == nameof(SIFID)) as String; // 1
-            DemandRate = Attributes.Single(x => x.Name == nameof(DemandRate)) as Frequecy;
-            E_DEToTrip = Attributes.Single(x => x.Name == nameof(E_DEToTrip)) as E_DEToTrip;
-            SafeState = Attributes.Single(x => x.Name == nameof(SafeState)) as String;
-            SILAllocationMethod = Attributes.Single(x => x.Name == nameof(SILAllocationMethod)) as String; // 5
-
-            const int expectedNumberOfAttributes = 5;
-            if (Attributes.Count() != expectedNumberOfAttributes) throw new Exception($"Expected {expectedNumberOfAttributes} attributes but got {Attributes.Count()}.");
+            CrossSubsystemGroups = new Groups(this);
         }
 
+ 
         public bool Remove(SIFSubsystem item)
         {
             return Subsystems.Remove(item);
@@ -74,10 +91,10 @@ namespace Sintef.Apos.Sif.Model
         {
             _parent = parent;
         }
-        public SIF Append(string sifId)
+        public SIF Append(string sifId = null)
         {
             var sif = new SIF(_parent);
-            sif.SIFID.Value = sifId;
+            sif.SIFID.StringValue = sifId;
             _items.Add(sif);
             return sif;
         }
@@ -116,7 +133,7 @@ namespace Sintef.Apos.Sif.Model
         {
             foreach (var sif in _items)
             {
-                var duplicates = _items.Where(x => x.SIFID.Value == sif.SIFID.Value);
+                var duplicates = _items.Where(x => x.SIFID.StringValue == sif.SIFID.StringValue);
                 if (duplicates.Count() > 1) errors.Add(new ModelError(sif, "SIFID must be unique."));
                 sif.Validate(errors);
             }

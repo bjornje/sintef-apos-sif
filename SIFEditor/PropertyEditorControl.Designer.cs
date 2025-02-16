@@ -45,7 +45,7 @@
             this.labelName.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelName.Location = new System.Drawing.Point(3, 0);
             this.labelName.Name = "labelName";
-            this.labelName.Size = new System.Drawing.Size(160, 23);
+            this.labelName.Size = new System.Drawing.Size(228, 23);
             this.labelName.TabIndex = 0;
             this.labelName.Text = "property name";
             this.labelName.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -57,14 +57,15 @@
             this.textBoxValue.Name = "textBoxValue";
             this.textBoxValue.Size = new System.Drawing.Size(32, 23);
             this.textBoxValue.TabIndex = 1;
+            this.textBoxValue.TextChanged += new System.EventHandler(this.textBoxValue_TextChanged);
             // 
             // tableLayoutPanel1
             // 
             this.tableLayoutPanel1.AutoSize = true;
             this.tableLayoutPanel1.ColumnCount = 3;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 166F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 234F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 366F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 258F));
             this.tableLayoutPanel1.Controls.Add(this.labelName, 0, 0);
             this.tableLayoutPanel1.Controls.Add(this.labelType, 2, 0);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -79,9 +80,9 @@
             // 
             this.labelType.AutoSize = true;
             this.labelType.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.labelType.Location = new System.Drawing.Point(302, 0);
+            this.labelType.Location = new System.Drawing.Point(410, 0);
             this.labelType.Name = "labelType";
-            this.labelType.Size = new System.Drawing.Size(360, 23);
+            this.labelType.Size = new System.Drawing.Size(252, 23);
             this.labelType.TabIndex = 2;
             this.labelType.Text = "property type";
             this.labelType.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -100,6 +101,7 @@
             this.comboBoxValue.Name = "comboBoxValue";
             this.comboBoxValue.Size = new System.Drawing.Size(68, 23);
             this.comboBoxValue.TabIndex = 3;
+            this.comboBoxValue.TextChanged += new System.EventHandler(this.comboBoxValue_TextChanged);
             // 
             // PropertyEditorControl
             // 
