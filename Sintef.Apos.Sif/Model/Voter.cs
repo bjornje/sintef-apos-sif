@@ -28,7 +28,7 @@ namespace Sintef.Apos.Sif.Model
         {
             long? M = null;
             long? N = null;
-            var actualNumberOfElements = _parent.GetNumberOfGroupsAndComponents();
+            var actualNumberOfElements = _parent.GetNumberOfElements();
 
             if (string.IsNullOrEmpty(_threshhold.StringValue))
             {

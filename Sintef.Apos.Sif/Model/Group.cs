@@ -9,8 +9,9 @@ namespace Sintef.Apos.Sif.Model
     {
         public Groups Groups { get; }
         public SISComponents Components { get; }
-        public Integer VoteWithinGroup_K_in_KooN { get; protected set; }
+        public Integer VoteWithinGroup_k_in_kooN { get; protected set; }
         public Integer NumberOfComponentsOrSubgroups_N { get; protected set; }
+        public Boolean IsCrossSubsystemGroup { get; protected set; }
 
         public const string RefBaseSystemUnitPath = "SIF Unit Classes/Group";
 
@@ -22,12 +23,18 @@ namespace Sintef.Apos.Sif.Model
             Components = new SISComponents(this);
             Groups = new Groups(this);
 
-            _voter = new Voter(this, VoteWithinGroup_K_in_KooN, "K", NumberOfComponentsOrSubgroups_N, "N");
+            _voter = new Voter(this, VoteWithinGroup_k_in_kooN, "k", NumberOfComponentsOrSubgroups_N, "N");
+        }
+
+        public void ToggleIsCrossSectionGroup()
+        {
+            if (IsCrossSubsystemGroup.Value.HasValue) IsCrossSubsystemGroup.Value = !IsCrossSubsystemGroup.Value;
+            else IsCrossSubsystemGroup.Value = true;
         }
 
         public void VoteWithinGroup(int K, int N)
         {
-            VoteWithinGroup_K_in_KooN.Value = K;
+            VoteWithinGroup_k_in_kooN.Value = K;
             NumberOfComponentsOrSubgroups_N.Value = N;
         }
 
@@ -67,6 +74,47 @@ namespace Sintef.Apos.Sif.Model
             Groups.Validate(errors);
             Components.Validate(errors);
         }
+
+        public IEnumerable<Group> GetAllGroups()
+        {
+            var groups = new List<Group>();
+
+            groups.AddRange(Groups);
+
+            foreach (var group in Groups) groups.AddRange(group.GetAllGroups());
+
+            return groups;
+        }
+
+        public override string GetPathStep()
+        {
+            if (Parent is Group parentGroup)
+            {
+                var index = 1;
+                foreach (var item in parentGroup.Groups)
+                {
+                    if (item == this) return GetType().Name + index;
+                    index++;
+                }
+            }
+            else if (Parent is SIFSubsystem parentSubsystem)
+            {
+                var index = 1;
+                foreach (var item in parentSubsystem.Groups)
+                {
+                    if (item == this) return GetType().Name + index;
+                    index++;
+                }
+            }
+
+            return base.GetPathStep();
+        }
+
+        public override int GetNumberOfElements()
+        {
+            return Groups.Count() + Components.Count();
+        }
+
     }
 
     public class Groups : IEnumerable<Group>
@@ -86,6 +134,8 @@ namespace Sintef.Apos.Sif.Model
             return group;
         }
 
+
+
         public bool Remove(Group item)
         {
             return _items.Remove(item);
@@ -94,6 +144,7 @@ namespace Sintef.Apos.Sif.Model
         public IEnumerator<Group> GetEnumerator()
         {
             return _items.GetEnumerator();
+    
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -121,5 +172,31 @@ namespace Sintef.Apos.Sif.Model
         {
             foreach (var group in _items) group.Validate(errors);
         }
+    }
+    public class CrossSubsystemGroups : IEnumerable<Group>
+    {
+        private readonly Node _parent;
+        public CrossSubsystemGroups(Node parent)
+        {
+            _parent = parent;
+        }
+
+        private IEnumerable<Group> GetItems() 
+        {
+            if (_parent is SIF sif) return sif.GetAllGroups();
+
+            return Enumerable.Empty<Group>();
+        }
+
+        public IEnumerator<Group> GetEnumerator()
+        {
+            return GetItems().GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetItems().GetEnumerator();
+        }
+
     }
 }

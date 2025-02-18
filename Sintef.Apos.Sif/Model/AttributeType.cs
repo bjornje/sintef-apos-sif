@@ -17,7 +17,7 @@ namespace Sintef.Apos.Sif.Model
         public string StringValue { get; set; }
         public string RefAttributeType { get; }
         public Type DataType { get; }
-        public virtual object ObjectValue { get => GetValueAsObject(StringValue, DataType); set => StringValue = GetValueAsString(value, DataType); }
+        public virtual object ObjectValue { get => GetValueAsObject(StringValue, DataType); set => StringValue = GetValueAsString(value); }
 
         protected AttributeType(string name, string description, string refAttributeType, Type dataType)
         {
@@ -34,7 +34,7 @@ namespace Sintef.Apos.Sif.Model
             if (DataType == typeof(decimal))
             {
                 var valueAsObject = GetValueAsObject(StringValue, DataType);
-                var valueAsString = GetValueAsString(valueAsObject, DataType);
+                var valueAsString = GetValueAsString(valueAsObject);
                 if (StringValue == valueAsString) return;
 
                 errors.Add(new ModelError(node, $"The value {StringValue} provided for {Name} is not a valid decimal number."));
@@ -42,10 +42,18 @@ namespace Sintef.Apos.Sif.Model
             else if (DataType == typeof(long))
             {
                 var valueAsObject = GetValueAsObject(StringValue, DataType);
-                var valueAsString = GetValueAsString(valueAsObject, DataType);
+                var valueAsString = GetValueAsString(valueAsObject);
                 if (StringValue == valueAsString) return;
 
                 errors.Add(new ModelError(node, $"The value {StringValue} provided for {Name} is not a valid integer number."));
+            }
+            else if (DataType == typeof(bool))
+            {
+                var valueAsObject = GetValueAsObject(StringValue, DataType);
+                var valueAsString = GetValueAsString(valueAsObject);
+                if (StringValue == valueAsString) return;
+
+                errors.Add(new ModelError(node, $"The value {StringValue} provided for {Name} is not a valid boolean."));
             }
             else if (DataType == typeof(string))
             {
@@ -69,12 +77,16 @@ namespace Sintef.Apos.Sif.Model
                 if (int.TryParse(value, out var intValue)) return intValue;
                 if (long.TryParse(value, out var longValue)) return longValue;
             }
+            else if (dataType == typeof(bool))
+            {
+                if (bool.TryParse(value, out var boolValue)) return boolValue;
+            }
             else if (dataType == typeof(string)) return value;
 
             return null;
         }
 
-        private static string GetValueAsString(object value, Type dataType)
+        private static string GetValueAsString(object value)
         {
             if (value == null) return null;
 
@@ -82,6 +94,7 @@ namespace Sintef.Apos.Sif.Model
             else if (value is decimal decimalValue) return decimalValue.ToString(CultureInfo.InvariantCulture);
             else if (value is int intValue) return intValue.ToString(CultureInfo.InvariantCulture);
             else if (value is long longValue) return longValue.ToString(CultureInfo.InvariantCulture);
+            else if (value is bool boolValue) return boolValue.ToString(CultureInfo.InvariantCulture);
             else return value.ToString();
         }
 
@@ -132,6 +145,19 @@ namespace Sintef.Apos.Sif.Model
         public override AttributeType Clone()
         {
             return new Integer(Name, Description);
+        }
+    }
+    public class Boolean : AttributeType
+    {
+        public bool? Value { get => ObjectValue as bool?; set => ObjectValue = value; }
+        public Boolean(string name, string description) : base(name, description, "Types/Boolean", typeof(bool))
+        {
+
+        }
+
+        public override AttributeType Clone()
+        {
+            return new Boolean(Name, Description);
         }
     }
     public class Hours : AttributeType

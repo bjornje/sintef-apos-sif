@@ -8,7 +8,7 @@ namespace Sintef.Apos.Sif.Model
 {
     public class FinalElementSubsystem : SIFSubsystem
     {
-        public FinalElementSubsystem(SIF parent) : base(parent)
+        public FinalElementSubsystem(SIF parent) : base(parent, "FinalElement")
         {
         }
     }

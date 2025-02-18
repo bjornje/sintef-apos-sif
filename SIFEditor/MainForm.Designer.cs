@@ -55,6 +55,7 @@
             this.addGroupToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.addComponentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeComponentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.isCrossSubsystemGroupToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStripSISComponent = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.removeComponentToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -270,30 +271,39 @@
             this.contextMenuStripGroup.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.addGroupToolStripMenuItem1,
             this.addComponentToolStripMenuItem,
-            this.removeComponentToolStripMenuItem});
+            this.removeComponentToolStripMenuItem,
+            this.isCrossSubsystemGroupToolStripMenuItem});
             this.contextMenuStripGroup.Name = "contextMenuStripGroup";
-            this.contextMenuStripGroup.Size = new System.Drawing.Size(181, 92);
+            this.contextMenuStripGroup.Size = new System.Drawing.Size(206, 114);
             // 
             // addGroupToolStripMenuItem1
             // 
             this.addGroupToolStripMenuItem1.Name = "addGroupToolStripMenuItem1";
-            this.addGroupToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.addGroupToolStripMenuItem1.Size = new System.Drawing.Size(205, 22);
             this.addGroupToolStripMenuItem1.Text = "Add Group";
             this.addGroupToolStripMenuItem1.Click += new System.EventHandler(this.addGroupToolStripMenuItem1_Click);
             // 
             // addComponentToolStripMenuItem
             // 
             this.addComponentToolStripMenuItem.Name = "addComponentToolStripMenuItem";
-            this.addComponentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.addComponentToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
             this.addComponentToolStripMenuItem.Text = "Add Component";
             this.addComponentToolStripMenuItem.Click += new System.EventHandler(this.addComponentToolStripMenuItem_Click);
             // 
             // removeComponentToolStripMenuItem
             // 
             this.removeComponentToolStripMenuItem.Name = "removeComponentToolStripMenuItem";
-            this.removeComponentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.removeComponentToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
             this.removeComponentToolStripMenuItem.Text = "Remove Group";
             this.removeComponentToolStripMenuItem.Click += new System.EventHandler(this.removeComponentToolStripMenuItem_Click);
+            // 
+            // isCrossSubsystemGroupToolStripMenuItem
+            // 
+            this.isCrossSubsystemGroupToolStripMenuItem.Name = "isCrossSubsystemGroupToolStripMenuItem";
+            this.isCrossSubsystemGroupToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.isCrossSubsystemGroupToolStripMenuItem.Text = "Is cross sybsystem group";
+            this.isCrossSubsystemGroupToolStripMenuItem.Visible = false;
+            this.isCrossSubsystemGroupToolStripMenuItem.Click += new System.EventHandler(this.isCrossSubsystemGroupToolStripMenuItem_Click);
             // 
             // contextMenuStripSISComponent
             // 
@@ -369,5 +379,6 @@
         private ToolStripMenuItem inputDeviceToolStripMenuItem;
         private ToolStripMenuItem logicSolverToolStripMenuItem;
         private ToolStripMenuItem finalElementToolStripMenuItem;
+        private ToolStripMenuItem isCrossSubsystemGroupToolStripMenuItem;
     }
 }

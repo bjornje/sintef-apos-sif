@@ -161,7 +161,7 @@ namespace Sintef.Apos.Sif
 
                         if (k == null) k = ReadAttribute("M", ie); // for backward compatibility
 
-                        group.VoteWithinGroup_K_in_KooN.StringValue = k;
+                        group.VoteWithinGroup_k_in_kooN.StringValue = k;
                         return;
                     }
                     break;

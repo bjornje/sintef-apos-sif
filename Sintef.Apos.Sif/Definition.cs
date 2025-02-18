@@ -196,6 +196,9 @@ namespace Sintef.Apos.Sif
                 case "kg_s":
                     attributes.Add(new kg_s(attributeName, attiributeDescription));
                     break;
+                case "Boolean":
+                    attributes.Add(new Model.Boolean(attributeName, attiributeDescription));
+                    break;
                 default:
                     Console.Write("Unknown attribute class: " + className);
                     break;
@@ -254,14 +257,14 @@ namespace Sintef.Apos.Sif
 <CAEXFile SchemaVersion=""3.0"" FileName="""" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""
     xmlns=""http://www.dke.de/CAEX""
     xsi:schemaLocation=""http://www.dke.de/CAEX CAEX_ClassModel_V.3.0.xsd"">
-    <Description>This document is generated from the APOS_SIF.qea model version 20 by the
+    <Description>This document is generated from the APOS_SIF.qea model version 21 by the
         EA_UML_to_AML.js transformation script.
         The model and transformation script are derived from initial SIF model and transformation
         script from Kongsberg.</Description>
     <AdditionalInformation />
     <SuperiorStandardVersion>AutomationML 2.10</SuperiorStandardVersion>
-    <SourceDocumentInformation OriginName=""APOS_SIF.qea"" OriginID="""" OriginVersion=""20""
-        LastWritingDateTime=""2025-02-13T09:13:27.000Z"" OriginVendor=""SINTEF""
+    <SourceDocumentInformation OriginName=""APOS_SIF.qea"" OriginID="""" OriginVersion=""21""
+        LastWritingDateTime=""2025-02-17T08:19:44.000Z"" OriginVendor=""SINTEF""
         OriginVendorURL=""www.sintef.no"" />
     <RoleClassLib Name=""CDD"">
         <Description></Description>
@@ -439,7 +442,7 @@ namespace Sintef.Apos.Sif
         <Description></Description>
         <SystemUnitClass Name=""Group"" ID=""{91B2A42C-84AD-4c59-9520-E18974D4B24B}"">
             <Description>The Group is an abstract class holding common properties for a group.</Description>
-            <Attribute Name=""VoteWithinGroup_K_in_KooN"" ID=""{9F5BA9BA-7FAA-45f9-910A-F5862E1695FB}""
+            <Attribute Name=""VoteWithinGroup_k_in_kooN"" ID=""{9F5BA9BA-7FAA-45f9-910A-F5862E1695FB}""
                 RefAttributeType=""Types/Integer"">
                 <Description></Description>
             </Attribute>
@@ -601,8 +604,8 @@ namespace Sintef.Apos.Sif
                 ID=""{67DD139F-A86B-45c5-ABD8-92801CAACD51}"" RefAttributeType=""Types/Integer"">
                 <Description></Description>
             </Attribute>
-            <Attribute Name=""NumberOfGroups_N""
-                ID=""{881BFE8C-D278-4105-9AB0-3030EFC871DE}"" RefAttributeType=""Types/Integer"">
+            <Attribute Name=""NumberOfGroups_N"" ID=""{A89B3118-0E72-4a5b-AA43-83064A7CB188}""
+                RefAttributeType=""Types/Integer"">
                 <Description></Description>
             </Attribute>
         </SystemUnitClass>

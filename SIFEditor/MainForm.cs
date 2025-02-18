@@ -39,7 +39,7 @@ namespace SIFEditor
             {
                 if (treeNode.Tag is not Node node) continue;
 
-                var text = node.DisplayName();
+                var text = node.DisplayName(treeNode.Parent);
                 if (treeNode.Text != text)
                 {
                     treeNode.Text = text;
@@ -55,7 +55,7 @@ namespace SIFEditor
         {
             treeView1.Nodes.Clear();
 
-            var node = new TreeNode(root.DisplayName());
+            var node = new TreeNode(root.DisplayName(new TreeNode()));
             node.ContextMenuStrip = contextMenuStripSIFs;
             node.Tag = root;
             treeView1.Nodes.Add(node);
@@ -68,10 +68,11 @@ namespace SIFEditor
         {
             foreach(var sif in sifs)
             {
-                var childNode = new TreeNode(sif.DisplayName());
+                var childNode = new TreeNode(sif.DisplayName(node));
                 childNode.ContextMenuStrip = contextMenuStripSIF;
                 childNode.Tag = sif;
                 node.Nodes.Add(childNode);
+                //AddCrossSubsystemGroups(sif.CrossSubsystemGroups, childNode);
                 AddSIFSubsystems(sif.Subsystems, childNode);
             }
         }
@@ -80,7 +81,7 @@ namespace SIFEditor
         {
             foreach(var subsystem in subsystems)
             {
-                var childNode = new TreeNode(subsystem.DisplayName());
+                var childNode = new TreeNode(subsystem.DisplayName(node));
                 childNode.ContextMenuStrip = contextMenuStripSubsystem;
                 childNode.Tag = subsystem;
                 node.Nodes.Add(childNode);
@@ -89,11 +90,24 @@ namespace SIFEditor
             }
         }
 
+        private void AddCrossSubsystemGroups(CrossSubsystemGroups groups, TreeNode node)
+        {
+            foreach (var group in groups)
+            {
+                var childNode = new TreeNode(group.DisplayName(node));
+                childNode.ContextMenuStrip = contextMenuStripGroup;
+                childNode.Tag = group;
+                node.Nodes.Add(childNode);
+                AddComponents(group.Components, childNode);
+                AddGroups(group.Groups, childNode);
+            }
+        }
+
         private void AddGroups(Groups groups, TreeNode node)
         {
             foreach (var group in groups)
             {
-                var childNode = new TreeNode(group.DisplayName());
+                var childNode = new TreeNode(group.DisplayName(node));
                 childNode.ContextMenuStrip = contextMenuStripGroup;
                 childNode.Tag = group;
                 node.Nodes.Add(childNode);
@@ -106,7 +120,7 @@ namespace SIFEditor
         {
             foreach (var component in components)
             {
-                var childNode = new TreeNode(component.DisplayName());
+                var childNode = new TreeNode(component.DisplayName(node));
                 childNode.ContextMenuStrip = contextMenuStripSISComponent;
                 childNode.Tag = component;
                 node.Nodes.Add(childNode);
@@ -292,7 +306,7 @@ namespace SIFEditor
                 var inputDeviceSubsystemTreeNode = AppendTreeNode(inputDeviceSubsystem, sifTreeNode, contextMenuStripSubsystem);
 
                 var inputDeviceGroup = inputDeviceSubsystem.Groups.Append();
-                inputDeviceGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
+                inputDeviceGroup.VoteWithinGroup_k_in_kooN.ObjectValue = 1;
                 inputDeviceGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
 
                 var inputDeviceGroupTreeNode = AppendTreeNode(inputDeviceGroup, inputDeviceSubsystemTreeNode, contextMenuStripGroup);
@@ -308,7 +322,7 @@ namespace SIFEditor
                 var logicSolverSubsystemTreeNode = AppendTreeNode(logicSolverSubsystem, sifTreeNode, contextMenuStripSubsystem);
 
                 var logicSolverGroup = logicSolverSubsystem.Groups.Append();
-                logicSolverGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
+                logicSolverGroup.VoteWithinGroup_k_in_kooN.ObjectValue = 1;
                 logicSolverGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
 
                 var logicSolverGroupTreeNode = AppendTreeNode(logicSolverGroup, logicSolverSubsystemTreeNode, contextMenuStripGroup);
@@ -324,7 +338,7 @@ namespace SIFEditor
                 var finalElementSubsystemTreeNode = AppendTreeNode(finalElementSubsystem, sifTreeNode, contextMenuStripSubsystem);
 
                 var finalElementGroup = finalElementSubsystem.Groups.Append();
-                finalElementGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
+                finalElementGroup.VoteWithinGroup_k_in_kooN.ObjectValue = 1;
                 finalElementGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
 
                 var finalElementGroupTreeNode = AppendTreeNode(finalElementGroup, finalElementSubsystemTreeNode, contextMenuStripGroup);
@@ -338,7 +352,7 @@ namespace SIFEditor
 
         private static TreeNode AppendTreeNode(Node tag, TreeNode parent, ContextMenuStrip contextMenuStrip)
         {
-            var treeNode = new TreeNode(tag.DisplayName());
+            var treeNode = new TreeNode(tag.DisplayName(parent));
             treeNode.ContextMenuStrip = contextMenuStrip;
             treeNode.Tag = tag;
             parent.Nodes.Add(treeNode);
@@ -346,12 +360,20 @@ namespace SIFEditor
             return treeNode;
         }
 
-        private static void AdjustMenuItem(ContextMenuStrip menuStrip, string key, bool isEnabled)
+        private static void AdjustMenuItemEnabled(ContextMenuStrip menuStrip, string key, bool isEnabled)
         {
             var item = menuStrip.Items.Find(key, true).FirstOrDefault();
             if (item == null) return;
 
             item.Enabled = isEnabled;
+        }
+
+        private static void AdjustMenuItemChecked(ContextMenuStrip menuStrip, string key, bool? isChecked)
+        {
+            var item = menuStrip.Items.Find(key, true).FirstOrDefault();
+            if (item is not ToolStripMenuItem menuItem) return;
+
+            menuItem.Checked = isChecked ?? false;
         }
 
         private void treeView1_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -360,9 +382,13 @@ namespace SIFEditor
             {
                 if (e.Node.Tag is SIF sif)
                 {
-                    AdjustMenuItem(e.Node.ContextMenuStrip, "inputDeviceToolStripMenuItem", sif.InputDevice == null);
-                    AdjustMenuItem(e.Node.ContextMenuStrip, "logicSolverToolStripMenuItem", sif.LogicSolver == null);
-                    AdjustMenuItem(e.Node.ContextMenuStrip, "finalElementToolStripMenuItem", sif.FinalElement == null);
+                    AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "inputDeviceToolStripMenuItem", sif.InputDevice == null);
+                    AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "logicSolverToolStripMenuItem", sif.LogicSolver == null);
+                    AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "finalElementToolStripMenuItem", sif.FinalElement == null);
+                }
+                else if (e.Node.Tag is Group group)
+                {
+                    //AdjustMenuItemChecked(e.Node.ContextMenuStrip, "isCrossSubsystemGroupToolStripMenuItem", group.IsCrossSubsystemGroup.Value);
                 }
 
                 treeView1.SelectedNode = e.Node;
@@ -374,7 +400,7 @@ namespace SIFEditor
             if (treeView1.SelectedNode?.Tag is SIFSubsystem subsystem)
             {
                 var group = subsystem.Groups.Append();
-                group.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
+                group.VoteWithinGroup_k_in_kooN.ObjectValue = 1;
                 group.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
 
                 AppendTreeNode(group, treeView1.SelectedNode, contextMenuStripGroup);
@@ -454,6 +480,7 @@ namespace SIFEditor
             }
 
             _builder?.SaveToFile(_fileName);
+            TreeChanged();
         }
 
         private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -467,6 +494,7 @@ namespace SIFEditor
 
             _fileName = saveFileDialog.FileName;
             _builder?.SaveToFile(_fileName);
+            TreeChanged();
         }
 
         private void addGroupToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -474,7 +502,7 @@ namespace SIFEditor
             if (treeView1.SelectedNode?.Tag is Group group)
             {
                 var subGroup = group.Groups.Append();
-                subGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
+                subGroup.VoteWithinGroup_k_in_kooN.ObjectValue = 1;
                 subGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
 
                 AppendTreeNode(subGroup, treeView1.SelectedNode, contextMenuStripGroup);
@@ -542,6 +570,23 @@ namespace SIFEditor
                 subsystem.NumberOfGroups_N.ObjectValue = 1;
 
                 AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
+                TreeChanged();
+            }
+        }
+
+        private void isCrossSubsystemGroupToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode?.Tag is Group group)
+            {
+                group.ToggleIsCrossSectionGroup();
+
+                var treeNode = treeView1.SelectedNode.Parent.Parent;
+
+                if (group.IsCrossSubsystemGroup.Value.HasValue && group.IsCrossSubsystemGroup.Value.Value)
+                {
+                    AppendTreeNode(group, treeNode, contextMenuStripGroup);
+                }
+
                 TreeChanged();
             }
         }

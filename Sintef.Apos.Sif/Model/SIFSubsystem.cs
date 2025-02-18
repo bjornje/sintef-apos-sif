@@ -15,10 +15,8 @@ namespace Sintef.Apos.Sif.Model
         public Integer NumberOfGroups_N { get; protected set; }
 
         private readonly Voter _voter;
-        public SIFSubsystem(SIF parent, bool isTemporary = false) : base(parent, $"SIFSubsystem{parent.Subsystems.Count() + 1}")
+        public SIFSubsystem(SIF parent, string pathStep) : base(parent, pathStep)
         {
-            if (isTemporary) return;
-
             SetAttributes(Definition.GetAttributes(this, 3));
 
             _voter = new Voter(this, VoteBetweenGroups_M_in_MooN, "M", NumberOfGroups_N, "N");
@@ -55,6 +53,29 @@ namespace Sintef.Apos.Sif.Model
 
             Groups.Validate(errors);
         }
+
+        public IEnumerable<Group> GetAllGroups()
+        {
+            var groups = new List<Group>();
+
+            groups.AddRange(Groups);
+
+            foreach (var group in Groups) groups.AddRange(group.GetAllGroups());
+
+            return groups;
+        }
+
+        public override string GetPathStep()
+        {
+            var name = GetType().Name;
+            return name.Substring(0, name.Length - 9);
+        }
+
+        public override int GetNumberOfElements()
+        {
+            return Groups.Count();
+        }
+
     }
 
     public class SIFSubsystems : IEnumerable<SIFSubsystem>

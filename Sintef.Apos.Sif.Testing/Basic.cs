@@ -5,7 +5,7 @@ namespace Sintef.Apos.Sif.Testing
         [Fact]
         public void VerifyModelVersion()
         {
-            Assert.Equal("20", Definition.Version);
+            Assert.Equal("21", Definition.Version);
         }
 
         [Fact]
@@ -27,8 +27,13 @@ namespace Sintef.Apos.Sif.Testing
             Assert.Equal(3, sif.Subsystems.Count());
 
             var initiatorGroup = initator.Groups.Append();
+            initiatorGroup.VoteWithinGroup(1, 1);
+
             var logicSolverGroup = logicSolver.Groups.Append();
+            logicSolverGroup.VoteWithinGroup(1, 1);
+
             var finalElementGroup = finalElement.Groups.Append();
+            finalElementGroup.VoteWithinGroup(1, 1);
 
             initiatorGroup.VoteWithinGroup(2, 2);
 
@@ -50,7 +55,7 @@ namespace Sintef.Apos.Sif.Testing
             var finalElementComponent = finalElementGroup.Components.Append("ESV-3023");
             finalElementComponent.ProofTestIntervalSILCompliance.StringValue = "2000";
 
-            Assert.Equal(2, initiatorGroup.VoteWithinGroup_K_in_KooN.Value);
+            Assert.Equal(2, initiatorGroup.VoteWithinGroup_k_in_kooN.Value);
             Assert.Equal(2, initiatorGroup.NumberOfComponentsOrSubgroups_N.Value);
             Assert.Equal(3000.0, initiatorComponent1.ProofTestIntervalSILCompliance.Value);
             Assert.Equal(25.7, initiatorComponent1.ProofTestCoverage.Value);
@@ -102,7 +107,7 @@ namespace Sintef.Apos.Sif.Testing
             Assert.Single(logicSolver2Group.Components);
             Assert.Single(finalElement2Group.Components);
 
-            Assert.Equal("2", initiator2Group.VoteWithinGroup_K_in_KooN.StringValue);
+            Assert.Equal("2", initiator2Group.VoteWithinGroup_k_in_kooN.StringValue);
             Assert.Equal("2", initiator2Group.NumberOfComponentsOrSubgroups_N.StringValue);
 
             var initiator2Component1 = initiator2Group.Components.Single(x => x.Name.StringValue == "TT-1001");
@@ -120,7 +125,7 @@ namespace Sintef.Apos.Sif.Testing
             var finalElement2Component = finalElement2Group.Components.Single(x => x.Name.StringValue == "ESV-3023");
             Assert.Equal("2000", finalElement2Component.ProofTestIntervalSILCompliance.StringValue);
 
-            Assert.Equal(2, initiator2Group.VoteWithinGroup_K_in_KooN.Value);
+            Assert.Equal(2, initiator2Group.VoteWithinGroup_k_in_kooN.Value);
             Assert.Equal(2, initiator2Group.NumberOfComponentsOrSubgroups_N.Value);
             Assert.Equal(3000.0, initiator2Component1.ProofTestIntervalSILCompliance.Value);
             Assert.Equal(25.7, initiator2Component1.ProofTestCoverage.Value);

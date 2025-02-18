@@ -12,7 +12,7 @@ namespace Sintef.Apos.Sif.Model
     {
         public SIFSubsystems Subsystems { get; }
 
-        public Groups CrossSubsystemGroups { get; }
+        public CrossSubsystemGroups CrossSubsystemGroups { get; }
 
         public InputDeviceSubsystem InputDevice => Subsystems.SingleOrDefault(x => x is InputDeviceSubsystem) as InputDeviceSubsystem;
         public LogicSolverSubsystem LogicSolver => Subsystems.SingleOrDefault(x => x is LogicSolverSubsystem) as LogicSolverSubsystem;
@@ -54,7 +54,7 @@ namespace Sintef.Apos.Sif.Model
 
             Subsystems = new SIFSubsystems(this);
 
-            CrossSubsystemGroups = new Groups(this);
+            CrossSubsystemGroups = new CrossSubsystemGroups(this);
         }
 
  
@@ -79,6 +79,16 @@ namespace Sintef.Apos.Sif.Model
             if (!Subsystems.Any()) errors.Add(new ModelError(this, "Missing SIFSubsystem."));
             Subsystems.Validate(errors);
         }
+
+        public IEnumerable<Group> GetAllGroups()
+        {
+            var groups = new List<Group>();
+
+            foreach (var subsystem in Subsystems) groups.AddRange(subsystem.GetAllGroups());
+
+            return groups;
+        }
+
     }
 
     public class SIFs : IEnumerable<SIF>

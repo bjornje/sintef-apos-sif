@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Sintef.Apos.Sif.Model
 {
@@ -14,6 +15,16 @@ namespace Sintef.Apos.Sif.Model
         public IEnumerable<AttributeType> Attributes => _attributes ?? Enumerable.Empty<AttributeType>();
         public string PathStepX { get; }
 
+        public virtual string GetPathStep()
+        {
+            return GetType().Name;
+        }
+
+        public virtual int GetNumberOfElements()
+        {
+            return 0;
+        }
+
         private Collection<AttributeType> _attributes;
         public Node(Node parent, string pathStep)
         {
@@ -21,37 +32,25 @@ namespace Sintef.Apos.Sif.Model
             PathStepX = pathStep;
         }
 
-        public int GetNumberOfGroupsAndComponents()
-        {
-            if (this is Group group) return group.Components.Count() + group.Groups.Count();
-            if (this is SIFSubsystem subsystem) return subsystem.Groups.Count();
-            return 0;
-        }
         protected void SetAttributes(Collection<AttributeType> attributes)
         {
             _attributes = attributes;
         }
 
-        public string Path
+        public string Path => GetPath(null);
+
+        public string GetPath(Node stopAtNode)
         {
-            get
+            string path = "";
+            var node = this;
+
+            while (node != null && node != stopAtNode)
             {
-                string path = "";
-                var node = this;
-
-                while(node != null)
-                {
-                    var pathStep = node.PathStepX;
-
-                    if (node is SIF sif) pathStep = sif.SIFID.StringValue;
-                    else if (node is SISComponent sISComponent) pathStep = sISComponent.Name.StringValue;
-
-                    path = $"/{pathStep}{path}";
-                    node = node.Parent;
-                }
-
-                return path.TrimStart('/');
+                path = $"/{node.GetPathStep()}{path}";
+                node = node.Parent;
             }
+
+            return path.TrimStart('/');
         }
 
         public string GetSIFID()
@@ -62,10 +61,22 @@ namespace Sintef.Apos.Sif.Model
             {
                 if (node is SIF sif)
                 {
-                    if (sif.SIFID == null) return "<missing>";
-                    if (string.IsNullOrWhiteSpace(sif.SIFID.StringValue)) return "<blank>";
-                    return sif.SIFID.StringValue;
+                    if (string.IsNullOrWhiteSpace(sif.SIFID.Value)) return "<blank>";
+                    return sif.SIFID.Value;
                 }
+                node = node.Parent;
+            }
+
+            return null;
+        }
+
+        public SIF GetSIF()
+        {
+            var node = this;
+
+            while (node != null)
+            {
+                if (node is SIF sif) return sif;
                 node = node.Parent;
             }
 
