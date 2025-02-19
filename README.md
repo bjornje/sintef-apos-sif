@@ -5,3 +5,5 @@ This repository consists of three projects,
 - Sintef.Apos.Sif.Testing - Unit tests for the Sintef.Apos.Sif library
    
 To use the SDK in your project, link to the nuget-packages of this site, "https://nuget.pkg.github.com/bjornje/index.json".
+
+For more information on how to use the SDK, check out the <a href="https://github.com/bjornje/sintef-apos-sif/wiki">Wiki</a>
