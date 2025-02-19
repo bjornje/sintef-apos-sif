@@ -4,4 +4,4 @@ This repository consists of three projects,
 - Sintef.Apos.Sif - A library (SKD, nuget-package) that enables other projects to read, edit and write AML-files
 - Sintef.Apos.Sif.Testing - Unit tests for the Sintef.Apos.Sif library
    
-To use the SDK in your project, add a link to the nuget-packages of this site, "https://nuget.pkg.github.com/bjornje/index.json".
+To use the SDK in your project, link to the nuget-packages of this site, "https://nuget.pkg.github.com/bjornje/index.json".
