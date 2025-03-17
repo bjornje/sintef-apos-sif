@@ -69,13 +69,13 @@ namespace Sintef.Apos.Sif.Model
 
             if (dataType == typeof(decimal))
             {
-                if (double.TryParse(value, out var doubleValue)) return doubleValue;
-                if (decimal.TryParse(value, out var decimalValue)) return decimalValue;
+                if (double.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var doubleValue)) return doubleValue;
+                if (decimal.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var decimalValue)) return decimalValue;
             }
             else if (dataType == typeof(long))
             {
-                if (int.TryParse(value, out var intValue)) return intValue;
-                if (long.TryParse(value, out var longValue)) return longValue;
+                if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intValue)) return intValue;
+                if (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var longValue)) return longValue;
             }
             else if (dataType == typeof(bool))
             {

@@ -4,7 +4,10 @@ using Sintef.Apos.Sif.Model;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace Sintef.Apos.Sif
@@ -42,7 +45,20 @@ namespace Sintef.Apos.Sif
             _errors.Clear();
 
             var doc = CAEXDocument.LoadFromFile(fileName);
+            WriteModel(doc);
+        }
 
+        public void LoadFromStream(Stream inputStream)
+        {
+            Roots.Clear();
+            _errors.Clear();
+
+            var doc = CAEXDocument.LoadFromStream(inputStream);
+            WriteModel(doc);
+        }
+
+        private void WriteModel(CAEXDocument doc)
+        {
             var originVersion = doc.CAEXFile.SourceDocumentInformation.Select(x => x.OriginVersion).SingleOrDefault();
 
 
@@ -190,6 +206,22 @@ namespace Sintef.Apos.Sif
 
         public void SaveToFile(string outputFileName)
         {
+            var doc = ReadModel();
+            var xDoc = XDocument.Load(doc.SaveToStream(false));
+            xDoc.Save(outputFileName, SaveOptions.None);
+            _rootsClone = Roots.Clone();
+        }
+
+        public void SaveToStream(Stream outputStream)
+        {
+            var doc = ReadModel();
+            var xDoc = XDocument.Load(doc.SaveToStream(false));
+            xDoc.Save(outputStream, SaveOptions.None);
+            _rootsClone = Roots.Clone();
+        }
+
+        private CAEXDocument ReadModel()
+        {
             var doc = CAEXDocument.LoadFromString(Definition.Model);
 
             foreach (var root in Roots)
@@ -204,14 +236,12 @@ namespace Sintef.Apos.Sif
                     sifElement.Name = sif.GetType().Name;
                     sifElement.RefBaseSystemUnitPath = SIF.RefBaseSystemUnitPath;
 
-                    foreach(var item in sif.Attributes) WriteAttribute(item, sifElement);
+                    foreach (var item in sif.Attributes) WriteAttribute(item, sifElement);
                     foreach (var subsystem in sif.Subsystems) WriteSubsystem(subsystem, sifElement.InternalElement.Append());
                 }
             }
 
-            var xDoc = XDocument.Load(doc.SaveToStream(false));
-            xDoc.Save(outputFileName, SaveOptions.None);
-            _rootsClone = Roots.Clone();
+            return doc;
         }
 
         private static void WriteSubsystem(SIFSubsystem subsystem, InternalElementType subsystemElement)
