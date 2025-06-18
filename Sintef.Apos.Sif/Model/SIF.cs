@@ -26,15 +26,15 @@ namespace Sintef.Apos.Sif.Model
         public String DemandSource { get; private set; }
         public String Effect { get; private set; } //5
         public ILLevel EILLevel { get; private set; }
-        public String EnvironmentalExtremes { get; private set; }
+        public String EUCReference { get; private set; }
         public ManualActivation ManualActivation { get; private set; }
         public Seconds MaxAllowableResponseTime { get; private set; }
         public String MeasureToAvoidCCF { get; private set; } //10
         public ModeOfOperation ModeOfOperation { get; private set; }
-        public Frequecy PFDRequirement { get; private set; }
+        public Probability PFDRequirement { get; private set; }
         public PerHour PFHRequirement { get; private set; }
         public String PlantOperatingMode { get; private set; }
-        public String QuantificationMethod { get; private set; } //15
+        public String QuantificationMethodOrTool { get; private set; } //15
         public String SafeProcessState { get; private set; }
         public String SIFDescription { get; private set; }
         public String SIFID { get; private set; }
@@ -55,6 +55,7 @@ namespace Sintef.Apos.Sif.Model
             Subsystems = new SIFSubsystems(this);
 
             CrossSubsystemGroups = new CrossSubsystemGroups(this);
+            CrossSubsystemGroups.VoteBetweenGroups(1, 1);
         }
 
  
@@ -76,6 +77,8 @@ namespace Sintef.Apos.Sif.Model
         {
             foreach(var property in Attributes) property.Validate(this, errors);
 
+            CrossSubsystemGroups.Validate(errors);
+
             if (!Subsystems.Any()) errors.Add(new ModelError(this, "Missing SIFSubsystem."));
             Subsystems.Validate(errors);
         }
@@ -89,6 +92,15 @@ namespace Sintef.Apos.Sif.Model
             return groups;
         }
 
+        public void SetCrossVotingGroups()
+        {
+            CrossSubsystemGroups.Clear();
+
+            foreach (var group in GetAllGroups().Where(x => x.AllowAnyComponents.Value.HasValue && x.AllowAnyComponents.Value.Value))
+            {
+                CrossSubsystemGroups.Add(group);
+            }
+        }
     }
 
     public class SIFs : IEnumerable<SIF>

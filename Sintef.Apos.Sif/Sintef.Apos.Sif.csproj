@@ -11,14 +11,14 @@
     <PackageProjectUrl>https://www.sintef.no/prosjekter/2023/apos-2.0-automatisert-prosess-for-oppfolging-av-instrumenterte-sikkerhetssystemer/</PackageProjectUrl>
     <Description>A development kit to facilitate convertion between a well defined SIF model and portable AML file.
 APOS 2.0 - Automated process for monitoring instrumented security systems. The importance of maintaining a safe, efficient and reliable energy sector has become increasingly clear. In this project, we will help the energy sector to improve the follow-up of its safety systems by introducing digital solutions that facilitate the sharing and exchange of necessary safety information from design to operation.</Description>
-    <AssemblyVersion>2.1.1.1</AssemblyVersion>
-	<FileVersion>2.1.1.1</FileVersion>
-	<Version>2.1.1.1</Version>
+    <AssemblyVersion>2.1.2.0</AssemblyVersion>
+	<FileVersion>2.1.2.0</FileVersion>
+	<Version>2.1.2.0</Version>
 	<RepositoryUrl>https://github.com/bjornje/sintef-apos-sif</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aml.Engine" Version="4.4.2" />
+    <PackageReference Include="Aml.Engine" Version="4.4.3" />
   </ItemGroup>
 
 </Project>

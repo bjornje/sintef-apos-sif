@@ -181,6 +181,8 @@ namespace Sintef.Apos.Sif.Model
                 foreach (var sif in root.SIFs) CloneSIF(clonedRoot.SIFs, sif);
             }
 
+            clonedRoots.SetCrossVotingGroups();
+
             return clonedRoots;
         }
 
@@ -260,6 +262,17 @@ namespace Sintef.Apos.Sif.Model
             foreach(var root in _items)
             {
                 root.Validate(errors);
+            }
+        }
+
+        public void SetCrossVotingGroups()
+        {
+            foreach (var root in _items)
+            {
+                foreach(var sif in root.SIFs)
+                {
+                    sif.SetCrossVotingGroups();
+                }
             }
         }
     }

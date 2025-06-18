@@ -65,12 +65,6 @@ namespace Sintef.Apos.Sif.Model
             return groups;
         }
 
-        public override string GetPathStep()
-        {
-            var name = GetType().Name;
-            return name.Substring(0, name.Length - 9);
-        }
-
         public override int GetNumberOfElements()
         {
             return Groups.Count();

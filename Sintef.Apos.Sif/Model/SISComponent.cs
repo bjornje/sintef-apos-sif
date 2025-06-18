@@ -11,40 +11,44 @@ namespace Sintef.Apos.Sif.Model
     public class SISComponent : Node
     {
         public String APOSL2Group { get; protected set; } //1
+        public Boolean Bypass_Approvement { get; protected set; }
         public BypassControl Bypass_Control { get; protected set; }
         public Seconds Bypass_MaxAllowableBypassTime { get; protected set; }
-        public String DiagnosticRequired { get; protected set; }
-        public String DiagnosticRequirementsForImplementation { get; protected set; } //5
+        public String DiagnosticRequired { get; protected set; } //5
+        public String DiagnosticRequirementsForImplementation { get; protected set; }
         public E_DEToTrip E_DEToTrip { get; protected set; }
+        public String EnvironmentalExtremes { get; protected set; }
         public Comparison FailPass_ComparisonToPass { get; protected set; }
-        public String FailPass_Masurement { get; protected set; }
+        public String FailPass_Masurement { get; protected set; } //10
         public String FailPass_Requirement { get; protected set; }
-        public String FailPass_Unit { get; protected set; } //10
+        public String FailPass_Unit { get; protected set; }
         public Seconds MaxAllowableResponseTime { get; protected set; }
-        public Hours MRT { get; protected set; }
-        public Percent PFDBudget { get; protected set; }
-        public PerHour PFHBudget { get; protected set; }
-        public Percent ProofTestCoverage { get; protected set; } //15
+        public Hours MTTR { get; protected set; }
+        public Percent PFDBudget { get; protected set; } //15
+        public Percent PFHBudget { get; protected set; }
+        public Percent ProofTestCoverage { get; protected set; }
         public Hours ProofTestIntervalOperatorSpec { get; protected set; }
         public Hours ProofTestIntervalSILCompliance { get; protected set; }
-        public String SafeState { get; protected set; }
+        public String SafeState { get; protected set; } //20
         public String SurvaibabilityRequirement { get; protected set; }
-        public SILLevel SystematicCapability { get; protected set; } //20
+        public SILLevel SystematicCapability { get; protected set; } 
         public String TagDescription { get; protected set; }
-        public TagNumber TagNumber { get; protected set; }
+        public String TagName { get; protected set; }
+        public TagNumber TagNumber { get; protected set; } //25
         public Seconds TimeDelay { get; protected set; }
         public String TripAction { get; protected set; }
-        public TypeAB TypeAB { get; protected set; } //25
+        public TypeAB TypeAB { get; protected set; } //28
 
         public const string RefBaseSystemUnitPath = "SIF Unit Classes/SISComponent";
 
-        public String Name { get; } = new String(nameof(Name), "");
+        public String Name { get; }
 
         public SISComponent(Group parent, string name, int expectedNumberOfAttributes) : base(parent, name)
         {
+            Name = new String(nameof(Name), "", this);
             Name.StringValue = name;
 
-            SetAttributes(Definition.GetAttributes(this, expectedNumberOfAttributes + 25));
+            SetAttributes(Definition.GetAttributes(this, expectedNumberOfAttributes + 28));
         }
 
         public bool IsSameAs(SISComponent component)

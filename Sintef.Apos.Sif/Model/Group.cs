@@ -9,9 +9,9 @@ namespace Sintef.Apos.Sif.Model
     {
         public Groups Groups { get; }
         public SISComponents Components { get; }
-        public Integer VoteWithinGroup_k_in_kooN { get; protected set; }
+        public Integer VoteWithinGroup_K_in_KooN { get; protected set; }
         public Integer NumberOfComponentsOrSubgroups_N { get; protected set; }
-        public Boolean IsCrossSubsystemGroup { get; protected set; }
+        public Boolean AllowAnyComponents { get; protected set; }
 
         public const string RefBaseSystemUnitPath = "SIF Unit Classes/Group";
 
@@ -19,22 +19,16 @@ namespace Sintef.Apos.Sif.Model
 
         public Group(Node parent, string name) : base(parent, name)
         {
-            SetAttributes(Definition.GetAttributes(this, 2));
+            SetAttributes(Definition.GetAttributes(this, 3));
             Components = new SISComponents(this);
             Groups = new Groups(this);
 
-            _voter = new Voter(this, VoteWithinGroup_k_in_kooN, "k", NumberOfComponentsOrSubgroups_N, "N");
-        }
-
-        public void ToggleIsCrossSectionGroup()
-        {
-            if (IsCrossSubsystemGroup.Value.HasValue) IsCrossSubsystemGroup.Value = !IsCrossSubsystemGroup.Value;
-            else IsCrossSubsystemGroup.Value = true;
+            _voter = new Voter(this, VoteWithinGroup_K_in_KooN, "K", NumberOfComponentsOrSubgroups_N, "N");
         }
 
         public void VoteWithinGroup(int K, int N)
         {
-            VoteWithinGroup_k_in_kooN.Value = K;
+            VoteWithinGroup_K_in_KooN.Value = K;
             NumberOfComponentsOrSubgroups_N.Value = N;
         }
 
@@ -84,30 +78,6 @@ namespace Sintef.Apos.Sif.Model
             foreach (var group in Groups) groups.AddRange(group.GetAllGroups());
 
             return groups;
-        }
-
-        public override string GetPathStep()
-        {
-            if (Parent is Group parentGroup)
-            {
-                var index = 1;
-                foreach (var item in parentGroup.Groups)
-                {
-                    if (item == this) return GetType().Name + index;
-                    index++;
-                }
-            }
-            else if (Parent is SIFSubsystem parentSubsystem)
-            {
-                var index = 1;
-                foreach (var item in parentSubsystem.Groups)
-                {
-                    if (item == this) return GetType().Name + index;
-                    index++;
-                }
-            }
-
-            return base.GetPathStep();
         }
 
         public override int GetNumberOfElements()
@@ -173,29 +143,68 @@ namespace Sintef.Apos.Sif.Model
             foreach (var group in _items) group.Validate(errors);
         }
     }
-    public class CrossSubsystemGroups : IEnumerable<Group>
+    public class CrossSubsystemGroups : Node, IEnumerable<Group>
     {
-        private readonly Node _parent;
-        public CrossSubsystemGroups(Node parent)
+        public Integer VoteBetweenGroups_M_in_MooN { get; protected set; }
+        public Integer NumberOfGroups_N { get; protected set; }
+
+        private readonly Voter _voter;
+
+        private readonly Collection<Group> _items = new Collection<Group>();
+        public CrossSubsystemGroups(Node parent) : base(parent, "CrossSubsystemGroups")
         {
-            _parent = parent;
+            NumberOfGroups_N = new Integer("NumberOfGroups_N", "", this);
+            VoteBetweenGroups_M_in_MooN = new Integer("VoteBetweenGroups_M_in_MooN", "", this);
+
+            _voter = new Voter(this, VoteBetweenGroups_M_in_MooN, "M", NumberOfGroups_N, "N");
+
         }
 
-        private IEnumerable<Group> GetItems() 
+        public void VoteBetweenGroups(int M, int N)
         {
-            if (_parent is SIF sif) return sif.GetAllGroups();
+            VoteBetweenGroups_M_in_MooN.Value = M;
+            NumberOfGroups_N.Value = N;
+        }
 
-            return Enumerable.Empty<Group>();
+        public override int GetNumberOfElements()
+        {
+            return _items.Count;
+        }
+
+        public void Validate(Collection<ModelError> errors)
+        {
+            if (!_items.Any()) return;
+            _voter.Validate(errors);
+        }
+
+        public bool Add(Group item)
+        {
+            if (_items.Contains(item)) return false;
+
+            _items.Add(item);
+            return true;
+        }
+
+
+
+        public bool Remove(Group item)
+        {
+            return _items.Remove(item);
+        }
+
+        public void Clear()
+        {
+            _items.Clear();
         }
 
         public IEnumerator<Group> GetEnumerator()
         {
-            return GetItems().GetEnumerator();
+            return _items.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return GetItems().GetEnumerator();
+            return _items.GetEnumerator();
         }
 
     }

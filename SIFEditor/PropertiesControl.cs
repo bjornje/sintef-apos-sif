@@ -33,6 +33,18 @@ namespace SIFEditor
                 flowLayoutPanel1.Controls.Add(control);
                 _editorControls.Add(sisComponent.Name.Name, control);
             }
+            else if (node is CrossSubsystemGroups groups)
+            {
+                var control = new PropertyEditorControl(groups.NumberOfGroups_N);
+                control.TextChanged += Control_TextChanged;
+                flowLayoutPanel1.Controls.Add(control);
+                _editorControls.Add(groups.NumberOfGroups_N.Name, control);
+
+                var control2 = new PropertyEditorControl(groups.VoteBetweenGroups_M_in_MooN);
+                control2.TextChanged += Control_TextChanged;
+                flowLayoutPanel1.Controls.Add(control2);
+                _editorControls.Add(groups.VoteBetweenGroups_M_in_MooN.Name, control2);
+            }
 
             foreach (var property in node.Attributes.OrderBy(x => x.Name))
             {
@@ -53,6 +65,11 @@ namespace SIFEditor
             if (node is SISComponent sisComponent)
             {
                 _editorControls[sisComponent.Name.Name].Show(sisComponent.Name);
+            }
+            else if (node is CrossSubsystemGroups groups)
+            {
+                _editorControls[groups.NumberOfGroups_N.Name].Show(groups.NumberOfGroups_N);
+                _editorControls[groups.VoteBetweenGroups_M_in_MooN.Name].Show(groups.VoteBetweenGroups_M_in_MooN);
             }
 
             foreach (var property in node.Attributes)

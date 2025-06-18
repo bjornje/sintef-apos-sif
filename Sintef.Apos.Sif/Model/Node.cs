@@ -15,8 +15,49 @@ namespace Sintef.Apos.Sif.Model
         public IEnumerable<AttributeType> Attributes => _attributes ?? Enumerable.Empty<AttributeType>();
         public string PathStepX { get; }
 
-        public virtual string GetPathStep()
+        public string GetPathStep()
         {
+            var index = 1;
+
+            if (Parent is Root root)
+            {
+                foreach (var item in root.SIFs)
+                {
+                    if (item == this) return GetType().Name + index;
+                    index++;
+                }
+
+            }
+            else if (Parent is Group parentGroup)
+            {
+                foreach (var item in parentGroup.Groups)
+                {
+                    if (item == this) return GetType().Name + index;
+                    index++;
+                }
+
+                index = 1;
+                foreach (var item in parentGroup.Components)
+                {
+                    if (item == this) return "Component" + index;
+                    index++;
+                }
+            }
+            else if (Parent is SIFSubsystem parentSubsystem)
+            {
+                foreach (var item in parentSubsystem.Groups)
+                {
+                    if (item == this) return GetType().Name + index;
+                    index++;
+                }
+            }
+            else if (Parent is SIF)
+            {
+                var name = GetType().Name;
+                return name.Substring(0, name.Length - 9);
+            }
+
+
             return GetType().Name;
         }
 

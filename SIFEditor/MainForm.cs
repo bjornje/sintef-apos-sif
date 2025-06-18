@@ -1,7 +1,14 @@
+using Aml.Engine.Services;
 using Sintef.Apos.Sif;
 using Sintef.Apos.Sif.Model;
+using System;
 using System.Reflection;
+using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows.Forms;
+using System.Xml.Linq;
+using Boolean = Sintef.Apos.Sif.Model.Boolean;
 
 namespace SIFEditor
 {
@@ -35,7 +42,7 @@ namespace SIFEditor
 
             FindAllTreeNodes(treeView1.TopNode, treeNodes);
 
-            foreach(var treeNode in treeNodes) 
+            foreach (var treeNode in treeNodes)
             {
                 if (treeNode.Tag is not Node node) continue;
 
@@ -66,20 +73,23 @@ namespace SIFEditor
 
         private void AddSIFs(SIFs sifs, TreeNode node)
         {
-            foreach(var sif in sifs)
+            foreach (var sif in sifs)
             {
                 var childNode = new TreeNode(sif.DisplayName(node));
                 childNode.ContextMenuStrip = contextMenuStripSIF;
                 childNode.Tag = sif;
                 node.Nodes.Add(childNode);
-                //AddCrossSubsystemGroups(sif.CrossSubsystemGroups, childNode);
+
+                var crossSubsystemTreeNode = AppendTreeNode(sif.CrossSubsystemGroups, childNode, null);
+
+                AddCrossSubsystemGroups(sif.CrossSubsystemGroups, crossSubsystemTreeNode);
                 AddSIFSubsystems(sif.Subsystems, childNode);
             }
         }
 
         private void AddSIFSubsystems(SIFSubsystems subsystems, TreeNode node)
         {
-            foreach(var subsystem in subsystems)
+            foreach (var subsystem in subsystems)
             {
                 var childNode = new TreeNode(subsystem.DisplayName(node));
                 childNode.ContextMenuStrip = contextMenuStripSubsystem;
@@ -95,11 +105,9 @@ namespace SIFEditor
             foreach (var group in groups)
             {
                 var childNode = new TreeNode(group.DisplayName(node));
-                childNode.ContextMenuStrip = contextMenuStripGroup;
+                childNode.ContextMenuStrip = contextMenuCrossGroup;
                 childNode.Tag = group;
                 node.Nodes.Add(childNode);
-                AddComponents(group.Components, childNode);
-                AddGroups(group.Groups, childNode);
             }
         }
 
@@ -134,7 +142,8 @@ namespace SIFEditor
             var list = new List<TreeNode>();
             FindAllTreeNodes(treeView1.TopNode, list);
 
-            var result = list.SingleOrDefault(x => x.Tag == error.Node);
+            var result = list.FirstOrDefault(x => x.Tag == error.Node && x.Parent.Tag is not CrossSubsystemGroups);
+
 
             if (result == null) return;
 
@@ -149,7 +158,7 @@ namespace SIFEditor
 
             list.Add(node);
 
-            foreach(var childNode in node.Nodes)
+            foreach (var childNode in node.Nodes)
             {
                 if (childNode is TreeNode treeNode) FindAllTreeNodes(treeNode, list);
             }
@@ -193,12 +202,70 @@ namespace SIFEditor
             }
             else if (sender is ComboBox comboBox && comboBox.Tag is AttributeType attributeType2)
             {
+                var valueBefore = attributeType2.ObjectValue;
+
                 if (string.IsNullOrEmpty(comboBox.Text)) attributeType2.StringValue = null;
                 else attributeType2.StringValue = comboBox.Text;
+
+                if (attributeType2.Owner is Group group && attributeType2 == group.AllowAnyComponents)
+                {
+                    var change = CrossVotingGroupChange(valueBefore as bool?, group.AllowAnyComponents.Value);
+                    if (change == 1)
+                    {
+                        var treeNodes = new List<TreeNode>();
+                        FindAllTreeNodes(treeView1.TopNode, treeNodes);
+                        var crossGroupsTreeNode = treeNodes.FirstOrDefault(x => x.Tag == group.GetSIF().CrossSubsystemGroups);
+
+                        if (crossGroupsTreeNode != null && crossGroupsTreeNode.Tag is CrossSubsystemGroups groups)
+                        {
+                            groups.Add(group);
+                            var childNode = new TreeNode(group.DisplayName(crossGroupsTreeNode));
+                            childNode.ContextMenuStrip = contextMenuCrossGroup;
+                            childNode.Tag = group;
+                            crossGroupsTreeNode.Nodes.Add(childNode);
+                        }
+                    }
+                    else if (change == -1)
+                    {
+                        var treeNodes = new List<TreeNode>();
+                        FindAllTreeNodes(treeView1.TopNode, treeNodes);
+                        var crossGroupsTreeNode = treeNodes.FirstOrDefault(x => x.Tag == group.GetSIF().CrossSubsystemGroups);
+                        if (crossGroupsTreeNode != null && crossGroupsTreeNode.Tag is CrossSubsystemGroups groups)
+                        {
+                            var groupTreeNode = FindSubNode(crossGroupsTreeNode, group);
+                            if (groupTreeNode.Tag == group)
+                            {
+                                groups.Remove(group);
+                                crossGroupsTreeNode.Nodes.Remove(groupTreeNode);
+                            }
+                        }
+                    }
+                }
             }
 
             TreeChanged();
         }
+
+        private static TreeNode FindSubNode(TreeNode treeNode, Node node)
+        {
+            foreach (TreeNode subTreeNode in treeNode.Nodes)
+            {
+                if (subTreeNode.Tag == node) return subTreeNode;
+            }
+
+            return new TreeNode();
+        }
+
+        private static int CrossVotingGroupChange(bool? valueBefore, bool? valueAfter)
+        {
+            if (!valueBefore.HasValue) valueBefore = false;
+            if (!valueAfter.HasValue) valueAfter = false;
+
+            if (valueBefore.Value && !valueAfter.Value) return -1;
+            if (!valueBefore.Value && valueAfter.Value) return 1;
+            return 0;
+        }
+
 
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -269,7 +336,7 @@ namespace SIFEditor
             saveToolStripMenuItem.Enabled = _builder != null;
             saveAsToolStripMenuItem.Enabled = _builder != null;
             if (_builder == null) return;
- 
+
             RefreshTreeView();
 
             var hasChanges = _builder.HasChanges;
@@ -298,6 +365,8 @@ namespace SIFEditor
                 var sif = root.SIFs.Append("New SIF");
                 var sifTreeNode = AppendTreeNode(sif, treeView1.TopNode, contextMenuStripSIF);
 
+                var crossSubsystemTreeNode = AppendTreeNode(sif.CrossSubsystemGroups, sifTreeNode, null);
+
                 //InputDeviceSubsystem
                 var inputDeviceSubsystem = sif.Subsystems.AppendInputDevice();
                 inputDeviceSubsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
@@ -306,7 +375,7 @@ namespace SIFEditor
                 var inputDeviceSubsystemTreeNode = AppendTreeNode(inputDeviceSubsystem, sifTreeNode, contextMenuStripSubsystem);
 
                 var inputDeviceGroup = inputDeviceSubsystem.Groups.Append();
-                inputDeviceGroup.VoteWithinGroup_k_in_kooN.ObjectValue = 1;
+                inputDeviceGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
                 inputDeviceGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
 
                 var inputDeviceGroupTreeNode = AppendTreeNode(inputDeviceGroup, inputDeviceSubsystemTreeNode, contextMenuStripGroup);
@@ -322,7 +391,7 @@ namespace SIFEditor
                 var logicSolverSubsystemTreeNode = AppendTreeNode(logicSolverSubsystem, sifTreeNode, contextMenuStripSubsystem);
 
                 var logicSolverGroup = logicSolverSubsystem.Groups.Append();
-                logicSolverGroup.VoteWithinGroup_k_in_kooN.ObjectValue = 1;
+                logicSolverGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
                 logicSolverGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
 
                 var logicSolverGroupTreeNode = AppendTreeNode(logicSolverGroup, logicSolverSubsystemTreeNode, contextMenuStripGroup);
@@ -338,7 +407,7 @@ namespace SIFEditor
                 var finalElementSubsystemTreeNode = AppendTreeNode(finalElementSubsystem, sifTreeNode, contextMenuStripSubsystem);
 
                 var finalElementGroup = finalElementSubsystem.Groups.Append();
-                finalElementGroup.VoteWithinGroup_k_in_kooN.ObjectValue = 1;
+                finalElementGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
                 finalElementGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
 
                 var finalElementGroupTreeNode = AppendTreeNode(finalElementGroup, finalElementSubsystemTreeNode, contextMenuStripGroup);
@@ -388,7 +457,7 @@ namespace SIFEditor
                 }
                 else if (e.Node.Tag is Group group)
                 {
-                    //AdjustMenuItemChecked(e.Node.ContextMenuStrip, "isCrossSubsystemGroupToolStripMenuItem", group.IsCrossSubsystemGroup.Value);
+                    AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "setAsCrossVotingGroupToolStripMenuItem", !group.AllowAnyComponents.Value.HasValue || group.AllowAnyComponents.Value == false);
                 }
 
                 treeView1.SelectedNode = e.Node;
@@ -400,7 +469,7 @@ namespace SIFEditor
             if (treeView1.SelectedNode?.Tag is SIFSubsystem subsystem)
             {
                 var group = subsystem.Groups.Append();
-                group.VoteWithinGroup_k_in_kooN.ObjectValue = 1;
+                group.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
                 group.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
 
                 AppendTreeNode(group, treeView1.SelectedNode, contextMenuStripGroup);
@@ -488,13 +557,76 @@ namespace SIFEditor
             treeView1.Focus();
 
             using var saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "AML-files|*.aml";
+            saveFileDialog.Filter = "AML-files|*.aml|Text-files|*.txt";
 
             if (saveFileDialog.ShowDialog() != DialogResult.OK) return;
 
+            if (saveFileDialog.FileName.EndsWith(".txt"))
+            {
+                SaveAsTextFile(saveFileDialog.FileName);
+                return;
+            }
+
             _fileName = saveFileDialog.FileName;
+
             _builder?.SaveToFile(_fileName);
             TreeChanged();
+        }
+
+        private void SaveAsTextFile(string fileName)
+        {
+            if (_builder == null)
+            {
+                return;
+            }
+
+            var sb = new StringBuilder();
+            AppendLine(sb, "Path", "SIFID", "Component name", "Attribute name", "Attribute value");
+
+            foreach(var sif in _builder.SIFs)
+            {
+                foreach(var attribute in sif.Attributes)
+                {
+                    AppendLine(sb, sif.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue);
+
+                }
+
+                foreach (var subsystem in sif.Subsystems)
+                {
+                    foreach(var attribute in subsystem.Attributes)
+                    {
+                        AppendLine(sb, subsystem.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue);
+                    }
+                }
+
+                foreach (var group in sif.GetAllGroups())
+                {
+                    AppendGroup(sb, sif, group);
+                }
+            }
+
+            File.WriteAllText(fileName, sb.ToString());
+        }
+
+        private static void AppendGroup(StringBuilder sb, SIF sif, Group group)
+        {
+            foreach (var attribute in group.Attributes)
+            {
+                AppendLine(sb, group.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue);
+            }
+
+            foreach (var component in group.Components)
+            {
+                foreach(var attribute in component.Attributes)
+                {
+                    AppendLine(sb, component.GetPath(sif.Parent), sif.SIFID.Value, component.Name.Value, attribute.Name, attribute.StringValue);
+                }
+            }
+        }
+
+        private static void AppendLine(StringBuilder sb, string col1, string col2, string col3, string col4, string col5)
+        {
+            sb.AppendLine($"{col1}\t{col2}\t{col3}\t{col4}\t{col5}");
         }
 
         private void addGroupToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -502,7 +634,7 @@ namespace SIFEditor
             if (treeView1.SelectedNode?.Tag is Group group)
             {
                 var subGroup = group.Groups.Append();
-                subGroup.VoteWithinGroup_k_in_kooN.ObjectValue = 1;
+                subGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
                 subGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
 
                 AppendTreeNode(subGroup, treeView1.SelectedNode, contextMenuStripGroup);
@@ -574,19 +706,36 @@ namespace SIFEditor
             }
         }
 
-        private void isCrossSubsystemGroupToolStripMenuItem_Click(object sender, EventArgs e)
+        private void setAsCrossVotingGroupToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (treeView1.SelectedNode?.Tag is Group group)
             {
-                group.ToggleIsCrossSectionGroup();
+                group.AllowAnyComponents.Value = true;
+                var treeNodes = new List<TreeNode>();
+                FindAllTreeNodes(treeView1.TopNode, treeNodes);
+                var crossGroupsTreeNode = treeNodes.FirstOrDefault(x => x.Tag == group.GetSIF().CrossSubsystemGroups);
 
-                var treeNode = treeView1.SelectedNode.Parent.Parent;
-
-                if (group.IsCrossSubsystemGroup.Value.HasValue && group.IsCrossSubsystemGroup.Value.Value)
+                if (crossGroupsTreeNode != null && crossGroupsTreeNode.Tag is CrossSubsystemGroups groups)
                 {
-                    AppendTreeNode(group, treeNode, contextMenuStripGroup);
+                    groups.Add(group);
+                    var childNode = new TreeNode(group.DisplayName(crossGroupsTreeNode));
+                    childNode.ContextMenuStrip = contextMenuCrossGroup;
+                    childNode.Tag = group;
+                    crossGroupsTreeNode.Nodes.Add(childNode);
                 }
 
+                TreeChanged();
+            }
+        }
+
+        private void removeFromCrossVotingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode.Tag is Group group)
+            {
+                group.AllowAnyComponents.Value = null;
+                var crossGroups = group.GetSIF().CrossSubsystemGroups;
+                crossGroups.Remove(group);
+                treeView1.Nodes.Remove(treeView1.SelectedNode);
                 TreeChanged();
             }
         }

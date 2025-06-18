@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace Sintef.Apos.Sif.Model
 {
@@ -17,17 +12,19 @@ namespace Sintef.Apos.Sif.Model
         public string StringValue { get; set; }
         public string RefAttributeType { get; }
         public Type DataType { get; }
+        public Node Owner { get; }
         public virtual object ObjectValue { get => GetValueAsObject(StringValue, DataType); set => StringValue = GetValueAsString(value); }
 
-        protected AttributeType(string name, string description, string refAttributeType, Type dataType)
+        protected AttributeType(string name, string description, string refAttributeType, Type dataType, Node owner)
         {
             Name = name;
             Description = description;
             RefAttributeType = refAttributeType;
             DataType = dataType;
+            Owner = owner;
         }
 
-        public abstract AttributeType Clone();
+        public abstract AttributeType Clone(Node owner);
 
         public virtual void Validate(Node node, Collection<ModelError> errors)
         {
@@ -94,7 +91,7 @@ namespace Sintef.Apos.Sif.Model
             else if (value is decimal decimalValue) return decimalValue.ToString(CultureInfo.InvariantCulture);
             else if (value is int intValue) return intValue.ToString(CultureInfo.InvariantCulture);
             else if (value is long longValue) return longValue.ToString(CultureInfo.InvariantCulture);
-            else if (value is bool boolValue) return boolValue.ToString(CultureInfo.InvariantCulture);
+            else if (value is bool boolValue) return boolValue.ToString(CultureInfo.InvariantCulture).ToLower();
             else return value.ToString();
         }
 
@@ -103,14 +100,13 @@ namespace Sintef.Apos.Sif.Model
     public class String : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public String(string name, string description) : base(name, description, "Types/String", typeof(string))
+        public String(string name, string description, Node owner) : base(name, description, "Types/String", typeof(string), owner)
         {
-
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new String(Name, Description);
+            return new String(Name, Description, owner);
         }
 
         public override void Validate(Node node, Collection<ModelError> errors)
@@ -124,144 +120,144 @@ namespace Sintef.Apos.Sif.Model
     public class Frequecy : AttributeType
     {
         public double? Value { get => ObjectValue as double?; set => ObjectValue = value; }
-        public Frequecy(string name, string description) : base(name, description, "Types/Frequecy", typeof(decimal))
+        public Frequecy(string name, string description, Node owner) : base(name, description, "Types/Frequecy", typeof(decimal), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new Frequecy(Name, Description);
+            return new Frequecy(Name, Description, owner);
         }
     }
     public class Integer : AttributeType
     {
         public int? Value { get => ObjectValue as int?; set => ObjectValue = value; }
-        public Integer(string name, string description) : base(name, description, "Types/Integer", typeof(long))
+        public Integer(string name, string description, Node owner) : base(name, description, "Types/Integer", typeof(long), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new Integer(Name, Description);
+            return new Integer(Name, Description, owner);
         }
     }
     public class Boolean : AttributeType
     {
         public bool? Value { get => ObjectValue as bool?; set => ObjectValue = value; }
-        public Boolean(string name, string description) : base(name, description, "Types/Boolean", typeof(bool))
+        public Boolean(string name, string description, Node owner) : base(name, description, "Types/Boolean", typeof(bool), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new Boolean(Name, Description);
+            return new Boolean(Name, Description, owner);
         }
     }
     public class Hours : AttributeType
     {
         public double? Value { get => ObjectValue as double?; set => ObjectValue = value; }
-        public Hours(string name, string description) : base(name, description, "Types/Hours", typeof(decimal))
+        public Hours(string name, string description, Node owner) : base(name, description, "Types/Hours", typeof(decimal), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new Hours(Name, Description);
+            return new Hours(Name, Description, owner);
         }
     }
     public class FITs : AttributeType
     {
         public double? Value { get => ObjectValue as double?; set => ObjectValue = value; }
-        public FITs(string name, string description) : base(name, description, "Types/FITs", typeof(decimal))
+        public FITs(string name, string description, Node owner) : base(name, description, "Types/FITs", typeof(decimal), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new FITs(Name, Description);
+            return new FITs(Name, Description, owner);
         }
     }
     public class SILLevel : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public SILLevel(string name, string description) : base(name, description, "Types/SILLevel", typeof(string))
+        public SILLevel(string name, string description, Node owner) : base(name, description, "Types/SILLevel", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new SILLevel(Name, Description);
+            return new SILLevel(Name, Description, owner);
         }
     }
     public class InputDeviceTrigger : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public InputDeviceTrigger(string name, string description) : base(name, description, "Types/InputDeviceTrigger", typeof(string))
+        public InputDeviceTrigger(string name, string description, Node owner) : base(name, description, "Types/InputDeviceTrigger", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new InputDeviceTrigger(Name, Description);
+            return new InputDeviceTrigger(Name, Description, owner);
         }
     }
     public class FinalElementFunction : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public FinalElementFunction(string name, string description) : base(name, description, "Types/FinalElementFunction", typeof(string))
+        public FinalElementFunction(string name, string description, Node owner) : base(name, description, "Types/FinalElementFunction", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new FinalElementFunction(Name, Description);
+            return new FinalElementFunction(Name, Description, owner);
         }
     }
     public class FailSafePosition : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public FailSafePosition(string name, string description) : base(name, description, "Types/FailSafePosition", typeof(string))
+        public FailSafePosition(string name, string description, Node owner) : base(name, description, "Types/FailSafePosition", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new FailSafePosition(Name, Description);
+            return new FailSafePosition(Name, Description, owner);
         }
     }
     public class Percent : AttributeType
     {
         public double? Value { get => ObjectValue as double?; set => ObjectValue = value; }
-        public Percent(string name, string description) : base(name, description, "Types/Percent", typeof(decimal))
+        public Percent(string name, string description, Node owner) : base(name, description, "Types/Percent", typeof(decimal), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new Percent(Name, Description);
+            return new Percent(Name, Description, owner);
         }
     }
     public class Seconds : AttributeType
     {
         public double? Value { get => ObjectValue as double?; set => ObjectValue = value; }
-        public Seconds(string name, string description) : base(name, description, "Types/Seconds", typeof(decimal))
+        public Seconds(string name, string description, Node owner) : base(name, description, "Types/Seconds", typeof(decimal), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new Seconds(Name, Description);
+            return new Seconds(Name, Description, owner);
         }
 
     }
@@ -269,124 +265,124 @@ namespace Sintef.Apos.Sif.Model
     public class E_DEToTrip : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public E_DEToTrip(string name, string description) : base(name, description, "Types/E_DEToTrip", typeof(string))
+        public E_DEToTrip(string name, string description, Node owner) : base(name, description, "Types/E_DEToTrip", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new E_DEToTrip(Name, Description);
+            return new E_DEToTrip(Name, Description, owner);
         }
     }
 
     public class PerYear : AttributeType
     {
         public double? Value { get => ObjectValue as double?; set => ObjectValue = value; }
-        public PerYear(string name, string description) : base(name, description, "Types/PerYear", typeof(decimal))
+        public PerYear(string name, string description, Node owner) : base(name, description, "Types/PerYear", typeof(decimal), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new PerYear(Name, Description);
+            return new PerYear(Name, Description, owner);
         }
     }
     public class SIFType : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public SIFType(string name, string description) : base(name, description, "Types/SIFType", typeof(string))
+        public SIFType(string name, string description, Node owner) : base(name, description, "Types/SIFType", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new SIFType(Name, Description);
+            return new SIFType(Name, Description, owner);
         }
     }
     public class ModeOfOperation : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public ModeOfOperation(string name, string description) : base(name, description, "Types/ModeOfOperation", typeof(string))
+        public ModeOfOperation(string name, string description, Node owner) : base(name, description, "Types/ModeOfOperation", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new ModeOfOperation(Name, Description);
+            return new ModeOfOperation(Name, Description, owner);
         }
     }
 
     public class ILLevel : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public ILLevel(string name, string description) : base(name, description, "Types/ILLevel", typeof(string))
+        public ILLevel(string name, string description, Node owner) : base(name, description, "Types/ILLevel", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new ILLevel(Name, Description);
+            return new ILLevel(Name, Description, owner);
         }
     }
 
     public class PerHour : AttributeType
     {
         public double? Value { get => ObjectValue as double?; set => ObjectValue = value; }
-        public PerHour(string name, string description) : base(name, description, "Types/PerHour", typeof(decimal))
+        public PerHour(string name, string description, Node owner) : base(name, description, "Types/PerHour", typeof(decimal), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new PerHour(Name, Description);
+            return new PerHour(Name, Description, owner);
         }
     }
 
     public class ManualActivation : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public ManualActivation(string name, string description) : base(name, description, "Types/ManualActivation", typeof(string))
+        public ManualActivation(string name, string description, Node owner) : base(name, description, "Types/ManualActivation", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new ManualActivation(Name, Description);
+            return new ManualActivation(Name, Description, owner);
         }
     }
 
     public class ResetAfterShutdown_FinalElement : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public ResetAfterShutdown_FinalElement(string name, string description) : base(name, description, "Types/ResetAfterShutdown_FinalElement", typeof(string))
+        public ResetAfterShutdown_FinalElement(string name, string description, Node owner) : base(name, description, "Types/ResetAfterShutdown_FinalElement", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new ResetAfterShutdown_FinalElement(Name, Description);
+            return new ResetAfterShutdown_FinalElement(Name, Description, owner);
         }
     }
 
     public class AlarmOrWarning : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public AlarmOrWarning(string name, string description) : base(name, description, "Types/AlarmOrWarning", typeof(string))
+        public AlarmOrWarning(string name, string description, Node owner) : base(name, description, "Types/AlarmOrWarning", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new AlarmOrWarning(Name, Description);
+            return new AlarmOrWarning(Name, Description, owner);
         }
     }
 
@@ -394,42 +390,42 @@ namespace Sintef.Apos.Sif.Model
     public class TagNumber : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public TagNumber(string name, string description) : base(name, description, "Types/TagNumber", typeof(string))
+        public TagNumber(string name, string description, Node owner) : base(name, description, "Types/TagNumber", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new TagNumber(Name, Description);
+            return new TagNumber(Name, Description, owner);
         }
     }
 
     public class TypeAB : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public TypeAB(string name, string description) : base(name, description, "Types/TypeAB", typeof(string))
+        public TypeAB(string name, string description, Node owner) : base(name, description, "Types/TypeAB", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new TypeAB(Name, Description);
+            return new TypeAB(Name, Description, owner);
         }
     }
 
     public class Comparison : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public Comparison(string name, string description) : base(name, description, "Types/Comparison", typeof(string))
+        public Comparison(string name, string description, Node owner) : base(name, description, "Types/Comparison", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new Comparison(Name, Description);
+            return new Comparison(Name, Description, owner);
         }
     }
 
@@ -437,14 +433,14 @@ namespace Sintef.Apos.Sif.Model
     public class BypassControl : AttributeType
     {
         public string Value { get => StringValue; set => StringValue = value; }
-        public BypassControl(string name, string description) : base(name, description, "Types/BypassControl", typeof(string))
+        public BypassControl(string name, string description, Node owner) : base(name, description, "Types/BypassControl", typeof(string), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new BypassControl(Name, Description);
+            return new BypassControl(Name, Description, owner);
         }
     }
 
@@ -452,14 +448,44 @@ namespace Sintef.Apos.Sif.Model
     public class kg_s : AttributeType
     {
         public double? Value { get => ObjectValue as double?; set => ObjectValue = value; }
-        public kg_s(string name, string description) : base(name, description, "Types/kg_s", typeof(decimal))
+        public kg_s(string name, string description, Node owner) : base(name, description, "Types/kg_s", typeof(decimal), owner)
         {
 
         }
 
-        public override AttributeType Clone()
+        public override AttributeType Clone(Node owner)
         {
-            return new kg_s(Name, Description);
+            return new kg_s(Name, Description, owner);
+        }
+    }
+
+
+
+    public class Probability : AttributeType
+    {
+        public double? Value { get => ObjectValue as double?; set => ObjectValue = value; }
+        public Probability(string name, string description, Node owner) : base(name, description, "Types/Probability", typeof(decimal), owner)
+        {
+
+        }
+
+        public override AttributeType Clone(Node owner)
+        {
+            return new Probability(Name, Description, owner);
+        }
+    }
+
+    public class Decimal : AttributeType
+    {
+        public double? Value { get => ObjectValue as double?; set => ObjectValue = value; }
+        public Decimal(string name, string description, Node owner) : base(name, description, "Types/Decimal", typeof(decimal), owner)
+        {
+
+        }
+
+        public override AttributeType Clone(Node owner)
+        {
+            return new Decimal(Name, Description, owner);
         }
     }
 

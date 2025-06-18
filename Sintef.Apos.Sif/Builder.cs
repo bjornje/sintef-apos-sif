@@ -74,6 +74,8 @@ namespace Sintef.Apos.Sif
                 }
             }
 
+            Roots.SetCrossVotingGroups();
+
             Roots.Validate(_errors);
 
             _rootsClone = Roots.Clone();
@@ -177,7 +179,7 @@ namespace Sintef.Apos.Sif
 
                         if (k == null) k = ReadAttribute("M", ie); // for backward compatibility
 
-                        group.VoteWithinGroup_k_in_kooN.StringValue = k;
+                        group.VoteWithinGroup_K_in_KooN.StringValue = k;
                         return;
                     }
                     break;
