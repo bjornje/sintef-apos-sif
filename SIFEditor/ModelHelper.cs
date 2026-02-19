@@ -12,7 +12,7 @@ namespace SIFEditor
 
             if (node is SIFSubsystem sifSubsystem)
             {
-                return $"{sifSubsystem.GetPathStep()} ({sifSubsystem.VoteBetweenGroups_M_in_MooN.StringValue}oo{sifSubsystem.NumberOfGroups_N.StringValue})";
+                return $"{sifSubsystem.GetPathStep()} ({sifSubsystem.MInVotingMooN.StringValue}oo{sifSubsystem.NumberOfGroups.StringValue})";
             }
 
             if (node is Group group)
@@ -22,7 +22,7 @@ namespace SIFEditor
                     return $"{group.GetPath(group.GetSIF())}";
                 }
 
-                return $"{node.GetPathStep()} ({group.VoteWithinGroup_K_in_KooN.StringValue}oo{group.NumberOfComponentsOrSubgroups_N.StringValue})";
+                return $"{node.GetPathStep()} ({group.MInVotingMooN.StringValue}oo{group.NumberOfDevicesWithinGroup.StringValue})";
             }
 
             if (node is CrossSubsystemGroups crossGroups)

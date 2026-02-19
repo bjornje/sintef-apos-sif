@@ -20,37 +20,54 @@ namespace Sintef.Apos.Sif.Model
 
 
         //Attributes
-        public ILLevel AILLevel { get; private set; } //1
-        public String Cause { get; private set; }
-        public PerYear DemandRate { get; private set; }
-        public String DemandSource { get; private set; }
-        public String Effect { get; private set; } //5
-        public ILLevel EILLevel { get; private set; }
-        public String EUCReference { get; private set; }
-        public ManualActivation ManualActivation { get; private set; }
-        public Seconds MaxAllowableResponseTime { get; private set; }
-        public String MeasureToAvoidCCF { get; private set; } //10
-        public ModeOfOperation ModeOfOperation { get; private set; }
-        public Probability PFDRequirement { get; private set; }
-        public PerHour PFHRequirement { get; private set; }
-        public String PlantOperatingMode { get; private set; }
-        public String QuantificationMethodOrTool { get; private set; } //15
-        public String SafeProcessState { get; private set; }
-        public String SIFDescription { get; private set; }
-        public String SIFID { get; private set; }
-        public String SIFName { get; private set; }
-        public SIFType SIFType { get; private set; } //20
-        public String SIFTypicalID { get; private set; }
+
+        public FrequecyPerYear MaximumAllowableDemandRate { get; private set; }
+        public DurationSeconds MaximumAllowableSIFResponseTime { get; private set; }
+        public String SafeStateOfProcess { get; private set; }
+        public SILLevel SafetyIntegrityLevelRequirement { get; private set; }
         public String SILAllocationMethod { get; private set; }
-        public SILLevel SILLevel { get; private set; }
-        public PerHour SpuriousTripRate { get; private set; }
-        public String SurvaivabilityRequirement { get; private set; } //25
+        public String SIFDescription { get; private set; }
+        public ModeOfOperation ModeOfOperation { get; private set; }
+        public EnvironmentalIntegrityLevel EnvironmentalIntegrityLevelRequirement { get; private set; }
+        public AssetIntegrityLevel AssetIntegrityLevelRequirement { get; private set; }
+        public Probability PFDRequirement { get; private set; }
+        public String SIFName { get; private set; }
+        public SIFType SIFType { get; private set; }
+        public String SIFID { get; private set; }
+        public String Cause { get; private set; }
+        public String Effect { get; private set; }
+        public FrequecyPerHour MaximumAllowableSpuriousTripRate { get; private set; }
+        public String ManuallyActivatedShutdownRequirement { get; private set; }
+        public String Effect4 { get; private set; }
+        public FrequecyPerHour PFHRequirement { get; private set; }
+        public String DemandSource { get; private set; }
+        public String SIFTypicalID { get; private set; }
+        public String SIFVersion { get; private set; }
+
+        //20
+        //public ILLevel AILLevel { get; private set; } //1
+        //public PerYear DemandRate { get; private set; }
+        //public ILLevel EILLevel { get; private set; }
+        //public String EUCReference { get; private set; }
+        //public ManualActivation ManualActivation { get; private set; }
+        //public Seconds MaxAllowableResponseTime { get; private set; }
+        //public String MeasureToAvoidCCF { get; private set; } //10
+        //public ModeOfOperation ModeOfOperation { get; private set; }
+        //public Probability PFDRequirement { get; private set; }
+        //public String PlantOperatingMode { get; private set; }
+        //public String QuantificationMethodOrTool { get; private set; } //15
+        //public String SafeProcessState { get; private set; }
+        //public String SIFDescription { get; private set; }
+        //public String SILAllocationMethod { get; private set; }
+        //public SILLevel SILLevel { get; private set; }
+        //public PerHour SpuriousTripRate { get; private set; }
+        //public String SurvaivabilityRequirement { get; private set; } //25
 
         public const string RefBaseSystemUnitPath = "SIF Unit Classes/SIF";
 
         public SIF(Root parent) : base(parent, $"SIF{parent.SIFs.Count() + 1}")
         {
-            SetAttributes(Definition.GetAttributes(this, 25));
+            SetAttributes(Definition.GetAttributes(this, 21));
 
             Subsystems = new SIFSubsystems(this);
 

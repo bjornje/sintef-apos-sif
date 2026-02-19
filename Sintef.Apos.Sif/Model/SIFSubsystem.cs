@@ -11,23 +11,24 @@ namespace Sintef.Apos.Sif.Model
         public const string RefBaseSystemUnitPath = "SIF Unit Classes/SIFSubsystem";
         public Groups Groups { get; }
         public Percent PFDBudget { get; protected set; }
-        public Integer VoteBetweenGroups_M_in_MooN { get; protected set; }
-        public Integer NumberOfGroups_N { get; protected set; }
+
+        public Integer MInVotingMooN { get; protected set; }
+        public Integer NumberOfGroups { get; protected set; }
 
         private readonly Voter _voter;
         public SIFSubsystem(SIF parent, string pathStep) : base(parent, pathStep)
         {
             SetAttributes(Definition.GetAttributes(this, 3));
 
-            _voter = new Voter(this, VoteBetweenGroups_M_in_MooN, "M", NumberOfGroups_N, "N");
+            _voter = new Voter(this, MInVotingMooN, "M", NumberOfGroups, "N");
 
             Groups = new Groups(this);
         }
 
         public void VoteBetweenGroups(int M, int N)
         {
-            VoteBetweenGroups_M_in_MooN.Value = M;
-            NumberOfGroups_N.Value = N;
+            MInVotingMooN.Value = M;
+            NumberOfGroups.Value = N;
         }
 
         public bool IsSameAs(SIFSubsystem subsystem)

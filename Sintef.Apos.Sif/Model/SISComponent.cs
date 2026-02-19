@@ -3,41 +3,35 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sintef.Apos.Sif.Model
 {
     public class SISComponent : Node
     {
-        public String APOSL2Group { get; protected set; } //1
-        public Boolean Bypass_Approvement { get; protected set; }
-        public BypassControl Bypass_Control { get; protected set; }
-        public Seconds Bypass_MaxAllowableBypassTime { get; protected set; }
-        public String DiagnosticRequired { get; protected set; } //5
-        public String DiagnosticRequirementsForImplementation { get; protected set; }
-        public E_DEToTrip E_DEToTrip { get; protected set; }
-        public String EnvironmentalExtremes { get; protected set; }
-        public Comparison FailPass_ComparisonToPass { get; protected set; }
-        public String FailPass_Masurement { get; protected set; } //10
-        public String FailPass_Requirement { get; protected set; }
-        public String FailPass_Unit { get; protected set; }
-        public Seconds MaxAllowableResponseTime { get; protected set; }
-        public Hours MTTR { get; protected set; }
-        public Percent PFDBudget { get; protected set; } //15
+        public DurationHours MaximumTestIntervalForSILCompliance { get; protected set; } //1
+        public TagName TagName { get; protected set; }
+        public Percent PFDBudget { get; protected set; }
+        public String TagInformation { get; protected set; }
+        public String SafeStateOfDevice { get; protected set; } //5
+        public TypeAB TypeAOrB { get; protected set; }
+        public String EquipmentType { get; protected set; }
         public Percent PFHBudget { get; protected set; }
-        public Percent ProofTestCoverage { get; protected set; }
-        public Hours ProofTestIntervalOperatorSpec { get; protected set; }
-        public Hours ProofTestIntervalSILCompliance { get; protected set; }
-        public String SafeState { get; protected set; } //20
-        public String SurvaibabilityRequirement { get; protected set; }
-        public SILLevel SystematicCapability { get; protected set; } 
-        public String TagDescription { get; protected set; }
-        public String TagName { get; protected set; }
-        public TagNumber TagNumber { get; protected set; } //25
-        public Seconds TimeDelay { get; protected set; }
-        public String TripAction { get; protected set; }
-        public TypeAB TypeAB { get; protected set; } //28
+        //public String RequirementsForTesting { get; protected set; }
+        public SCLevel SystematicCapabilityRequirement { get; protected set; } //10
+        public Percent TestCoverage { get; protected set; }
+        public DurationHours MeanTimeToRestoration { get; protected set; }
+        public DurationHours MinimumTestIntervalOperatorSpecification { get; protected set; }
+        public DurationSeconds MaximumAllowableSISDeviceResponseTime { get; protected set; }
+        public DurationHours ExpectedRepairTime { get; protected set; } //15
+        public String NumericFailCriterionValue { get; protected set; }
+        public Comparison NumericFailCriterionOperator { get; protected set; }
+        public String NumericFailCriterionDescriptionOfMeasurement { get; protected set; }
+        public Boolean BypassAdministrativeControlRequired { get; protected set; }
+        public DurationSeconds MaximumAllowableBypassTime { get; protected set; } //20
+        public TripEnergyMode TripEnergyMode { get; protected set; }
+        public FailurePhilosophy FailurePhilosophy { get; protected set; }
+        public EnvironmentalExtremes EnvironmentalExtremes { get; protected set; }
+        public DurationHours MaximumPermittedRepairTime { get; protected set; } //24
 
         public const string RefBaseSystemUnitPath = "SIF Unit Classes/SISComponent";
 
@@ -45,10 +39,10 @@ namespace Sintef.Apos.Sif.Model
 
         public SISComponent(Group parent, string name, int expectedNumberOfAttributes) : base(parent, name)
         {
-            Name = new String(nameof(Name), "", this);
+            Name = new String(nameof(Name), "", "", this);
             Name.StringValue = name;
 
-            SetAttributes(Definition.GetAttributes(this, expectedNumberOfAttributes + 28));
+            SetAttributes(Definition.GetAttributes(this, expectedNumberOfAttributes + 23));
         }
 
         public bool IsSameAs(SISComponent component)

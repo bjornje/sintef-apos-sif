@@ -1,16 +1,11 @@
-﻿using System;
-using System.Linq;
-
-namespace Sintef.Apos.Sif.Model
+﻿namespace Sintef.Apos.Sif.Model
 {
     public class FinalElementComponent : SISComponent
     {
-        public Boolean ManualOperation { get; protected set; } //1
-        public kg_s MaximumAllowableLeakageRate { get; protected set; }
-        public Percent PartialStrokeTestCoverage { get; protected set; }
-        public Hours PartialStrokeTestInterval { get; protected set; }
-        public ResetAfterShutdown_FinalElement ResetAfterShutdown { get; protected set; } //5
-        public Boolean TightShutOff { get; protected set; }
+        public Boolean ManualOperationIsPossible { get; protected set; }
+        public LeakageRate_kg_s MaximumAllowableLeakageRate { get; protected set; }
+        public ResetAfterShutdown_FinalElement ResetAfterShutdownRequirement { get; protected set; }
+        public Boolean TightShutoffIsRequired { get; protected set; }
 
         public new const string RefBaseSystemUnitPath = "SIS Unit Classes/FinalElementComponent";
 

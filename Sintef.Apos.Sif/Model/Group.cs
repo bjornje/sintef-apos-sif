@@ -9,8 +9,8 @@ namespace Sintef.Apos.Sif.Model
     {
         public Groups Groups { get; }
         public SISComponents Components { get; }
-        public Integer VoteWithinGroup_K_in_KooN { get; protected set; }
-        public Integer NumberOfComponentsOrSubgroups_N { get; protected set; }
+        public Integer MInVotingMooN { get; protected set; }
+        public Integer NumberOfDevicesWithinGroup { get; protected set; }
         public Boolean AllowAnyComponents { get; protected set; }
 
         public const string RefBaseSystemUnitPath = "SIF Unit Classes/Group";
@@ -23,13 +23,13 @@ namespace Sintef.Apos.Sif.Model
             Components = new SISComponents(this);
             Groups = new Groups(this);
 
-            _voter = new Voter(this, VoteWithinGroup_K_in_KooN, "K", NumberOfComponentsOrSubgroups_N, "N");
+            _voter = new Voter(this, MInVotingMooN, "M", NumberOfDevicesWithinGroup, "N");
         }
 
-        public void VoteWithinGroup(int K, int N)
+        public void VoteWithinGroup(int M, int N)
         {
-            VoteWithinGroup_K_in_KooN.Value = K;
-            NumberOfComponentsOrSubgroups_N.Value = N;
+            MInVotingMooN.Value = M;
+            NumberOfDevicesWithinGroup.Value = N;
         }
 
         public bool Remove(SISComponent item)
@@ -153,8 +153,8 @@ namespace Sintef.Apos.Sif.Model
         private readonly Collection<Group> _items = new Collection<Group>();
         public CrossSubsystemGroups(Node parent) : base(parent, "CrossSubsystemGroups")
         {
-            NumberOfGroups_N = new Integer("NumberOfGroups_N", "", this);
-            VoteBetweenGroups_M_in_MooN = new Integer("VoteBetweenGroups_M_in_MooN", "", this);
+            NumberOfGroups_N = new Integer("NumberOfGroups_N", "", "", this);
+            VoteBetweenGroups_M_in_MooN = new Integer("VoteBetweenGroups_M_in_MooN", "", "", this);
 
             _voter = new Voter(this, VoteBetweenGroups_M_in_MooN, "M", NumberOfGroups_N, "N");
 

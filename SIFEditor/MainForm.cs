@@ -369,14 +369,14 @@ namespace SIFEditor
 
                 //InputDeviceSubsystem
                 var inputDeviceSubsystem = sif.Subsystems.AppendInputDevice();
-                inputDeviceSubsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
-                inputDeviceSubsystem.NumberOfGroups_N.ObjectValue = 1;
+                inputDeviceSubsystem.MInVotingMooN.ObjectValue = 1;
+                inputDeviceSubsystem.NumberOfGroups.ObjectValue = 1;
 
                 var inputDeviceSubsystemTreeNode = AppendTreeNode(inputDeviceSubsystem, sifTreeNode, contextMenuStripSubsystem);
 
                 var inputDeviceGroup = inputDeviceSubsystem.Groups.Append();
-                inputDeviceGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
-                inputDeviceGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
+                inputDeviceGroup.MInVotingMooN.ObjectValue = 1;
+                inputDeviceGroup.NumberOfDevicesWithinGroup.ObjectValue = 1;
 
                 var inputDeviceGroupTreeNode = AppendTreeNode(inputDeviceGroup, inputDeviceSubsystemTreeNode, contextMenuStripGroup);
 
@@ -385,14 +385,14 @@ namespace SIFEditor
 
                 //LogicSolverSubsystem
                 var logicSolverSubsystem = sif.Subsystems.AppendLogicSolver();
-                logicSolverSubsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
-                logicSolverSubsystem.NumberOfGroups_N.ObjectValue = 1;
+                logicSolverSubsystem.MInVotingMooN.ObjectValue = 1;
+                logicSolverSubsystem.NumberOfGroups.ObjectValue = 1;
 
                 var logicSolverSubsystemTreeNode = AppendTreeNode(logicSolverSubsystem, sifTreeNode, contextMenuStripSubsystem);
 
                 var logicSolverGroup = logicSolverSubsystem.Groups.Append();
-                logicSolverGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
-                logicSolverGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
+                logicSolverGroup.MInVotingMooN.ObjectValue = 1;
+                logicSolverGroup.NumberOfDevicesWithinGroup.ObjectValue = 1;
 
                 var logicSolverGroupTreeNode = AppendTreeNode(logicSolverGroup, logicSolverSubsystemTreeNode, contextMenuStripGroup);
 
@@ -401,14 +401,14 @@ namespace SIFEditor
 
                 //FinalElementSubsystem
                 var finalElementSubsystem = sif.Subsystems.AppendFinalElement();
-                finalElementSubsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
-                finalElementSubsystem.NumberOfGroups_N.ObjectValue = 1;
+                finalElementSubsystem.MInVotingMooN.ObjectValue = 1;
+                finalElementSubsystem.NumberOfGroups.ObjectValue = 1;
 
                 var finalElementSubsystemTreeNode = AppendTreeNode(finalElementSubsystem, sifTreeNode, contextMenuStripSubsystem);
 
                 var finalElementGroup = finalElementSubsystem.Groups.Append();
-                finalElementGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
-                finalElementGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
+                finalElementGroup.MInVotingMooN.ObjectValue = 1;
+                finalElementGroup.NumberOfDevicesWithinGroup.ObjectValue = 1;
 
                 var finalElementGroupTreeNode = AppendTreeNode(finalElementGroup, finalElementSubsystemTreeNode, contextMenuStripGroup);
 
@@ -469,8 +469,8 @@ namespace SIFEditor
             if (treeView1.SelectedNode?.Tag is SIFSubsystem subsystem)
             {
                 var group = subsystem.Groups.Append();
-                group.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
-                group.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
+                group.MInVotingMooN.ObjectValue = 1;
+                group.NumberOfDevicesWithinGroup.ObjectValue = 1;
 
                 AppendTreeNode(group, treeView1.SelectedNode, contextMenuStripGroup);
                 TreeChanged();
@@ -634,8 +634,8 @@ namespace SIFEditor
             if (treeView1.SelectedNode?.Tag is Group group)
             {
                 var subGroup = group.Groups.Append();
-                subGroup.VoteWithinGroup_K_in_KooN.ObjectValue = 1;
-                subGroup.NumberOfComponentsOrSubgroups_N.ObjectValue = 1;
+                subGroup.MInVotingMooN.ObjectValue = 1;
+                subGroup.NumberOfDevicesWithinGroup.ObjectValue = 1;
 
                 AppendTreeNode(subGroup, treeView1.SelectedNode, contextMenuStripGroup);
 
@@ -672,8 +672,8 @@ namespace SIFEditor
             if (treeView1.SelectedNode?.Tag is SIF sif)
             {
                 var subsystem = sif.Subsystems.AppendInputDevice();
-                subsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
-                subsystem.NumberOfGroups_N.ObjectValue = 1;
+                subsystem.MInVotingMooN.ObjectValue = 1;
+                subsystem.NumberOfGroups.ObjectValue = 1;
 
                 AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
                 TreeChanged();
@@ -685,8 +685,8 @@ namespace SIFEditor
             if (treeView1.SelectedNode?.Tag is SIF sif)
             {
                 var subsystem = sif.Subsystems.AppendLogicSolver();
-                subsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
-                subsystem.NumberOfGroups_N.ObjectValue = 1;
+                subsystem.MInVotingMooN.ObjectValue = 1;
+                subsystem.NumberOfGroups.ObjectValue = 1;
 
                 AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
                 TreeChanged();
@@ -698,8 +698,8 @@ namespace SIFEditor
             if (treeView1.SelectedNode?.Tag is SIF sif)
             {
                 var subsystem = sif.Subsystems.AppendFinalElement();
-                subsystem.VoteBetweenGroups_M_in_MooN.ObjectValue = 1;
-                subsystem.NumberOfGroups_N.ObjectValue = 1;
+                subsystem.MInVotingMooN.ObjectValue = 1;
+                subsystem.NumberOfGroups.ObjectValue = 1;
 
                 AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
                 TreeChanged();

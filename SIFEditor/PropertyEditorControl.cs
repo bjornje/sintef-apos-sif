@@ -26,20 +26,20 @@ namespace SIFEditor
             labelName.Text = property.Name;
             toolTipProperty.SetToolTip(labelName, property.Description);
 
+            labelType.Text = Type.Name;
 
+            if (Definition.TryGetAttributeTypeDescription(property.RefAttributeType, out var description))
+            {
+                toolTipPropertyType.SetToolTip(labelType, description);
+            }
 
-
-            labelType.Text = property.RefAttributeType.Substring(6);
-            if (Definition.TryGetAttributeTypeDescription(labelType.Text, out var description)) toolTipPropertyType.SetToolTip(labelType, description);
-
-            if (Definition.TryGetAttributeTypeValues(labelType.Text, out var values))
+            if (Definition.TryGetAttributeTypeValues(property.RefAttributeType, out var values))
             {
                 tableLayoutPanel1.Controls.Add(comboBoxValue, 1, 0);
                 comboBoxValue.Dock = DockStyle.Fill;
                 comboBoxValue.Items.Add("");
                 foreach(var item in values) comboBoxValue.Items.Add(item);
                 ControlType = comboBoxValue.GetType();
-
             }
             else
             {

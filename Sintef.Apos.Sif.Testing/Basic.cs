@@ -55,8 +55,8 @@ namespace Sintef.Apos.Sif.Testing
             var finalElementComponent = finalElementGroup.Components.Append("ESV-3023");
             finalElementComponent.ProofTestIntervalSILCompliance.StringValue = "2000";
 
-            Assert.Equal(2, initiatorGroup.VoteWithinGroup_K_in_KooN.Value);
-            Assert.Equal(2, initiatorGroup.NumberOfComponentsOrSubgroups_N.Value);
+            Assert.Equal(2, initiatorGroup.MInVotingMooN.Value);
+            Assert.Equal(2, initiatorGroup.NumberOfDevicesWithinGroup.Value);
             Assert.Equal(3000.0, initiatorComponent1.ProofTestIntervalSILCompliance.Value);
             Assert.Equal(25.7, initiatorComponent1.ProofTestCoverage.Value);
             Assert.Equal(6000.0, initiatorComponent2.ProofTestIntervalSILCompliance.Value);
@@ -90,14 +90,14 @@ namespace Sintef.Apos.Sif.Testing
             var logicSolver2 = sif2.LogicSolver;
             var finalElement2 = sif2.FinalElement;
 
-            Assert.Equal("1", initiator2.VoteBetweenGroups_M_in_MooN.StringValue);
-            Assert.Equal("1", initiator2.NumberOfGroups_N.StringValue);
+            Assert.Equal("1", initiator2.MInVotingMooN.StringValue);
+            Assert.Equal("1", initiator2.NumberOfGroups.StringValue);
 
-            Assert.Equal("1", logicSolver2.VoteBetweenGroups_M_in_MooN.StringValue);
-            Assert.Equal("1", logicSolver2.NumberOfGroups_N.StringValue);
+            Assert.Equal("1", logicSolver2.MInVotingMooN.StringValue);
+            Assert.Equal("1", logicSolver2.NumberOfGroups.StringValue);
 
-            Assert.Equal("1", finalElement2.VoteBetweenGroups_M_in_MooN.StringValue);
-            Assert.Equal("1", finalElement2.NumberOfGroups_N.StringValue);
+            Assert.Equal("1", finalElement2.MInVotingMooN.StringValue);
+            Assert.Equal("1", finalElement2.NumberOfGroups.StringValue);
 
             var initiator2Group = initiator2.Groups.Single();
             var logicSolver2Group = logicSolver2.Groups.Single();
@@ -107,8 +107,8 @@ namespace Sintef.Apos.Sif.Testing
             Assert.Single(logicSolver2Group.Components);
             Assert.Single(finalElement2Group.Components);
 
-            Assert.Equal("2", initiator2Group.VoteWithinGroup_K_in_KooN.StringValue);
-            Assert.Equal("2", initiator2Group.NumberOfComponentsOrSubgroups_N.StringValue);
+            Assert.Equal("2", initiator2Group.MInVotingMooN.StringValue);
+            Assert.Equal("2", initiator2Group.NumberOfDevicesWithinGroup.StringValue);
 
             var initiator2Component1 = initiator2Group.Components.Single(x => x.Name.StringValue == "TT-1001");
             Assert.Equal("3000", initiator2Component1.ProofTestIntervalSILCompliance.StringValue);
@@ -125,8 +125,8 @@ namespace Sintef.Apos.Sif.Testing
             var finalElement2Component = finalElement2Group.Components.Single(x => x.Name.StringValue == "ESV-3023");
             Assert.Equal("2000", finalElement2Component.ProofTestIntervalSILCompliance.StringValue);
 
-            Assert.Equal(2, initiator2Group.VoteWithinGroup_K_in_KooN.Value);
-            Assert.Equal(2, initiator2Group.NumberOfComponentsOrSubgroups_N.Value);
+            Assert.Equal(2, initiator2Group.MInVotingMooN.Value);
+            Assert.Equal(2, initiator2Group.NumberOfDevicesWithinGroup.Value);
             Assert.Equal(3000.0, initiator2Component1.ProofTestIntervalSILCompliance.Value);
             Assert.Equal(25.7, initiator2Component1.ProofTestCoverage.Value);
             Assert.Equal(6000.0, initiator2Component2.ProofTestIntervalSILCompliance.Value);
@@ -183,8 +183,8 @@ namespace Sintef.Apos.Sif.Testing
             var finalElementComponent = finalElementGroup.Components.Append("ESV-3023");
             finalElementComponent.ProofTestIntervalSILCompliance.StringValue = "2000";
 
-            Assert.Equal(2, initiatorGroup.VoteWithinGroup_K_in_KooN.Value);
-            Assert.Equal(2, initiatorGroup.NumberOfComponentsOrSubgroups_N.Value);
+            Assert.Equal(2, initiatorGroup.MInVotingMooN.Value);
+            Assert.Equal(2, initiatorGroup.NumberOfDevicesWithinGroup.Value);
             Assert.Equal(3000.0, initiatorComponent1.ProofTestIntervalSILCompliance.Value);
             Assert.Equal(25.7, initiatorComponent1.ProofTestCoverage.Value);
             Assert.Equal(6000.0, initiatorComponent2.ProofTestIntervalSILCompliance.Value);
@@ -217,14 +217,14 @@ namespace Sintef.Apos.Sif.Testing
             var logicSolver2 = sif2.LogicSolver;
             var finalElement2 = sif2.FinalElement;
 
-            Assert.Equal("1", initiator2.VoteBetweenGroups_M_in_MooN.StringValue);
-            Assert.Equal("1", initiator2.NumberOfGroups_N.StringValue);
+            Assert.Equal("1", initiator2.MInVotingMooN.StringValue);
+            Assert.Equal("1", initiator2.NumberOfGroups.StringValue);
 
-            Assert.Equal("1", logicSolver2.VoteBetweenGroups_M_in_MooN.StringValue);
-            Assert.Equal("1", logicSolver2.NumberOfGroups_N.StringValue);
+            Assert.Equal("1", logicSolver2.MInVotingMooN.StringValue);
+            Assert.Equal("1", logicSolver2.NumberOfGroups.StringValue);
 
-            Assert.Equal("1", finalElement2.VoteBetweenGroups_M_in_MooN.StringValue);
-            Assert.Equal("1", finalElement2.NumberOfGroups_N.StringValue);
+            Assert.Equal("1", finalElement2.MInVotingMooN.StringValue);
+            Assert.Equal("1", finalElement2.NumberOfGroups.StringValue);
 
             var initiator2Group = initiator2.Groups.Single();
             var logicSolver2Group = logicSolver2.Groups.Single();
@@ -234,8 +234,8 @@ namespace Sintef.Apos.Sif.Testing
             Assert.Single(logicSolver2Group.Components);
             Assert.Single(finalElement2Group.Components);
 
-            Assert.Equal("2", initiator2Group.VoteWithinGroup_K_in_KooN.StringValue);
-            Assert.Equal("2", initiator2Group.NumberOfComponentsOrSubgroups_N.StringValue);
+            Assert.Equal("2", initiator2Group.MInVotingMooN.StringValue);
+            Assert.Equal("2", initiator2Group.NumberOfDevicesWithinGroup.StringValue);
 
             var initiator2Component1 = initiator2Group.Components.Single(x => x.Name.StringValue == "TT-1001");
             Assert.Equal("3000", initiator2Component1.ProofTestIntervalSILCompliance.StringValue);
@@ -252,8 +252,8 @@ namespace Sintef.Apos.Sif.Testing
             var finalElement2Component = finalElement2Group.Components.Single(x => x.Name.StringValue == "ESV-3023");
             Assert.Equal("2000", finalElement2Component.ProofTestIntervalSILCompliance.StringValue);
 
-            Assert.Equal(2, initiator2Group.VoteWithinGroup_K_in_KooN.Value);
-            Assert.Equal(2, initiator2Group.NumberOfComponentsOrSubgroups_N.Value);
+            Assert.Equal(2, initiator2Group.MInVotingMooN.Value);
+            Assert.Equal(2, initiator2Group.NumberOfDevicesWithinGroup.Value);
             Assert.Equal(3000.0, initiator2Component1.ProofTestIntervalSILCompliance.Value);
             Assert.Equal(25.7, initiator2Component1.ProofTestCoverage.Value);
             Assert.Equal(6000.0, initiator2Component2.ProofTestIntervalSILCompliance.Value);

@@ -170,7 +170,7 @@ namespace Sintef.Apos.Sif
                     {
                         var m = ReadAttribute("M", ie);
 
-                        sifSubsystem.VoteBetweenGroups_M_in_MooN.StringValue = m;
+                        sifSubsystem.MInVotingMooN.StringValue = m;
                         return;
                     }
                     else if (node is Group group && (ie.Name == "ComponentVoter" || ie.Name == "GroupVoter"))
@@ -179,7 +179,7 @@ namespace Sintef.Apos.Sif
 
                         if (k == null) k = ReadAttribute("M", ie); // for backward compatibility
 
-                        group.VoteWithinGroup_K_in_KooN.StringValue = k;
+                        group.MInVotingMooN.StringValue = k;
                         return;
                     }
                     break;
