@@ -20,14 +20,7 @@ namespace SIFEditor
 
             Type = node.GetType();
 
-            if (node is SISComponent sisComponent)
-            {
-                var control = new PropertyEditorControl(sisComponent.Name);
-                control.TextChanged += Control_TextChanged;
-                flowLayoutPanel1.Controls.Add(control);
-                _editorControls.Add(sisComponent.Name.Name, control);
-            }
-            else if (node is CrossSubsystemGroups groups)
+            if (node is CrossSubsystemGroups groups)
             {
                 var control = new PropertyEditorControl(groups.NumberOfGroups_N);
                 control.TextChanged += Control_TextChanged;
@@ -40,7 +33,7 @@ namespace SIFEditor
                 _editorControls.Add(groups.VoteBetweenGroups_M_in_MooN.Name, control2);
             }
 
-            foreach (var property in node.Attributes.OrderBy(x => x.Name))
+            foreach (var property in node.Attributes.OrderByDescending(x => x.IsMandatory).ThenBy(x => x.Name))
             {
                 var control = new PropertyEditorControl(property);
                 control.TextChanged += Control_TextChanged;
@@ -56,11 +49,7 @@ namespace SIFEditor
 
         public void Show(Node node)
         {
-            if (node is SISComponent sisComponent)
-            {
-                _editorControls[sisComponent.Name.Name].Show(sisComponent.Name);
-            }
-            else if (node is CrossSubsystemGroups groups)
+            if (node is CrossSubsystemGroups groups)
             {
                 _editorControls[groups.NumberOfGroups_N.Name].Show(groups.NumberOfGroups_N);
                 _editorControls[groups.VoteBetweenGroups_M_in_MooN.Name].Show(groups.VoteBetweenGroups_M_in_MooN);
@@ -70,6 +59,11 @@ namespace SIFEditor
             {
                 _editorControls[property.Name].Show(property);
             }
+        }
+
+        public void Focus(string name)
+        {
+            _editorControls[name].Focus();
         }
 
         public void Clear()

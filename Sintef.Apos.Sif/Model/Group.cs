@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Sintef.Apos.Sif.Model.Attributes;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -12,8 +13,6 @@ namespace Sintef.Apos.Sif.Model
         public Integer MInVotingMooN { get; protected set; }
         public Integer NumberOfDevicesWithinGroup { get; protected set; }
         public Boolean AllowAnyComponents { get; protected set; }
-
-        public const string RefBaseSystemUnitPath = "SIF Unit Classes/Group";
 
         private readonly Voter _voter;
 
@@ -32,7 +31,7 @@ namespace Sintef.Apos.Sif.Model
             NumberOfDevicesWithinGroup.Value = N;
         }
 
-        public bool Remove(SISComponent item)
+        public bool Remove(SISDeviceRequirements item)
         {
             return Components.Remove(item);
         }
@@ -98,7 +97,7 @@ namespace Sintef.Apos.Sif.Model
 
         public Group Append()
         {
-            Group group = new Group(_parent, "Group");
+            var group = new Group(_parent, "Group");
 
             _items.Add(group);
             return group;
@@ -124,14 +123,22 @@ namespace Sintef.Apos.Sif.Model
 
         public bool IsSameAs(Groups groups)
         {
-            if (_items.Count != groups.Count()) return false;
+            if (_items.Count != groups.Count())
+            {
+                return false;
+            }
 
             var alreadyMatchedGroups = new List<Group>();
 
             foreach (var group in groups)
             {
                 var myGroup = _items.FirstOrDefault(x => !alreadyMatchedGroups.Contains(x) && x.IsSameAs(group));
-                if (myGroup == null) return false;
+
+                if (myGroup == null)
+                {
+                    return false;
+                }
+
                 alreadyMatchedGroups.Add(myGroup);
             }
 
@@ -143,6 +150,7 @@ namespace Sintef.Apos.Sif.Model
             foreach (var group in _items) group.Validate(errors);
         }
     }
+
     public class CrossSubsystemGroups : Node, IEnumerable<Group>
     {
         public Integer VoteBetweenGroups_M_in_MooN { get; protected set; }
@@ -153,8 +161,8 @@ namespace Sintef.Apos.Sif.Model
         private readonly Collection<Group> _items = new Collection<Group>();
         public CrossSubsystemGroups(Node parent) : base(parent, "CrossSubsystemGroups")
         {
-            NumberOfGroups_N = new Integer("NumberOfGroups_N", "", "", this);
-            VoteBetweenGroups_M_in_MooN = new Integer("VoteBetweenGroups_M_in_MooN", "", "", this);
+            NumberOfGroups_N = new Integer("NumberOfGroups_N", "", "", false, this);
+            VoteBetweenGroups_M_in_MooN = new Integer("VoteBetweenGroups_M_in_MooN", "", "", false, this);
 
             _voter = new Voter(this, VoteBetweenGroups_M_in_MooN, "M", NumberOfGroups_N, "N");
 

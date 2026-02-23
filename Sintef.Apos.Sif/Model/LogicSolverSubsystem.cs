@@ -1,8 +1,8 @@
 ﻿namespace Sintef.Apos.Sif.Model
 {
-    public class LogicSolverSubsystem : SIFSubsystem
+    public class LogicSolverSubsystem : Subsystem
     {
-        public LogicSolverSubsystem(SIF parent) : base(parent, "LogicSolver")
+        public LogicSolverSubsystem(SafetyInstrumentedFunction parent) : base(parent, "LogicSolver")
         {
         }
     }

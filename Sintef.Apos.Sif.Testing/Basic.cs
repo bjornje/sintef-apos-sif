@@ -5,7 +5,46 @@ namespace Sintef.Apos.Sif.Testing
         [Fact]
         public void VerifyModelVersion()
         {
-            Assert.Equal("22", Definition.Version);
+            Assert.Equal("26", Definition.Version);
+        }
+
+        [Fact]
+        public void ScientificNotation()
+        {
+            var builder = new Builder();
+
+            var sif = builder.SIFs.Append("SIF-00ABC23");
+
+            sif.MaximumAllowableDemandRate.StringValue = "3.5E-07";
+
+            Assert.True(sif.MaximumAllowableDemandRate.IsValid(out var _));
+            Assert.Equal(0.00000035, sif.MaximumAllowableDemandRate.Value);
+            Assert.Equal("3.5E-07", sif.MaximumAllowableDemandRate.StringValue);
+
+            sif.MaximumAllowableDemandRate.StringValue = "0.00000035";
+
+            Assert.True(sif.MaximumAllowableDemandRate.IsValid(out var _));
+            Assert.Equal(0.00000035, sif.MaximumAllowableDemandRate.Value);
+            Assert.Equal("0.00000035", sif.MaximumAllowableDemandRate.StringValue);
+        }
+
+        [Fact]
+        public void ScientificNotation2()
+        {
+            var builder = new Builder();
+
+            var sif = builder.SIFs.Append("SIF-00ABC23");
+
+            sif.MaximumAllowableDemandRate.Value = 3.5E-07;
+
+            Assert.True(sif.MaximumAllowableDemandRate.IsValid(out var _));
+            Assert.Equal(0.00000035, sif.MaximumAllowableDemandRate.Value);
+            Assert.Equal("3.5E-07", sif.MaximumAllowableDemandRate.StringValue);
+
+            sif.MaximumAllowableDemandRate.StringValue = "0.00000035";
+            Assert.True(sif.MaximumAllowableDemandRate.IsValid(out var _));
+            Assert.Equal(0.00000035, sif.MaximumAllowableDemandRate.Value);
+            Assert.Equal("0.00000035", sif.MaximumAllowableDemandRate.StringValue);
         }
 
         [Fact]
@@ -38,36 +77,38 @@ namespace Sintef.Apos.Sif.Testing
             initiatorGroup.VoteWithinGroup(2, 2);
 
             var initiatorComponent1 = initiatorGroup.Components.Append("TT-1001");
-            initiatorComponent1.ProofTestIntervalSILCompliance.StringValue = "3000";
-            initiatorComponent1.ProofTestCoverage.StringValue = "25.7";
+            initiatorComponent1.MaximumTestIntervalForSILCompliance.StringValue = "3000";
+            initiatorComponent1.TestCoverage.StringValue = "25.7";
 
 
             var initiatorComponent2 = initiatorGroup.Components.Append("TT-1002");
-            initiatorComponent2.ProofTestIntervalSILCompliance.StringValue = "6000";
-            initiatorComponent2.ProofTestCoverage.StringValue = "15.8";
+            initiatorComponent2.MaximumTestIntervalForSILCompliance.StringValue = "6000";
+            initiatorComponent2.TestCoverage.StringValue = "15.8";
 
 
 
             var logicSolverComponent = logicSolverGroup.Components.Append("C01");
-            logicSolverComponent.ProofTestIntervalSILCompliance.StringValue = "7000";
+            logicSolverComponent.MaximumTestIntervalForSILCompliance.StringValue = "7000";
 
 
             var finalElementComponent = finalElementGroup.Components.Append("ESV-3023");
-            finalElementComponent.ProofTestIntervalSILCompliance.StringValue = "2000";
+            finalElementComponent.MaximumTestIntervalForSILCompliance.StringValue = "2000";
 
             Assert.Equal(2, initiatorGroup.MInVotingMooN.Value);
             Assert.Equal(2, initiatorGroup.NumberOfDevicesWithinGroup.Value);
-            Assert.Equal(3000.0, initiatorComponent1.ProofTestIntervalSILCompliance.Value);
-            Assert.Equal(25.7, initiatorComponent1.ProofTestCoverage.Value);
-            Assert.Equal(6000.0, initiatorComponent2.ProofTestIntervalSILCompliance.Value);
-            Assert.Equal(15.8, initiatorComponent2.ProofTestCoverage.Value);
-            Assert.Equal(7000.0, logicSolverComponent.ProofTestIntervalSILCompliance.Value);
-            Assert.Equal(2000.0, finalElementComponent.ProofTestIntervalSILCompliance.Value);
+            Assert.Equal(3000.0, initiatorComponent1.MaximumTestIntervalForSILCompliance.Value);
+            Assert.Equal(25.7, initiatorComponent1.TestCoverage.Value);
+            Assert.Equal(6000.0, initiatorComponent2.MaximumTestIntervalForSILCompliance.Value);
+            Assert.Equal(15.8, initiatorComponent2.TestCoverage.Value);
+            Assert.Equal(7000.0, logicSolverComponent.MaximumTestIntervalForSILCompliance.Value);
+            Assert.Equal(2000.0, finalElementComponent.MaximumTestIntervalForSILCompliance.Value);
 
 
             var sifIsValid = builder.Validate();
-            Assert.Empty(builder.Errors);
-            Assert.True(sifIsValid);
+            Assert.NotEmpty(builder.Errors);
+            Assert.False(sifIsValid);
+            Assert.Equal(builder.Errors.Count(), builder.Errors.Count(x => x.Attribute != null && x.Attribute.IsMandatory));
+
 
             const string filename = "SIF-00ABC23.aml";
 
@@ -77,8 +118,12 @@ namespace Sintef.Apos.Sif.Testing
             builder2.LoadFromFile(filename);
 
             var sif2IsValid = builder2.Validate();
-            Assert.Empty(builder2.Errors);
-            Assert.True(sif2IsValid);
+            Assert.NotEmpty(builder2.Errors);
+            Assert.False(sif2IsValid);
+
+            Assert.Equal(builder2.Errors.Count(), builder2.Errors.Count(x => x.Attribute != null && x.Attribute.IsMandatory));
+
+            Assert.Equal(builder.Errors.Count(), builder2.Errors.Count());
 
             var sif2 = builder2.SIFs.Single();
             Assert.Equal(3, sif2.Subsystems.Count());
@@ -110,29 +155,29 @@ namespace Sintef.Apos.Sif.Testing
             Assert.Equal("2", initiator2Group.MInVotingMooN.StringValue);
             Assert.Equal("2", initiator2Group.NumberOfDevicesWithinGroup.StringValue);
 
-            var initiator2Component1 = initiator2Group.Components.Single(x => x.Name.StringValue == "TT-1001");
-            Assert.Equal("3000", initiator2Component1.ProofTestIntervalSILCompliance.StringValue);
-            Assert.Equal("25.7", initiator2Component1.ProofTestCoverage.StringValue);
+            var initiator2Component1 = initiator2Group.Components.Single(x => x.TagName.StringValue == "TT-1001");
+            Assert.Equal("3000", initiator2Component1.MaximumTestIntervalForSILCompliance.StringValue);
+            Assert.Equal("25.7", initiator2Component1.TestCoverage.StringValue);
 
-            var initiator2Component2 = initiator2Group.Components.Single(x => x.Name.StringValue == "TT-1002");
-            Assert.Equal("6000", initiator2Component2.ProofTestIntervalSILCompliance.StringValue);
-            Assert.Equal("15.8", initiator2Component2.ProofTestCoverage.StringValue);
+            var initiator2Component2 = initiator2Group.Components.Single(x => x.TagName.StringValue == "TT-1002");
+            Assert.Equal("6000", initiator2Component2.MaximumTestIntervalForSILCompliance.StringValue);
+            Assert.Equal("15.8", initiator2Component2.TestCoverage.StringValue);
 
 
-            var logicSolver2Component = logicSolver2Group.Components.Single(x => x.Name.StringValue == "C01");
-            Assert.Equal("7000", logicSolver2Component.ProofTestIntervalSILCompliance.StringValue);
+            var logicSolver2Component = logicSolver2Group.Components.Single(x => x.TagName.StringValue == "C01");
+            Assert.Equal("7000", logicSolver2Component.MaximumTestIntervalForSILCompliance.StringValue);
 
-            var finalElement2Component = finalElement2Group.Components.Single(x => x.Name.StringValue == "ESV-3023");
-            Assert.Equal("2000", finalElement2Component.ProofTestIntervalSILCompliance.StringValue);
+            var finalElement2Component = finalElement2Group.Components.Single(x => x.TagName.StringValue == "ESV-3023");
+            Assert.Equal("2000", finalElement2Component.MaximumTestIntervalForSILCompliance.StringValue);
 
             Assert.Equal(2, initiator2Group.MInVotingMooN.Value);
             Assert.Equal(2, initiator2Group.NumberOfDevicesWithinGroup.Value);
-            Assert.Equal(3000.0, initiator2Component1.ProofTestIntervalSILCompliance.Value);
-            Assert.Equal(25.7, initiator2Component1.ProofTestCoverage.Value);
-            Assert.Equal(6000.0, initiator2Component2.ProofTestIntervalSILCompliance.Value);
-            Assert.Equal(15.8, initiator2Component2.ProofTestCoverage.Value);
-            Assert.Equal(7000.0, logicSolver2Component.ProofTestIntervalSILCompliance.Value);
-            Assert.Equal(2000.0, finalElement2Component.ProofTestIntervalSILCompliance.Value);
+            Assert.Equal(3000.0, initiator2Component1.MaximumTestIntervalForSILCompliance.Value);
+            Assert.Equal(25.7, initiator2Component1.TestCoverage.Value);
+            Assert.Equal(6000.0, initiator2Component2.MaximumTestIntervalForSILCompliance.Value);
+            Assert.Equal(15.8, initiator2Component2.TestCoverage.Value);
+            Assert.Equal(7000.0, logicSolver2Component.MaximumTestIntervalForSILCompliance.Value);
+            Assert.Equal(2000.0, finalElement2Component.MaximumTestIntervalForSILCompliance.Value);
 
             Assert.True(sif.IsSameAs(sif2));
         }
@@ -166,36 +211,38 @@ namespace Sintef.Apos.Sif.Testing
             initiatorGroup.VoteWithinGroup(2, 2);
 
             var initiatorComponent1 = initiatorGroup.Components.Append("TT-1001");
-            initiatorComponent1.ProofTestIntervalSILCompliance.StringValue = "3000";
-            initiatorComponent1.ProofTestCoverage.StringValue = "25.7";
+            initiatorComponent1.MaximumTestIntervalForSILCompliance.StringValue = "3000";
+            initiatorComponent1.TestCoverage.StringValue = "25.7";
 
 
             var initiatorComponent2 = initiatorGroup.Components.Append("TT-1002");
-            initiatorComponent2.ProofTestIntervalSILCompliance.StringValue = "6000";
-            initiatorComponent2.ProofTestCoverage.StringValue = "15.8";
+            initiatorComponent2.MaximumTestIntervalForSILCompliance.StringValue = "6000";
+            initiatorComponent2.TestCoverage.StringValue = "15.8";
 
 
 
             var logicSolverComponent = logicSolverGroup.Components.Append("C01");
-            logicSolverComponent.ProofTestIntervalSILCompliance.StringValue = "7000";
+            logicSolverComponent.MaximumTestIntervalForSILCompliance.StringValue = "7000";
 
 
             var finalElementComponent = finalElementGroup.Components.Append("ESV-3023");
-            finalElementComponent.ProofTestIntervalSILCompliance.StringValue = "2000";
+            finalElementComponent.MaximumTestIntervalForSILCompliance.StringValue = "2000";
 
             Assert.Equal(2, initiatorGroup.MInVotingMooN.Value);
             Assert.Equal(2, initiatorGroup.NumberOfDevicesWithinGroup.Value);
-            Assert.Equal(3000.0, initiatorComponent1.ProofTestIntervalSILCompliance.Value);
-            Assert.Equal(25.7, initiatorComponent1.ProofTestCoverage.Value);
-            Assert.Equal(6000.0, initiatorComponent2.ProofTestIntervalSILCompliance.Value);
-            Assert.Equal(15.8, initiatorComponent2.ProofTestCoverage.Value);
-            Assert.Equal(7000.0, logicSolverComponent.ProofTestIntervalSILCompliance.Value);
-            Assert.Equal(2000.0, finalElementComponent.ProofTestIntervalSILCompliance.Value);
+            Assert.Equal(3000.0, initiatorComponent1.MaximumTestIntervalForSILCompliance.Value);
+            Assert.Equal(25.7, initiatorComponent1.TestCoverage.Value);
+            Assert.Equal(6000.0, initiatorComponent2.MaximumTestIntervalForSILCompliance.Value);
+            Assert.Equal(15.8, initiatorComponent2.TestCoverage.Value);
+            Assert.Equal(7000.0, logicSolverComponent.MaximumTestIntervalForSILCompliance.Value);
+            Assert.Equal(2000.0, finalElementComponent.MaximumTestIntervalForSILCompliance.Value);
 
 
             var sifIsValid = builder.Validate();
-            Assert.Empty(builder.Errors);
-            Assert.True(sifIsValid);
+            Assert.NotEmpty(builder.Errors);
+            Assert.False(sifIsValid);
+            Assert.Equal(builder.Errors.Count(), builder.Errors.Count(x => x.Attribute != null && x.Attribute.IsMandatory));
+
 
             using var outputStream = new MemoryStream();
             builder.SaveToStream(outputStream);
@@ -204,8 +251,12 @@ namespace Sintef.Apos.Sif.Testing
             builder2.LoadFromStream(outputStream);
 
             var sif2IsValid = builder2.Validate();
-            Assert.Empty(builder2.Errors);
-            Assert.True(sif2IsValid);
+            Assert.NotEmpty(builder2.Errors);
+            Assert.False(sif2IsValid);
+
+            Assert.Equal(builder2.Errors.Count(), builder2.Errors.Count(x => x.Attribute != null && x.Attribute.IsMandatory));
+
+            Assert.Equal(builder.Errors.Count(), builder2.Errors.Count());
 
             var sif2 = builder2.SIFs.Single();
             Assert.Equal(3, sif2.Subsystems.Count());
@@ -237,29 +288,29 @@ namespace Sintef.Apos.Sif.Testing
             Assert.Equal("2", initiator2Group.MInVotingMooN.StringValue);
             Assert.Equal("2", initiator2Group.NumberOfDevicesWithinGroup.StringValue);
 
-            var initiator2Component1 = initiator2Group.Components.Single(x => x.Name.StringValue == "TT-1001");
-            Assert.Equal("3000", initiator2Component1.ProofTestIntervalSILCompliance.StringValue);
-            Assert.Equal("25.7", initiator2Component1.ProofTestCoverage.StringValue);
+            var initiator2Component1 = initiator2Group.Components.Single(x => x.TagName.StringValue == "TT-1001");
+            Assert.Equal("3000", initiator2Component1.MaximumTestIntervalForSILCompliance.StringValue);
+            Assert.Equal("25.7", initiator2Component1.TestCoverage.StringValue);
 
-            var initiator2Component2 = initiator2Group.Components.Single(x => x.Name.StringValue == "TT-1002");
-            Assert.Equal("6000", initiator2Component2.ProofTestIntervalSILCompliance.StringValue);
-            Assert.Equal("15.8", initiator2Component2.ProofTestCoverage.StringValue);
+            var initiator2Component2 = initiator2Group.Components.Single(x => x.TagName.StringValue == "TT-1002");
+            Assert.Equal("6000", initiator2Component2.MaximumTestIntervalForSILCompliance.StringValue);
+            Assert.Equal("15.8", initiator2Component2.TestCoverage.StringValue);
 
 
-            var logicSolver2Component = logicSolver2Group.Components.Single(x => x.Name.StringValue == "C01");
-            Assert.Equal("7000", logicSolver2Component.ProofTestIntervalSILCompliance.StringValue);
+            var logicSolver2Component = logicSolver2Group.Components.Single(x => x.TagName.StringValue == "C01");
+            Assert.Equal("7000", logicSolver2Component.MaximumTestIntervalForSILCompliance.StringValue);
 
-            var finalElement2Component = finalElement2Group.Components.Single(x => x.Name.StringValue == "ESV-3023");
-            Assert.Equal("2000", finalElement2Component.ProofTestIntervalSILCompliance.StringValue);
+            var finalElement2Component = finalElement2Group.Components.Single(x => x.TagName.StringValue == "ESV-3023");
+            Assert.Equal("2000", finalElement2Component.MaximumTestIntervalForSILCompliance.StringValue);
 
             Assert.Equal(2, initiator2Group.MInVotingMooN.Value);
             Assert.Equal(2, initiator2Group.NumberOfDevicesWithinGroup.Value);
-            Assert.Equal(3000.0, initiator2Component1.ProofTestIntervalSILCompliance.Value);
-            Assert.Equal(25.7, initiator2Component1.ProofTestCoverage.Value);
-            Assert.Equal(6000.0, initiator2Component2.ProofTestIntervalSILCompliance.Value);
-            Assert.Equal(15.8, initiator2Component2.ProofTestCoverage.Value);
-            Assert.Equal(7000.0, logicSolver2Component.ProofTestIntervalSILCompliance.Value);
-            Assert.Equal(2000.0, finalElement2Component.ProofTestIntervalSILCompliance.Value);
+            Assert.Equal(3000.0, initiator2Component1.MaximumTestIntervalForSILCompliance.Value);
+            Assert.Equal(25.7, initiator2Component1.TestCoverage.Value);
+            Assert.Equal(6000.0, initiator2Component2.MaximumTestIntervalForSILCompliance.Value);
+            Assert.Equal(15.8, initiator2Component2.TestCoverage.Value);
+            Assert.Equal(7000.0, logicSolver2Component.MaximumTestIntervalForSILCompliance.Value);
+            Assert.Equal(2000.0, finalElement2Component.MaximumTestIntervalForSILCompliance.Value);
 
             Assert.True(sif.IsSameAs(sif2));
         }

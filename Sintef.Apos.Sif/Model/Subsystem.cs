@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sintef.Apos.Sif.Model.Attributes;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -6,9 +7,8 @@ using System.Linq;
 
 namespace Sintef.Apos.Sif.Model
 {
-    public class SIFSubsystem : Node
+    public class Subsystem : Node
     {
-        public const string RefBaseSystemUnitPath = "SIF Unit Classes/SIFSubsystem";
         public Groups Groups { get; }
         public Percent PFDBudget { get; protected set; }
 
@@ -16,7 +16,7 @@ namespace Sintef.Apos.Sif.Model
         public Integer NumberOfGroups { get; protected set; }
 
         private readonly Voter _voter;
-        public SIFSubsystem(SIF parent, string pathStep) : base(parent, pathStep)
+        public Subsystem(SafetyInstrumentedFunction parent, string pathStep) : base(parent, pathStep)
         {
             SetAttributes(Definition.GetAttributes(this, 3));
 
@@ -31,7 +31,7 @@ namespace Sintef.Apos.Sif.Model
             NumberOfGroups.Value = N;
         }
 
-        public bool IsSameAs(SIFSubsystem subsystem)
+        public bool IsSameAs(Subsystem subsystem)
         {
             if (!HaveSameAttributeValues(subsystem)) return false;
             if (!Groups.IsSameAs(subsystem.Groups)) return false;
@@ -73,11 +73,11 @@ namespace Sintef.Apos.Sif.Model
 
     }
 
-    public class SIFSubsystems : IEnumerable<SIFSubsystem>
+    public class Subsystems : IEnumerable<Subsystem>
     {
-        private readonly Collection<SIFSubsystem> _items = new Collection<SIFSubsystem>();
-        private readonly SIF _parent;
-        public SIFSubsystems(SIF parent)
+        private readonly Collection<Subsystem> _items = new Collection<Subsystem>();
+        private readonly SafetyInstrumentedFunction _parent;
+        public Subsystems(SafetyInstrumentedFunction parent)
         {
             _parent = parent;
         }
@@ -114,12 +114,12 @@ namespace Sintef.Apos.Sif.Model
 
 
 
-        public bool Remove(SIFSubsystem item)
+        public bool Remove(Subsystem item)
         {
             return _items.Remove(item);
         }
 
-        public IEnumerator<SIFSubsystem> GetEnumerator()
+        public IEnumerator<Subsystem> GetEnumerator()
         {
             return _items.GetEnumerator();
         }
@@ -129,11 +129,11 @@ namespace Sintef.Apos.Sif.Model
             return _items.GetEnumerator();
         }
 
-        public bool IsSameAs(SIFSubsystems subsystems)
+        public bool IsSameAs(Subsystems subsystems)
         {
             if (_items.Count != subsystems.Count()) return false;
 
-            var alreadyMatchedSubsystems = new List<SIFSubsystem>();
+            var alreadyMatchedSubsystems = new List<Subsystem>();
 
             foreach (var subsystem in subsystems)
             {

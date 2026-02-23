@@ -1,14 +1,10 @@
-using Aml.Engine.Services;
 using Sintef.Apos.Sif;
 using Sintef.Apos.Sif.Model;
-using System;
+using Sintef.Apos.Sif.Model.Attributes;
 using System.Reflection;
-using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Windows.Forms;
-using System.Xml.Linq;
-using Boolean = Sintef.Apos.Sif.Model.Boolean;
+using ComboBox = System.Windows.Forms.ComboBox;
+using TextBox = System.Windows.Forms.TextBox;
 
 namespace SIFEditor
 {
@@ -83,11 +79,12 @@ namespace SIFEditor
                 var crossSubsystemTreeNode = AppendTreeNode(sif.CrossSubsystemGroups, childNode, null);
 
                 AddCrossSubsystemGroups(sif.CrossSubsystemGroups, crossSubsystemTreeNode);
-                AddSIFSubsystems(sif.Subsystems, childNode);
+                AddSubsystems(sif.Subsystems, childNode);
+                AddDocuments(sif.Documents, childNode);
             }
         }
 
-        private void AddSIFSubsystems(SIFSubsystems subsystems, TreeNode node)
+        private void AddSubsystems(Subsystems subsystems, TreeNode node)
         {
             foreach (var subsystem in subsystems)
             {
@@ -109,6 +106,14 @@ namespace SIFEditor
                 childNode.Tag = group;
                 node.Nodes.Add(childNode);
             }
+        }
+
+        private void AddDocuments(Documents documents, TreeNode node)
+        {
+            var childNode = new TreeNode(documents.DisplayName(node));
+            //treeNode.ContextMenuStrip = contextMenuStrip;
+            childNode.Tag = documents;
+            node.Nodes.Add(childNode);
         }
 
         private void AddGroups(Groups groups, TreeNode node)
@@ -137,19 +142,30 @@ namespace SIFEditor
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (listBox1.SelectedItem is not ModelError error) return;
+            if (listBox1.SelectedItem is not ModelError error)
+            {
+                return;
+            }
 
             var list = new List<TreeNode>();
             FindAllTreeNodes(treeView1.TopNode, list);
 
-            var result = list.FirstOrDefault(x => x.Tag == error.Node && x.Parent.Tag is not CrossSubsystemGroups);
+            var result = list.FirstOrDefault(x => x.Tag == error.Node && x.Parent?.Tag is not CrossSubsystemGroups);
 
 
-            if (result == null) return;
+            if (result == null)
+            {
+                return;
+            }
 
             treeView1.SelectedNode = result;
             result.EnsureVisible();
             treeView1.Focus();
+
+            if (error.Attribute != null && splitContainer2.Panel1.Controls[0] is PropertiesControl properties)
+            {
+                properties.Focus(error.Attribute.Name);
+            }
         }
 
         private static void FindAllTreeNodes(TreeNode node, List<TreeNode> list)
@@ -317,10 +333,16 @@ namespace SIFEditor
 
                 listBox1.Items.Clear();
 
-                foreach (var error in _builder.Errors) listBox1.Items.Add(error);
+                foreach (var error in _builder.Errors)
+                {
+                    listBox1.Items.Add(error);
+                }
 
                 var root = _builder.Roots.FirstOrDefault();
-                if (root != null) AddRoot(root);
+                if (root != null)
+                {
+                    AddRoot(root);
+                }
 
                 splitContainer2.Panel1.Controls.Clear();
                 splitContainer2.Panel1.Controls.Add(_propertieBlankPage);
@@ -362,7 +384,7 @@ namespace SIFEditor
 
             if (treeView1.TopNode.Tag is Root root)
             {
-                var sif = root.SIFs.Append("New SIF");
+                var sif = root.SIFs.Append();
                 var sifTreeNode = AppendTreeNode(sif, treeView1.TopNode, contextMenuStripSIF);
 
                 var crossSubsystemTreeNode = AppendTreeNode(sif.CrossSubsystemGroups, sifTreeNode, null);
@@ -415,6 +437,9 @@ namespace SIFEditor
                 var finalComponent = finalElementGroup.Components.Append();
                 AppendTreeNode(finalComponent, finalElementGroupTreeNode, contextMenuStripSISComponent);
 
+                var documentsTreeNode = AppendTreeNode(sif.Documents, sifTreeNode, null);
+
+
                 TreeChanged();
             }
         }
@@ -449,7 +474,7 @@ namespace SIFEditor
         {
             if (e.Button == MouseButtons.Right)
             {
-                if (e.Node.Tag is SIF sif)
+                if (e.Node.Tag is SafetyInstrumentedFunction sif)
                 {
                     AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "inputDeviceToolStripMenuItem", sif.InputDevice == null);
                     AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "logicSolverToolStripMenuItem", sif.LogicSolver == null);
@@ -466,7 +491,7 @@ namespace SIFEditor
 
         private void addGroupToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode?.Tag is SIFSubsystem subsystem)
+            if (treeView1.SelectedNode?.Tag is Sintef.Apos.Sif.Model.Subsystem subsystem)
             {
                 var group = subsystem.Groups.Append();
                 group.MInVotingMooN.ObjectValue = 1;
@@ -489,7 +514,7 @@ namespace SIFEditor
 
         private void removeComponentToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode?.Tag is SISComponent component && component.Parent is Group group)
+            if (treeView1.SelectedNode?.Tag is SISDeviceRequirements component && component.Parent is Group group)
             {
                 group.Remove(component);
                 treeView1.Nodes.Remove(treeView1.SelectedNode);
@@ -505,7 +530,7 @@ namespace SIFEditor
                 treeView1.Nodes.Remove(treeView1.SelectedNode);
                 TreeChanged();
             }
-            else if (treeView1.SelectedNode.Tag is Group subsystemGroup && subsystemGroup.Parent is SIFSubsystem subsystem)
+            else if (treeView1.SelectedNode.Tag is Group subsystemGroup && subsystemGroup.Parent is Sintef.Apos.Sif.Model.Subsystem subsystem)
             {
                 subsystem.Groups.Remove(subsystemGroup);
                 treeView1.Nodes.Remove(treeView1.SelectedNode);
@@ -516,7 +541,7 @@ namespace SIFEditor
 
         private void removeSubsystemToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode?.Tag is SIFSubsystem subsystem && subsystem.Parent is SIF sif)
+            if (treeView1.SelectedNode?.Tag is Sintef.Apos.Sif.Model.Subsystem subsystem && subsystem.Parent is SafetyInstrumentedFunction sif)
             {
                 sif.Remove(subsystem);
                 treeView1.Nodes.Remove(treeView1.SelectedNode);
@@ -526,7 +551,7 @@ namespace SIFEditor
 
         private void removeSIFToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode?.Tag is SIF sif && sif.Parent is Root root)
+            if (treeView1.SelectedNode?.Tag is SafetyInstrumentedFunction sif && sif.Parent is Root root)
             {
                 root.SIFs.Remove(sif);
                 treeView1.Nodes.Remove(treeView1.SelectedNode);
@@ -608,7 +633,7 @@ namespace SIFEditor
             File.WriteAllText(fileName, sb.ToString());
         }
 
-        private static void AppendGroup(StringBuilder sb, SIF sif, Group group)
+        private static void AppendGroup(StringBuilder sb, SafetyInstrumentedFunction sif, Group group)
         {
             foreach (var attribute in group.Attributes)
             {
@@ -619,7 +644,7 @@ namespace SIFEditor
             {
                 foreach(var attribute in component.Attributes)
                 {
-                    AppendLine(sb, component.GetPath(sif.Parent), sif.SIFID.Value, component.Name.Value, attribute.Name, attribute.StringValue);
+                    AppendLine(sb, component.GetPath(sif.Parent), sif.SIFID.Value, component.TagName.Value, attribute.Name, attribute.StringValue);
                 }
             }
         }
@@ -669,7 +694,7 @@ namespace SIFEditor
 
         private void inputDeviceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode?.Tag is SIF sif)
+            if (treeView1.SelectedNode?.Tag is SafetyInstrumentedFunction sif)
             {
                 var subsystem = sif.Subsystems.AppendInputDevice();
                 subsystem.MInVotingMooN.ObjectValue = 1;
@@ -682,7 +707,7 @@ namespace SIFEditor
 
         private void logicSolverToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode?.Tag is SIF sif)
+            if (treeView1.SelectedNode?.Tag is SafetyInstrumentedFunction sif)
             {
                 var subsystem = sif.Subsystems.AppendLogicSolver();
                 subsystem.MInVotingMooN.ObjectValue = 1;
@@ -695,7 +720,7 @@ namespace SIFEditor
 
         private void finalElementToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode?.Tag is SIF sif)
+            if (treeView1.SelectedNode?.Tag is SafetyInstrumentedFunction sif)
             {
                 var subsystem = sif.Subsystems.AppendFinalElement();
                 subsystem.MInVotingMooN.ObjectValue = 1;

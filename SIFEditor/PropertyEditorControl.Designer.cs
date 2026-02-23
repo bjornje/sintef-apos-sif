@@ -28,94 +28,94 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.labelName = new System.Windows.Forms.Label();
-            this.textBoxValue = new System.Windows.Forms.TextBox();
-            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.labelType = new System.Windows.Forms.Label();
-            this.toolTipProperty = new System.Windows.Forms.ToolTip(this.components);
-            this.toolTipPropertyType = new System.Windows.Forms.ToolTip(this.components);
-            this.comboBoxValue = new System.Windows.Forms.ComboBox();
-            this.tableLayoutPanel1.SuspendLayout();
-            this.SuspendLayout();
+            components = new System.ComponentModel.Container();
+            labelName = new Label();
+            textBoxValue = new TextBox();
+            tableLayoutPanel1 = new TableLayoutPanel();
+            labelType = new Label();
+            toolTipProperty = new ToolTip(components);
+            toolTipPropertyType = new ToolTip(components);
+            comboBoxValue = new ComboBox();
+            tableLayoutPanel1.SuspendLayout();
+            SuspendLayout();
             // 
             // labelName
             // 
-            this.labelName.AutoSize = true;
-            this.labelName.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.labelName.Location = new System.Drawing.Point(3, 0);
-            this.labelName.Name = "labelName";
-            this.labelName.Size = new System.Drawing.Size(228, 23);
-            this.labelName.TabIndex = 0;
-            this.labelName.Text = "property name";
-            this.labelName.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelName.AutoSize = true;
+            labelName.Dock = DockStyle.Fill;
+            labelName.Location = new Point(3, 0);
+            labelName.Name = "labelName";
+            labelName.Size = new Size(268, 23);
+            labelName.TabIndex = 0;
+            labelName.Text = "property name";
+            labelName.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // textBoxValue
             // 
-            this.textBoxValue.Location = new System.Drawing.Point(157, 82);
-            this.textBoxValue.Margin = new System.Windows.Forms.Padding(0);
-            this.textBoxValue.Name = "textBoxValue";
-            this.textBoxValue.Size = new System.Drawing.Size(32, 23);
-            this.textBoxValue.TabIndex = 1;
-            this.textBoxValue.TextChanged += new System.EventHandler(this.textBoxValue_TextChanged);
+            textBoxValue.Location = new Point(157, 82);
+            textBoxValue.Margin = new Padding(0);
+            textBoxValue.Name = "textBoxValue";
+            textBoxValue.Size = new Size(32, 23);
+            textBoxValue.TabIndex = 1;
+            textBoxValue.TextChanged += textBoxValue_TextChanged;
             // 
             // tableLayoutPanel1
             // 
-            this.tableLayoutPanel1.AutoSize = true;
-            this.tableLayoutPanel1.ColumnCount = 3;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 234F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 258F));
-            this.tableLayoutPanel1.Controls.Add(this.labelName, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.labelType, 2, 0);
-            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
-            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 1;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(665, 23);
-            this.tableLayoutPanel1.TabIndex = 2;
+            tableLayoutPanel1.AutoSize = true;
+            tableLayoutPanel1.ColumnCount = 3;
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 274F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 206F));
+            tableLayoutPanel1.Controls.Add(labelName, 0, 0);
+            tableLayoutPanel1.Controls.Add(labelType, 2, 0);
+            tableLayoutPanel1.Dock = DockStyle.Fill;
+            tableLayoutPanel1.Location = new Point(0, 0);
+            tableLayoutPanel1.Name = "tableLayoutPanel1";
+            tableLayoutPanel1.RowCount = 1;
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.Size = new Size(665, 23);
+            tableLayoutPanel1.TabIndex = 2;
             // 
             // labelType
             // 
-            this.labelType.AutoSize = true;
-            this.labelType.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.labelType.Location = new System.Drawing.Point(410, 0);
-            this.labelType.Name = "labelType";
-            this.labelType.Size = new System.Drawing.Size(252, 23);
-            this.labelType.TabIndex = 2;
-            this.labelType.Text = "property type";
-            this.labelType.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelType.AutoSize = true;
+            labelType.Dock = DockStyle.Fill;
+            labelType.Location = new Point(462, 0);
+            labelType.Name = "labelType";
+            labelType.Size = new Size(200, 23);
+            labelType.TabIndex = 2;
+            labelType.Text = "property type";
+            labelType.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // toolTipProperty
             // 
-            this.toolTipProperty.AutoPopDelay = 30000;
-            this.toolTipProperty.InitialDelay = 500;
-            this.toolTipProperty.ReshowDelay = 100;
+            toolTipProperty.AutoPopDelay = 30000;
+            toolTipProperty.InitialDelay = 500;
+            toolTipProperty.ReshowDelay = 100;
             // 
             // comboBoxValue
             // 
-            this.comboBoxValue.FormattingEnabled = true;
-            this.comboBoxValue.Location = new System.Drawing.Point(243, 117);
-            this.comboBoxValue.Margin = new System.Windows.Forms.Padding(0);
-            this.comboBoxValue.Name = "comboBoxValue";
-            this.comboBoxValue.Size = new System.Drawing.Size(68, 23);
-            this.comboBoxValue.TabIndex = 3;
-            this.comboBoxValue.TextChanged += new System.EventHandler(this.comboBoxValue_TextChanged);
+            comboBoxValue.FormattingEnabled = true;
+            comboBoxValue.Location = new Point(243, 117);
+            comboBoxValue.Margin = new Padding(0);
+            comboBoxValue.Name = "comboBoxValue";
+            comboBoxValue.Size = new Size(68, 23);
+            comboBoxValue.TabIndex = 3;
+            comboBoxValue.TextChanged += comboBoxValue_TextChanged;
             // 
             // PropertyEditorControl
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.comboBoxValue);
-            this.Controls.Add(this.textBoxValue);
-            this.Controls.Add(this.tableLayoutPanel1);
-            this.Name = "PropertyEditorControl";
-            this.Size = new System.Drawing.Size(665, 23);
-            this.tableLayoutPanel1.ResumeLayout(false);
-            this.tableLayoutPanel1.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(comboBoxValue);
+            Controls.Add(textBoxValue);
+            Controls.Add(tableLayoutPanel1);
+            Name = "PropertyEditorControl";
+            Size = new Size(665, 23);
+            tableLayoutPanel1.ResumeLayout(false);
+            tableLayoutPanel1.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
 
         }
 

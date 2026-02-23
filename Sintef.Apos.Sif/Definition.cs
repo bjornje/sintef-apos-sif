@@ -1,14 +1,19 @@
 ﻿using Aml.Engine.CAEX;
 using Sintef.Apos.Sif.Model;
+using Sintef.Apos.Sif.Model.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Xml.Linq;
+using String = Sintef.Apos.Sif.Model.Attributes.String;
 
 namespace Sintef.Apos.Sif
 {
     public static class Definition
     {
+        public const string SIFUnitClasses = "SIF Unit Classes";
+        public const string SISUnitClasses = "SIS Unit Classes";
         const string BasicUnitsLib = "APOS.BasicUnits_AttributeTypeLib";
         const string FailureClassificationTypesLib = "APOS.FailureClassificationTypes_AttributeTypeLib";
         const string SIFTypesLib = "APOS.SIFTypes_AttributeTypeLib";
@@ -18,9 +23,9 @@ namespace Sintef.Apos.Sif
             ModelCAEX = CAEXDocument.LoadFromString(Model);
             Version = ModelCAEX.CAEXFile.SourceDocumentInformation.Select(x => x.OriginVersion).SingleOrDefault();
 
+            var sifUnitClasses = ModelCAEX.CAEXFile.SystemUnitClassLib.FirstOrDefault(x => x.Name == SIFUnitClasses);
+            var sisUnitClasses = ModelCAEX.CAEXFile.SystemUnitClassLib.FirstOrDefault(x => x.Name == SISUnitClasses);
 
-            var sifUnitClasses = ModelCAEX.CAEXFile.SystemUnitClassLib.FirstOrDefault(x => x.Name == "SIF Unit Classes");
-            var sisUnitClasses = ModelCAEX.CAEXFile.SystemUnitClassLib.FirstOrDefault(x => x.Name == "SIS Unit Classes");
             var basicUnits = ModelCAEX.CAEXFile.AttributeTypeLib.FirstOrDefault(x => x.Name == BasicUnitsLib);
             var failureClassificationTypes = ModelCAEX.CAEXFile.AttributeTypeLib.FirstOrDefault(x => x.Name == FailureClassificationTypesLib);
             var sifTypes = ModelCAEX.CAEXFile.AttributeTypeLib.FirstOrDefault(x => x.Name == SIFTypesLib);
@@ -140,6 +145,12 @@ namespace Sintef.Apos.Sif
 
                 foreach (var subItem in item.InternalElement)
                 {
+                    var documentLink = subItem.ExternalInterface.FirstOrDefault(x => x.Name == "DocumentLink");
+                    if (documentLink != null)
+                    {
+                        var x = documentLink.GetType();
+                    }
+
                     foreach (var attr in subItem.Attribute)
                     {
                         SetAttribute(subItem.Name, attr);
@@ -199,7 +210,7 @@ namespace Sintef.Apos.Sif
 
             if (!_attributes.TryGetValue(nodeName, out var attributes))
             {
-                attributes = new List<Model.AttributeType>();
+                attributes = new List<Model.Attributes.AttributeType>();
                 _attributes[nodeName] = attributes;
             }
 
@@ -214,90 +225,97 @@ namespace Sintef.Apos.Sif
                 throw new Exception("Duplicate attributeName: " + attributeName);
             }
 
+            var isMandatory = false;
+            if (attr.Constraint.FirstOrDefault(x => x.Name == "ModellingRule") is AttributeValueRequirementType requirementType &&
+                requirementType.UnknownType.Requirements == "Mandatory")
+            {
+                isMandatory = true;
+            }
+
             var refAttributeType = attr.RefAttributeType;
 
             switch (className)
             {
                 case "accuracy":
-                    attributes.Add(new Accuracy(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new Accuracy(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "assetIntegrityLevel":
-                    attributes.Add(new AssetIntegrityLevel(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new AssetIntegrityLevel(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "boolean":
-                    attributes.Add(new Model.Boolean(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new Model.Attributes.Boolean(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "comparison":
-                    attributes.Add(new Comparison(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new Comparison(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "duration_hours":
-                    attributes.Add(new DurationHours(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new DurationHours(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "duration_seconds":
-                    attributes.Add(new DurationSeconds(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new DurationSeconds(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "environmentalExtremes":
-                    attributes.Add(new EnvironmentalExtremes(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new EnvironmentalExtremes(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "environmentalIntegrityLevel":
-                    attributes.Add(new EnvironmentalIntegrityLevel(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new EnvironmentalIntegrityLevel(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "failurePhilosophy":
-                    attributes.Add(new FailurePhilosophy(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new FailurePhilosophy(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "frequency_perhour":
-                    attributes.Add(new FrequecyPerHour(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new FrequecyPerHour(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "frequency_peryear":
-                    attributes.Add(new FrequecyPerYear(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new FrequecyPerYear(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "integer":
-                    attributes.Add(new Integer(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new Integer(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "leakagerate_kg_s":
-                    attributes.Add(new LeakageRate_kg_s(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new LeakageRateKilogramsPerSecond(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "modeOfOperation":
-                    attributes.Add(new ModeOfOperation(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new ModeOfOperation(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "percent":
-                    attributes.Add(new Percent(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new Percent(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "probability":
-                    attributes.Add(new Probability(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new Probability(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "rangeMax":
-                    attributes.Add(new RangeMax(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new RangeMax(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "rangeMin":
-                    attributes.Add(new RangeMin(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new RangeMin(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "resetAfterShutdown_FinalElement":
-                    attributes.Add(new ResetAfterShutdown_FinalElement(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new ResetAfterShutdown_FinalElement(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "SCLevel":
-                    attributes.Add(new SCLevel(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new SCLevel(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "SIFType":
-                    attributes.Add(new SIFType(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new SIFType(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "SILLevel":
-                    attributes.Add(new SILLevel(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new SILLevel(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "string":
-                    attributes.Add(new Model.String(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new String(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "tagName":
-                    attributes.Add(new TagName(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new TagName(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "tripEnergyMode":
-                    attributes.Add(new TripEnergyMode(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new TripEnergyMode(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "typeAB":
-                    attributes.Add(new TypeAB(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new TypeAB(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 case "unitOfMeasure":
-                    attributes.Add(new UnitOfMeasure(attributeName, attributeDescription, refAttributeType, null));
+                    attributes.Add(new UnitOfMeasure(attributeName, attributeDescription, refAttributeType, isMandatory, null));
                     break;
                 default:
                     Console.Write("Unknown attribute class: " + className);
@@ -308,19 +326,20 @@ namespace Sintef.Apos.Sif
         public static CAEXDocument ModelCAEX { get; }
         public static string Version { get; }
 
-        private static Dictionary<string, List<Model.AttributeType>> _attributes = new Dictionary<string, List<Model.AttributeType>>();
-        public static IEnumerable<Model.AttributeType> GetAttributes(Node node)
-        {
-            var attributes = new List<Model.AttributeType>();
+        private static Dictionary<string, List<Model.Attributes.AttributeType>> _attributes = new Dictionary<string, List<Model.Attributes.AttributeType>>();
 
-            if (node is SIFSubsystem)
+        public static IEnumerable<Model.Attributes.AttributeType> GetAttributes(Node node)
+        {
+            var attributes = new List<Model.Attributes.AttributeType>();
+
+            if (node is Subsystem)
             {
                 if (_attributes.TryGetValue("Subsystem", out var sifComponentAttributes))
                 {
                     attributes.AddRange(sifComponentAttributes);
                 }
             }
-            else if (node is SISComponent)
+            else if (node is SISDeviceRequirements)
             {
                 if (_attributes.TryGetValue("SISDeviceRequirements", out var sisComponentAttributes))
                 {
@@ -352,10 +371,18 @@ namespace Sintef.Apos.Sif
                 attributes.AddRange(ownAttributes);
             }
 
+            foreach (var item in attributes)
+            {
+                if (attributes.Count(x => x.Name == item.Name) > 1)
+                {
+                    throw new Exception("Duplicate attribute name: " + item.Name);
+                }
+            }
+
             return attributes;
         }
 
-        public static Collection<Model.AttributeType> GetAttributes(Node target, int expectedNumberOfAttributes)
+        public static Collection<Model.Attributes.AttributeType> GetAttributes(Node target, int expectedNumberOfAttributes)
         {
             var attributes = GetAttributes(target);
             if (attributes.Count() != expectedNumberOfAttributes)
@@ -365,7 +392,7 @@ namespace Sintef.Apos.Sif
 
             var type = target.GetType();
 
-            var attributeTypes = new Collection<Model.AttributeType>();
+            var attributeTypes = new Collection<Model.Attributes.AttributeType>();
 
             foreach (var attribute in attributes)
             {
@@ -852,7 +879,7 @@ namespace Sintef.Apos.Sif
                     </UnknownType>
                 </Constraint>
             </Attribute>
-            <Attribute Name=""MaximumTestIntervalForSILCompliance""
+            <!-- <Attribute Name=""MaximumTestIntervalForSILCompliance""
                 ID=""{A3C0D27B-A8AA-4d66-9A11-96B0BDA5859B}""
                 RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/duration_hours"">
                 <Description>maximum allowable number of hours between two consecutive proof tests
@@ -862,8 +889,8 @@ namespace Sintef.Apos.Sif
                         <Requirements>Mandatory</Requirements>
                     </UnknownType>
                 </Constraint>
-            </Attribute>
-            <Attribute Name=""TestCoverage"" ID=""{362DCA97-B3ED-4ce3-BBBB-C1EAB3BD310A}""
+            </Attribute> -->
+            <!-- <Attribute Name=""TestCoverage"" ID=""{362DCA97-B3ED-4ce3-BBBB-C1EAB3BD310A}""
                 RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/percent"">
                 <Description>fraction of dangerous undetected failures assumed detected during a
                     test</Description>
@@ -872,7 +899,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Mandatory</Requirements>
                     </UnknownType>
                 </Constraint>
-            </Attribute>
+            </Attribute> -->
         </SystemUnitClass>
         <SystemUnitClass Name=""InputDeviceRequirements"" ID=""{D0101401-669D-4476-8960-CB1FE6BE378E}""
             RefBaseClassPath=""SIS Unit Classes/SISDeviceRequirements"">

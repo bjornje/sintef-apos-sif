@@ -1,12 +1,15 @@
-﻿using System;
+﻿using Sintef.Apos.Sif.Model.Attributes;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Boolean = Sintef.Apos.Sif.Model.Attributes.Boolean;
+using String = Sintef.Apos.Sif.Model.Attributes.String;
 
 namespace Sintef.Apos.Sif.Model
 {
-    public class SISComponent : Node
+    public class SISDeviceRequirements : Node
     {
         public DurationHours MaximumTestIntervalForSILCompliance { get; protected set; } //1
         public TagName TagName { get; protected set; }
@@ -33,23 +36,18 @@ namespace Sintef.Apos.Sif.Model
         public EnvironmentalExtremes EnvironmentalExtremes { get; protected set; }
         public DurationHours MaximumPermittedRepairTime { get; protected set; } //24
 
-        public const string RefBaseSystemUnitPath = "SIF Unit Classes/SISComponent";
-
-        public String Name { get; }
-
-        public SISComponent(Group parent, string name, int expectedNumberOfAttributes) : base(parent, name)
+        public SISDeviceRequirements(Group parent, string name, int expectedNumberOfAttributes) : base(parent, name)
         {
-            Name = new String(nameof(Name), "", "", this);
-            Name.StringValue = name;
-
             SetAttributes(Definition.GetAttributes(this, expectedNumberOfAttributes + 23));
+
+            TagName.StringValue = name;
         }
 
-        public bool IsSameAs(SISComponent component)
+        public bool IsSameAs(SISDeviceRequirements component)
         {
-            if (string.IsNullOrEmpty(Name.StringValue) && !string.IsNullOrEmpty(component.Name.StringValue)) return false;
-            if (!string.IsNullOrEmpty(Name.StringValue) && string.IsNullOrEmpty(component.Name.StringValue)) return false;
-            if (!string.IsNullOrEmpty(Name.StringValue) && !string.IsNullOrEmpty(component.Name.StringValue) && Name.StringValue != component.Name.StringValue) return false;
+            if (string.IsNullOrEmpty(TagName.StringValue) && !string.IsNullOrEmpty(component.TagName.StringValue)) return false;
+            if (!string.IsNullOrEmpty(TagName.StringValue) && string.IsNullOrEmpty(component.TagName.StringValue)) return false;
+            if (!string.IsNullOrEmpty(TagName.StringValue) && !string.IsNullOrEmpty(component.TagName.StringValue) && TagName.StringValue != component.TagName.StringValue) return false;
 
             if (!HaveSameAttributeValues(component)) return false;
 
@@ -59,24 +57,22 @@ namespace Sintef.Apos.Sif.Model
         public void Validate(Collection<ModelError> errors)
         {
             foreach (var property in Attributes) property.Validate(this, errors);
-
-            if (string.IsNullOrWhiteSpace(Name.StringValue)) errors.Add(new ModelError(this, "Name must have a value."));
         }
 
     }
 
-    public class SISComponents : IEnumerable<SISComponent>
+    public class SISComponents : IEnumerable<SISDeviceRequirements>
     {
-        private readonly Collection<SISComponent> _items = new Collection<SISComponent>();
+        private readonly Collection<SISDeviceRequirements> _items = new Collection<SISDeviceRequirements>();
         private readonly Group _parent;
         public SISComponents(Group parent)
         {
             _parent = parent;
         }
 
-        public SISComponent Append(string name = null)
+        public SISDeviceRequirements Append(string name = null)
         {
-            SISComponent component;
+            SISDeviceRequirements component;
 
             var parent = _parent as Node;
 
@@ -89,31 +85,34 @@ namespace Sintef.Apos.Sif.Model
 
             if (parent is InputDeviceSubsystem)
             {
-                name = name ?? "New input component";
-                component = new InputDeviceComponent(_parent, name);
+                component = new InputDeviceRequirements(_parent, name);
+                component.TagName.StringValue = name ?? "New input component";
             }
             else if (parent is LogicSolverSubsystem)
             {
-                name = name ?? "New solver component";
-                component = new LogicSolverComponent(_parent, name);
+                component = new LogicSolverRequirements(_parent, name);
+                component.TagName.StringValue = name ?? "New solver component";
             }
             else if (parent is FinalElementSubsystem)
             {
-                name = name ?? "New final component";
-                component = new FinalElementComponent(_parent, name);
+                component = new FinalElementRequirements(_parent, name);
+                component.TagName.StringValue = name ?? "New final component";
             }
-            else throw new Exception($"Unexpeced type for having a group: {_parent.GetType()}");
+            else
+            {
+                throw new Exception($"Unexpeced type for having a group: {_parent.GetType()}");
+            }
 
             _items.Add(component); 
             return component;
         }
 
-        public bool Remove(SISComponent item)
+        public bool Remove(SISDeviceRequirements item)
         {
             return _items.Remove(item);
         }
 
-        public IEnumerator<SISComponent> GetEnumerator()
+        public IEnumerator<SISDeviceRequirements> GetEnumerator()
         {
             return _items.GetEnumerator();
         }
@@ -127,7 +126,7 @@ namespace Sintef.Apos.Sif.Model
         {
             if (_items.Count != components.Count()) return false;
 
-            var alreadyMatchedComponents = new List<SISComponent>();
+            var alreadyMatchedComponents = new List<SISDeviceRequirements>();
 
             foreach (var component in components)
             {
@@ -143,8 +142,8 @@ namespace Sintef.Apos.Sif.Model
         {
             foreach (var component in _items)
             {
-                var duplicates = _items.Where(x => x.Name.StringValue == component.Name.StringValue);
-                if (duplicates.Count() > 1) errors.Add(new ModelError(component, "Name must be unique."));
+                var duplicates = _items.Where(x => x.TagName.StringValue == component.TagName.StringValue);
+                if (duplicates.Count() > 1) errors.Add(new ModelError(component, component.TagName, $"{component.TagName.Name} must be unique."));
                 component.Validate(errors);
             }
         }

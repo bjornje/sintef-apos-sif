@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Sintef.Apos.Sif.Model
 {
-    public class FinalElementSubsystem : SIFSubsystem
+    public class FinalElementSubsystem : Subsystem
     {
-        public FinalElementSubsystem(SIF parent) : base(parent, "FinalElement")
+        public FinalElementSubsystem(SafetyInstrumentedFunction parent) : base(parent, "FinalElement")
         {
         }
     }

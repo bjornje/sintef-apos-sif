@@ -1,6 +1,8 @@
-﻿namespace Sintef.Apos.Sif.Model
+﻿using Sintef.Apos.Sif.Model.Attributes;
+
+namespace Sintef.Apos.Sif.Model
 {
-    public class InputDeviceComponent : SISComponent
+    public class InputDeviceRequirements : SISDeviceRequirements
     {
         public UnitOfMeasure UnitOfMeasure { get; protected set; }
         public RangeMax RangeMax { get; protected set; }
@@ -10,9 +12,7 @@
         public String AlarmDescription { get; protected set; }
         public Boolean MeasurementComparisonIsRequired { get; protected set; }
 
-        public new const string RefBaseSystemUnitPath = "SIS Unit Classes/InputDeviceComponent";
-
-        public InputDeviceComponent(Group parent, string name) : base(parent, name, 7)
+        public InputDeviceRequirements(Group parent, string name) : base(parent, name, 7)
         {
         }
     }

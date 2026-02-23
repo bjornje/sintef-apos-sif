@@ -8,9 +8,9 @@ namespace SIFEditor
         {
             if (node is Root) return "SIFs";
 
-            if (node is SIF sif) return sif.SIFID.StringValue;
+            if (node is SafetyInstrumentedFunction sif) return sif.SIFID.StringValue;
 
-            if (node is SIFSubsystem sifSubsystem)
+            if (node is Subsystem sifSubsystem)
             {
                 return $"{sifSubsystem.GetPathStep()} ({sifSubsystem.MInVotingMooN.StringValue}oo{sifSubsystem.NumberOfGroups.StringValue})";
             }
@@ -31,7 +31,10 @@ namespace SIFEditor
                 return $"CrossVoting ({crossGroups.VoteBetweenGroups_M_in_MooN.StringValue}oo{crossGroups.NumberOfGroups_N.StringValue})";
             }
 
-            if (node is SISComponent sisComponent) return sisComponent.Name.StringValue;
+            if (node is SISDeviceRequirements sisComponent)
+            {
+                return sisComponent.TagName.StringValue;
+            }
 
             return node.GetType().Name;
         }

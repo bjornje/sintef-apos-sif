@@ -1,14 +1,5 @@
 ﻿using Sintef.Apos.Sif;
-using Sintef.Apos.Sif.Model;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+using Sintef.Apos.Sif.Model.Attributes;
 
 namespace SIFEditor
 {
@@ -24,6 +15,12 @@ namespace SIFEditor
             Type = property.GetType();
 
             labelName.Text = property.Name;
+            if (!property.IsMandatory)
+            {
+                labelName.ForeColor = Color.Gray;
+                labelType.ForeColor = Color.Gray;
+            }
+
             toolTipProperty.SetToolTip(labelName, property.Description);
 
             labelType.Text = Type.Name;
@@ -60,6 +57,18 @@ namespace SIFEditor
             {
                 textBoxValue.Tag = property;
                 textBoxValue.Text = property.StringValue;
+            }
+        }
+
+        public new void Focus()
+        {
+            if (ControlType == typeof(ComboBox))
+            {
+                comboBoxValue.Focus();
+            }
+            else
+            {
+                textBoxValue.Focus();
             }
         }
 

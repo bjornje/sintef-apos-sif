@@ -1,11 +1,8 @@
-﻿using System;
+﻿using Sintef.Apos.Sif.Model.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace Sintef.Apos.Sif.Model
 {
@@ -23,7 +20,11 @@ namespace Sintef.Apos.Sif.Model
             {
                 foreach (var item in root.SIFs)
                 {
-                    if (item == this) return GetType().Name + index;
+                    if (item == this)
+                    {
+                        return "SIF" + index;
+                    }
+
                     index++;
                 }
 
@@ -32,26 +33,38 @@ namespace Sintef.Apos.Sif.Model
             {
                 foreach (var item in parentGroup.Groups)
                 {
-                    if (item == this) return GetType().Name + index;
+                    if (item == this)
+                    {
+                        return GetType().Name + index;
+                    }
+
                     index++;
                 }
 
                 index = 1;
                 foreach (var item in parentGroup.Components)
                 {
-                    if (item == this) return "Component" + index;
+                    if (item == this)
+                    {
+                        return "Component" + index;
+                    }
+
                     index++;
                 }
             }
-            else if (Parent is SIFSubsystem parentSubsystem)
+            else if (Parent is Subsystem parentSubsystem)
             {
                 foreach (var item in parentSubsystem.Groups)
                 {
-                    if (item == this) return GetType().Name + index;
+                    if (item == this)
+                    {
+                        return GetType().Name + index;
+                    }
+
                     index++;
                 }
             }
-            else if (Parent is SIF)
+            else if (Parent is SafetyInstrumentedFunction)
             {
                 var name = GetType().Name;
                 return name.Substring(0, name.Length - 9);
@@ -100,9 +113,13 @@ namespace Sintef.Apos.Sif.Model
 
             while (node != null)
             {
-                if (node is SIF sif)
+                if (node is SafetyInstrumentedFunction sif)
                 {
-                    if (string.IsNullOrWhiteSpace(sif.SIFID.Value)) return "<blank>";
+                    if (string.IsNullOrWhiteSpace(sif.SIFID.Value))
+                    {
+                        return "<blank>";
+                    }
+
                     return sif.SIFID.Value;
                 }
                 node = node.Parent;
@@ -111,13 +128,17 @@ namespace Sintef.Apos.Sif.Model
             return null;
         }
 
-        public SIF GetSIF()
+        public SafetyInstrumentedFunction GetSIF()
         {
             var node = this;
 
             while (node != null)
             {
-                if (node is SIF sif) return sif;
+                if (node is SafetyInstrumentedFunction sif)
+                {
+                    return sif;
+                }
+
                 node = node.Parent;
             }
 
@@ -127,23 +148,33 @@ namespace Sintef.Apos.Sif.Model
 
         public bool HaveSameAttributeValues(Node node)
         {
-            if (node.Attributes.Count() != Attributes.Count()) return false;
+            if (node.Attributes.Count() != Attributes.Count())
+            {
+                return false;
+            }
 
             foreach(var attribute in node.Attributes)
             {
                 var myAttribute = Attributes.FirstOrDefault(x => x.Name == attribute.Name);
                 if (myAttribute == null)
+                {
                     return false;
+                }
 
                 if (string.IsNullOrEmpty(myAttribute.StringValue) && !string.IsNullOrEmpty(attribute.StringValue))
+                {
                     return false;
+                }
 
                 if (!string.IsNullOrEmpty(myAttribute.StringValue) && string.IsNullOrEmpty(attribute.StringValue))
+                {
                     return false;
+                }
 
                 if (!string.IsNullOrEmpty(myAttribute.StringValue) && !string.IsNullOrEmpty(attribute.StringValue) && myAttribute.StringValue != attribute.StringValue)
+                {
                     return false;
-
+                }
             }
 
             return true;

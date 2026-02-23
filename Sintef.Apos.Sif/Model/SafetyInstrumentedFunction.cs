@@ -1,16 +1,16 @@
-﻿using System;
+﻿using Sintef.Apos.Sif.Model.Attributes;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using String = Sintef.Apos.Sif.Model.Attributes.String;
 
 namespace Sintef.Apos.Sif.Model
 {
-    public class SIF : Node
+    public class SafetyInstrumentedFunction : Node
     {
-        public SIFSubsystems Subsystems { get; }
+        public Subsystems Subsystems { get; }
 
         public CrossSubsystemGroups CrossSubsystemGroups { get; }
 
@@ -18,6 +18,7 @@ namespace Sintef.Apos.Sif.Model
         public LogicSolverSubsystem LogicSolver => Subsystems.SingleOrDefault(x => x is LogicSolverSubsystem) as LogicSolverSubsystem;
         public FinalElementSubsystem FinalElement => Subsystems.SingleOrDefault(x => x is FinalElementSubsystem) as FinalElementSubsystem;
 
+        public Documents Documents { get; }
 
         //Attributes
 
@@ -44,44 +45,25 @@ namespace Sintef.Apos.Sif.Model
         public String SIFTypicalID { get; private set; }
         public String SIFVersion { get; private set; }
 
-        //20
-        //public ILLevel AILLevel { get; private set; } //1
-        //public PerYear DemandRate { get; private set; }
-        //public ILLevel EILLevel { get; private set; }
-        //public String EUCReference { get; private set; }
-        //public ManualActivation ManualActivation { get; private set; }
-        //public Seconds MaxAllowableResponseTime { get; private set; }
-        //public String MeasureToAvoidCCF { get; private set; } //10
-        //public ModeOfOperation ModeOfOperation { get; private set; }
-        //public Probability PFDRequirement { get; private set; }
-        //public String PlantOperatingMode { get; private set; }
-        //public String QuantificationMethodOrTool { get; private set; } //15
-        //public String SafeProcessState { get; private set; }
-        //public String SIFDescription { get; private set; }
-        //public String SILAllocationMethod { get; private set; }
-        //public SILLevel SILLevel { get; private set; }
-        //public PerHour SpuriousTripRate { get; private set; }
-        //public String SurvaivabilityRequirement { get; private set; } //25
-
-        public const string RefBaseSystemUnitPath = "SIF Unit Classes/SIF";
-
-        public SIF(Root parent) : base(parent, $"SIF{parent.SIFs.Count() + 1}")
+        public SafetyInstrumentedFunction(Root parent) : base(parent, $"SIF{parent.SIFs.Count() + 1}")
         {
             SetAttributes(Definition.GetAttributes(this, 21));
 
-            Subsystems = new SIFSubsystems(this);
+            Subsystems = new Subsystems(this);
 
             CrossSubsystemGroups = new CrossSubsystemGroups(this);
             CrossSubsystemGroups.VoteBetweenGroups(1, 1);
+
+            Documents = new Documents(this);
         }
 
  
-        public bool Remove(SIFSubsystem item)
+        public bool Remove(Subsystem item)
         {
             return Subsystems.Remove(item);
         }
 
-        public bool IsSameAs(SIF sif)
+        public bool IsSameAs(SafetyInstrumentedFunction sif)
         {
             if (!HaveSameAttributeValues(sif)) return false;
 
@@ -120,29 +102,31 @@ namespace Sintef.Apos.Sif.Model
         }
     }
 
-    public class SIFs : IEnumerable<SIF>
+    public class SIFs : IEnumerable<SafetyInstrumentedFunction>
     {
-        private readonly Collection<SIF> _items = new Collection<SIF>();
+        private readonly Collection<SafetyInstrumentedFunction> _items = new Collection<SafetyInstrumentedFunction>();
         private readonly Root _parent;
 
         public Root Parent => _parent;
+
         public SIFs(Root parent)
         {
             _parent = parent;
         }
-        public SIF Append(string sifId = null)
+
+        public SafetyInstrumentedFunction Append(string sifId = null)
         {
-            var sif = new SIF(_parent);
-            sif.SIFID.StringValue = sifId;
+            var sif = new SafetyInstrumentedFunction(_parent);
+            sif.SIFID.StringValue = sifId ?? "New SIF";
             _items.Add(sif);
             return sif;
         }
 
-        public bool Remove(SIF item)
+        public bool Remove(SafetyInstrumentedFunction item)
         {
             return _items.Remove(item);
         }
-        public IEnumerator<SIF> GetEnumerator()
+        public IEnumerator<SafetyInstrumentedFunction> GetEnumerator()
         {
             return _items.GetEnumerator();
         }
@@ -156,7 +140,7 @@ namespace Sintef.Apos.Sif.Model
         {
             if (_items.Count != sifs.Count()) return false;
 
-            var alreadyMatchedSifs = new List<SIF>();
+            var alreadyMatchedSifs = new List<SafetyInstrumentedFunction>();
 
             foreach (var sif in sifs)
             {
