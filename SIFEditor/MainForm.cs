@@ -1,6 +1,7 @@
 using Sintef.Apos.Sif;
 using Sintef.Apos.Sif.Model;
-using Sintef.Apos.Sif.Model.Attributes;
+using System;
+using System.ComponentModel;
 using System.Reflection;
 using System.Text;
 using ComboBox = System.Windows.Forms.ComboBox;
@@ -15,10 +16,12 @@ namespace SIFEditor
         private readonly string _text;
         private readonly List<PropertiesControl> _nodeDetails = new();
         private readonly PropertiesControl _propertieBlankPage = new();
+        private readonly BindingList<ModelError> _filteredErrors = [];
         public MainForm()
         {
             InitializeComponent();
             listBox1.ValueMember = "Message";
+            listBox1.DataSource = _filteredErrors;
 
             var version = Assembly.GetExecutingAssembly().GetName().Version;
             _text = $"APOS SIF Editor {version.Major}.{version.Minor}.{version.Build} UML Model {Definition.Version}";
@@ -29,6 +32,58 @@ namespace SIFEditor
             _propertieBlankPage.Dock = DockStyle.Fill;
 
             splitContainer2.Panel1.Controls.Add(_propertieBlankPage);
+        }
+
+        private void FilterModelErrors()
+        {
+            var selectedItem = listBox1.SelectedItem;
+            var index = 0;
+            var selectedIndex = -1;
+
+            _filteredErrors.Clear();
+
+            if (_builder == null)
+            {
+                return;
+            }
+
+            if (treeView1.SelectedNode != null && treeView1.SelectedNode.Tag is Node node && node.GetType() != typeof(Root))
+            {
+                foreach (var error in _builder.Errors.Where(x => x.Node == node))
+                {
+                    if (error == selectedItem)
+                    {
+                        selectedIndex = index;
+                    }
+
+                    _filteredErrors.Add(error);
+                    index++;
+                }
+
+                listBox1.SelectedIndex = selectedIndex;
+
+                return;
+            }
+
+            foreach (var error in _builder.Errors)
+            {
+                if (error == selectedItem)
+                {
+                    selectedIndex = index;
+                }
+
+                _filteredErrors.Add(error);
+                index++;
+            }
+
+            if (treeView1.SelectedNode != null && treeView1.SelectedNode.Tag is Node node2 && node2.GetType() != typeof(Root))
+            {
+                listBox1.SelectedIndex = selectedIndex;
+            }
+            else
+            {
+                listBox1.SelectedIndex = -1;
+            }
         }
 
         private void RefreshTreeView()
@@ -51,7 +106,12 @@ namespace SIFEditor
 
             }
 
-            if (updateNeeded) treeView1.Refresh();
+            if (updateNeeded)
+            {
+                treeView1.Refresh();
+            }
+
+            _builder?.SIFs.PushAttributes();
         }
 
         private void AddRoot(Root root)
@@ -65,6 +125,7 @@ namespace SIFEditor
             AddSIFs(root.SIFs, node);
 
             treeView1.ExpandAll();
+
         }
 
         private void AddSIFs(SIFs sifs, TreeNode node)
@@ -111,7 +172,7 @@ namespace SIFEditor
         private void AddDocuments(Documents documents, TreeNode node)
         {
             var childNode = new TreeNode(documents.DisplayName(node));
-            //treeNode.ContextMenuStrip = contextMenuStrip;
+            childNode.ContextMenuStrip = contextMenuStripDocuments;
             childNode.Tag = documents;
             node.Nodes.Add(childNode);
         }
@@ -160,7 +221,6 @@ namespace SIFEditor
 
             treeView1.SelectedNode = result;
             result.EnsureVisible();
-            treeView1.Focus();
 
             if (error.Attribute != null && splitContainer2.Panel1.Controls[0] is PropertiesControl properties)
             {
@@ -183,11 +243,21 @@ namespace SIFEditor
         private bool _ignoreTextChanged = false;
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            if (treeView1.SelectedNode == null) return;
+            var allTreeNodes = new List<TreeNode>();
+            FindAllTreeNodes(treeView1.TopNode, allTreeNodes);
+            foreach (var item in allTreeNodes)
+            {
+                item.BackColor = Color.Transparent;
+            }
 
-            if (treeView1.SelectedNode.Tag is not Node node) return;
+            if (treeView1.SelectedNode == null || treeView1.SelectedNode.Tag is not Node node)
+            {
+                return;
+            }
 
             _ignoreTextChanged = true;
+
+            treeView1.SelectedNode.BackColor = Color.PaleTurquoise;
 
             var control = _nodeDetails.FirstOrDefault(x => x.Type == node.GetType());
             if (control == null)
@@ -204,6 +274,8 @@ namespace SIFEditor
             splitContainer2.Panel1.Controls.Add(control);
             control.Show(node);
 
+            FilterModelErrors();
+
             _ignoreTextChanged = false;
         }
 
@@ -211,12 +283,12 @@ namespace SIFEditor
         {
             if (_ignoreTextChanged) return;
 
-            if (sender is TextBox textBox && textBox.Tag is AttributeType attributeType)
+            if (sender is TextBox textBox && textBox.Tag is IAttribute attributeType)
             {
                 if (string.IsNullOrEmpty(textBox.Text)) attributeType.StringValue = null;
                 else attributeType.StringValue = textBox.Text;
             }
-            else if (sender is ComboBox comboBox && comboBox.Tag is AttributeType attributeType2)
+            else if (sender is ComboBox comboBox && comboBox.Tag is IAttribute attributeType2)
             {
                 var valueBefore = attributeType2.ObjectValue;
 
@@ -304,7 +376,7 @@ namespace SIFEditor
             _fileName = null;
             _builder = new Builder();
 
-            listBox1.Items.Clear();
+            FilterModelErrors();
 
             AddRoot(_builder.SIFs.Parent);
             addSifToolStripMenuItem_Click(sender, e);
@@ -331,12 +403,7 @@ namespace SIFEditor
 
                 _builder.LoadFromFile(openFileDialog.FileName);
 
-                listBox1.Items.Clear();
-
-                foreach (var error in _builder.Errors)
-                {
-                    listBox1.Items.Add(error);
-                }
+                FilterModelErrors();
 
                 var root = _builder.Roots.FirstOrDefault();
                 if (root != null)
@@ -357,7 +424,10 @@ namespace SIFEditor
 
             saveToolStripMenuItem.Enabled = _builder != null;
             saveAsToolStripMenuItem.Enabled = _builder != null;
-            if (_builder == null) return;
+            if (_builder == null)
+            {
+                return;
+            }
 
             RefreshTreeView();
 
@@ -365,8 +435,7 @@ namespace SIFEditor
             if (hasChanges || (_hasChanges != hasChanges))
             {
                 _builder.Validate();
-                listBox1.Items.Clear();
-                foreach (var error in _builder.Errors) listBox1.Items.Add(error);
+                FilterModelErrors();
             }
             _hasChanges = hasChanges;
 
@@ -387,7 +456,7 @@ namespace SIFEditor
                 var sif = root.SIFs.Append();
                 var sifTreeNode = AppendTreeNode(sif, treeView1.TopNode, contextMenuStripSIF);
 
-                var crossSubsystemTreeNode = AppendTreeNode(sif.CrossSubsystemGroups, sifTreeNode, null);
+                _ = AppendTreeNode(sif.CrossSubsystemGroups, sifTreeNode, null);
 
                 //InputDeviceSubsystem
                 var inputDeviceSubsystem = sif.Subsystems.AppendInputDevice();
@@ -437,14 +506,15 @@ namespace SIFEditor
                 var finalComponent = finalElementGroup.Components.Append();
                 AppendTreeNode(finalComponent, finalElementGroupTreeNode, contextMenuStripSISComponent);
 
-                var documentsTreeNode = AppendTreeNode(sif.Documents, sifTreeNode, null);
-
+                var documentsTreeNode = AppendTreeNode(sif.Documents, sifTreeNode, contextMenuStripDocuments);
+                var document = sif.Documents.Append();
+                AppendTreeNode(document, documentsTreeNode, contextMenuStripDocument);
 
                 TreeChanged();
             }
         }
 
-        private static TreeNode AppendTreeNode(Node tag, TreeNode parent, ContextMenuStrip contextMenuStrip)
+        private static TreeNode AppendTreeNode(Node tag, TreeNode parent, ContextMenuStrip? contextMenuStrip)
         {
             var treeNode = new TreeNode(tag.DisplayName(parent));
             treeNode.ContextMenuStrip = contextMenuStrip;
@@ -608,9 +678,9 @@ namespace SIFEditor
             var sb = new StringBuilder();
             AppendLine(sb, "Path", "SIFID", "Component name", "Attribute name", "Attribute value");
 
-            foreach(var sif in _builder.SIFs)
+            foreach (var sif in _builder.SIFs)
             {
-                foreach(var attribute in sif.Attributes)
+                foreach (var attribute in sif.Attributes)
                 {
                     AppendLine(sb, sif.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue);
 
@@ -618,7 +688,7 @@ namespace SIFEditor
 
                 foreach (var subsystem in sif.Subsystems)
                 {
-                    foreach(var attribute in subsystem.Attributes)
+                    foreach (var attribute in subsystem.Attributes)
                     {
                         AppendLine(sb, subsystem.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue);
                     }
@@ -642,7 +712,7 @@ namespace SIFEditor
 
             foreach (var component in group.Components)
             {
-                foreach(var attribute in component.Attributes)
+                foreach (var attribute in component.Attributes)
                 {
                     AppendLine(sb, component.GetPath(sif.Parent), sif.SIFID.Value, component.TagName.Value, attribute.Name, attribute.StringValue);
                 }
@@ -762,6 +832,56 @@ namespace SIFEditor
                 crossGroups.Remove(group);
                 treeView1.Nodes.Remove(treeView1.SelectedNode);
                 TreeChanged();
+            }
+        }
+
+        private void toolStripMenuItemAddDocument_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode.Tag is Documents documents)
+            {
+                var document = documents.Append();
+                AppendTreeNode(document, treeView1.SelectedNode, contextMenuStripDocument);
+                TreeChanged();
+            }
+        }
+
+        private void toolStripMenuItemUMLModel_Click(object sender, EventArgs e)
+        {
+            var modelForm = new UMLModelForm();
+            modelForm.Show();
+        }
+
+        private void addDocumentToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode?.Tag is Documents documents)
+            {
+                var document = documents.Append();
+                AppendTreeNode(document, treeView1.SelectedNode, contextMenuStripDocument);
+                TreeChanged();
+            }
+        }
+
+        private void removeDocumentToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode?.Tag is Document document && document.Parent is Documents documents)
+            {
+                documents.Remove(document);
+                treeView1.Nodes.Remove(treeView1.SelectedNode);
+                TreeChanged();
+            }
+        }
+
+        private void toolStripMenuItemAddAttribute_Click(object sender, EventArgs e)
+        {
+            var form = new AddAttributeForm();
+
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                Definition.TryAddAttribute(form.AttributeName, form.RefAttributeType, form.IsOrderedList, form.Target);
+
+                _builder?.PushAttributes();
+
+                treeView1_AfterSelect(null, null);
             }
         }
     }

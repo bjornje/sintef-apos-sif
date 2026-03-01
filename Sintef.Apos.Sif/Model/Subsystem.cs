@@ -1,5 +1,4 @@
-﻿using Sintef.Apos.Sif.Model.Attributes;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -10,10 +9,10 @@ namespace Sintef.Apos.Sif.Model
     public class Subsystem : Node
     {
         public Groups Groups { get; }
-        public Percent PFDBudget { get; protected set; }
+        public Attribute<double?> PFDBudget { get; protected set; }
 
-        public Integer MInVotingMooN { get; protected set; }
-        public Integer NumberOfGroups { get; protected set; }
+        public Attribute<int?> MInVotingMooN { get; protected set; }
+        public Attribute<int?> NumberOfGroups { get; protected set; }
 
         private readonly Voter _voter;
         public Subsystem(SafetyInstrumentedFunction parent, string pathStep) : base(parent, pathStep)
@@ -33,8 +32,15 @@ namespace Sintef.Apos.Sif.Model
 
         public bool IsSameAs(Subsystem subsystem)
         {
-            if (!HaveSameAttributeValues(subsystem)) return false;
-            if (!Groups.IsSameAs(subsystem.Groups)) return false;
+            if (!HaveSameAttributeValues(subsystem))
+            {
+                return false;
+            }
+
+            if (!Groups.IsSameAs(subsystem.Groups))
+            {
+                return false;
+            }
 
             return true;
         }
@@ -61,7 +67,10 @@ namespace Sintef.Apos.Sif.Model
 
             groups.AddRange(Groups);
 
-            foreach (var group in Groups) groups.AddRange(group.GetAllGroups());
+            foreach (var group in Groups)
+            {
+                groups.AddRange(group.GetAllGroups());
+            }
 
             return groups;
         }
@@ -69,6 +78,16 @@ namespace Sintef.Apos.Sif.Model
         public override int GetNumberOfElements()
         {
             return Groups.Count();
+        }
+
+        public override void PushAttributes()
+        {
+            foreach (var attribute in Definition.GetAdditionalAttributes(GetType().Name))
+            {
+                TryAddAttribute(attribute.Clone(this));
+            }
+
+            Groups.PushAttributes();
         }
 
     }
@@ -84,7 +103,10 @@ namespace Sintef.Apos.Sif.Model
 
         public InputDeviceSubsystem AppendInputDevice()
         {
-            if (_parent.InputDevice != null) throw new Exception("InputDevice already exists.");
+            if (_parent.InputDevice != null)
+            {
+                throw new Exception("InputDevice already exists.");
+            }
 
             var subsystem = new InputDeviceSubsystem(_parent);
             _items.Add(subsystem);
@@ -94,7 +116,10 @@ namespace Sintef.Apos.Sif.Model
 
         public LogicSolverSubsystem AppendLogicSolver()
         {
-            if (_parent.LogicSolver != null) throw new Exception("LogicSolver already exists.");
+            if (_parent.LogicSolver != null)
+            {
+                throw new Exception("LogicSolver already exists.");
+            }
 
             var subsystem = new LogicSolverSubsystem(_parent);
             _items.Add(subsystem);
@@ -104,7 +129,10 @@ namespace Sintef.Apos.Sif.Model
 
         public FinalElementSubsystem AppendFinalElement()
         {
-            if (_parent.FinalElement != null) throw new Exception("FinalElement already exists.");
+            if (_parent.FinalElement != null)
+            {
+                throw new Exception("FinalElement already exists.");
+            }
 
             var subsystem = new FinalElementSubsystem(_parent);
             _items.Add(subsystem);
@@ -131,14 +159,21 @@ namespace Sintef.Apos.Sif.Model
 
         public bool IsSameAs(Subsystems subsystems)
         {
-            if (_items.Count != subsystems.Count()) return false;
+            if (_items.Count != subsystems.Count())
+            {
+                return false;
+            }
 
             var alreadyMatchedSubsystems = new List<Subsystem>();
 
             foreach (var subsystem in subsystems)
             {
                 var mySubsystem = _items.FirstOrDefault(x => !alreadyMatchedSubsystems.Contains(x) && x.IsSameAs(subsystem));
-                if (mySubsystem == null) return false;
+                if (mySubsystem == null)
+                {
+                    return false;
+                }
+
                 alreadyMatchedSubsystems.Add(mySubsystem);
             }
 
@@ -153,6 +188,13 @@ namespace Sintef.Apos.Sif.Model
             }
         }
 
+        public void PushAttributes()
+        {
+            foreach (var subsystem in _items)
+            {
+                subsystem.PushAttributes();
+            }
+        }
 
     }
 }

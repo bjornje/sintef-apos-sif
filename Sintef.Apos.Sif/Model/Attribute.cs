@@ -3,32 +3,57 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 
-namespace Sintef.Apos.Sif.Model.Attributes
+namespace Sintef.Apos.Sif.Model
 {
-    public abstract class AttributeType
+    public class Attribute<T> : IAttribute
     {
         public string Name { get; }
         public string Description { get; }
         public string StringValue { get; set; }
         public string RefAttributeType { get; }
         public bool IsMandatory { get; }
-        public Type DataType { get; }
+        public bool IsPartOfModel { get; }
+        public bool IsOrderedList => false;
+        public Collection<IAttribute> Items { get; }
         public Node Owner { get; }
-        public virtual object ObjectValue { get => GetValueAsObject(StringValue, DataType); set => StringValue = GetValueAsString(value); }
+        public string[] ValueOptions { get; set; }
+        public object ObjectValue { get => GetValueAsObject(StringValue); set => StringValue = GetValueAsString(value); }
 
-        protected AttributeType(string name, string description, string refAttributeType, bool isMandatory, Type dataType, Node owner)
+        public T Value { get => (T)ObjectValue; set => ObjectValue = value; }
+        public Attribute(string name, string description, string refAttributeType, bool isMandatory, bool isPartOfModel, Node owner)
         {
             Name = name;
             Description = description;
             RefAttributeType = refAttributeType;
             IsMandatory = isMandatory;
-            DataType = dataType;
+            IsPartOfModel = isPartOfModel;
             Owner = owner;
         }
 
-        public abstract AttributeType Clone(Node owner);
+        public IAttribute Clone(Node owner)
+        {
+            return new Attribute<T>(Name, Description, RefAttributeType, IsMandatory, IsPartOfModel, owner);
+        }
 
-        public virtual bool IsValid(out Collection<ModelError> errors)
+        public IAttribute CreateItem()
+        {
+            return null;
+        }
+
+        public bool TryGetValueOptions(out string[] valueOptions)
+        {
+            if (ValueOptions == null)
+            {
+                valueOptions = null;
+                return false;
+            }
+
+            valueOptions = ValueOptions;
+
+            return true;
+        }
+
+        public bool IsValid(out Collection<ModelError> errors)
         {
             errors = new Collection<ModelError>();
 
@@ -37,8 +62,9 @@ namespace Sintef.Apos.Sif.Model.Attributes
             return errors.Count == 0;
         }
 
-        public virtual void Validate(Node node, Collection<ModelError> errors)
+        public void Validate(Node node, Collection<ModelError> errors)
         {
+
             if (string.IsNullOrEmpty(StringValue))
             {
                 if (IsMandatory)
@@ -49,9 +75,9 @@ namespace Sintef.Apos.Sif.Model.Attributes
                 return;
             }
 
-            if (DataType == typeof(decimal))
+            if (typeof(T) == typeof(double?))
             {
-                var valueAsObject = GetValueAsObject(StringValue, DataType);
+                var valueAsObject = GetValueAsObject(StringValue);
                 var valueAsString = GetValueAsString(valueAsObject);
 
                 if (StringValue == valueAsString)
@@ -71,9 +97,9 @@ namespace Sintef.Apos.Sif.Model.Attributes
 
                 errors.Add(new ModelError(node, this, $"The value {StringValue} provided for {Name} is not a valid decimal number."));
             }
-            else if (DataType == typeof(long))
+            else if (typeof(T) == typeof(int?))
             {
-                var valueAsObject = GetValueAsObject(StringValue, DataType);
+                var valueAsObject = GetValueAsObject(StringValue);
                 var valueAsString = GetValueAsString(valueAsObject);
 
                 if (StringValue == valueAsString)
@@ -83,9 +109,9 @@ namespace Sintef.Apos.Sif.Model.Attributes
 
                 errors.Add(new ModelError(node, this, $"The value {StringValue} provided for {Name} is not a valid integer number."));
             }
-            else if (DataType == typeof(bool))
+            else if (typeof(T) == typeof(bool?))
             {
-                var valueAsObject = GetValueAsObject(StringValue, DataType);
+                var valueAsObject = GetValueAsObject(StringValue);
                 var valueAsString = GetValueAsString(valueAsObject);
 
                 if (StringValue == valueAsString)
@@ -95,7 +121,7 @@ namespace Sintef.Apos.Sif.Model.Attributes
 
                 errors.Add(new ModelError(node, this, $"The value {StringValue} provided for {Name} is not a valid boolean."));
             }
-            else if (DataType == typeof(string))
+            else if (typeof(T) == typeof(string))
             {
                 if (string.IsNullOrEmpty(StringValue))
                 {
@@ -114,9 +140,9 @@ namespace Sintef.Apos.Sif.Model.Attributes
             }
         }
 
-        private static object GetValueAsObject(string value, Type dataType)
+        private static object GetValueAsObject(string value)
         {
-            if (dataType == typeof(decimal))
+            if (typeof(T) == typeof(double?))
             {
                 if (HasExponent(value, out var significand, out var exponent))
                 {
@@ -128,20 +154,40 @@ namespace Sintef.Apos.Sif.Model.Attributes
                 }
                 else
                 {
-                    if (double.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var doubleValue)) return doubleValue;
-                    if (decimal.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var decimalValue)) return decimalValue;
+                    if (double.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var doubleValue))
+                    {
+                        return doubleValue;
+                    }
+
+                    if (decimal.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var decimalValue))
+                    {
+                        return decimalValue;
+                    }
                 }
             }
-            else if (dataType == typeof(long))
+            else if (typeof(T) == typeof(int?))
             {
-                if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intValue)) return intValue;
-                if (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var longValue)) return longValue;
+                if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intValue))
+                {
+                    return intValue;
+                }
+
+                if (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var longValue))
+                {
+                    return longValue;
+                }
             }
-            else if (dataType == typeof(bool))
+            else if (typeof(T) == typeof(bool?))
             {
-                if (bool.TryParse(value, out var boolValue)) return boolValue;
+                if (bool.TryParse(value, out var boolValue))
+                {
+                    return boolValue;
+                }
             }
-            else if (dataType == typeof(string)) return value;
+            else if (typeof(T) == typeof(string))
+            {
+                return value;
+            }
 
             return null;
         }
@@ -218,6 +264,5 @@ namespace Sintef.Apos.Sif.Model.Attributes
                 return value.ToString();
             }
         }
-
     }
 }

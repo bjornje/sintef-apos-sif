@@ -1,3 +1,5 @@
+using Sintef.Apos.Sif.Model;
+
 namespace Sintef.Apos.Sif.Testing
 {
     public class Basic
@@ -5,11 +7,11 @@ namespace Sintef.Apos.Sif.Testing
         [Fact]
         public void VerifyModelVersion()
         {
-            Assert.Equal("26", Definition.Version);
+            Assert.Equal("30", Definition.Version);
         }
 
         [Fact]
-        public void ScientificNotation()
+        public void ScientificNotification()
         {
             var builder = new Builder();
 
@@ -26,14 +28,6 @@ namespace Sintef.Apos.Sif.Testing
             Assert.True(sif.MaximumAllowableDemandRate.IsValid(out var _));
             Assert.Equal(0.00000035, sif.MaximumAllowableDemandRate.Value);
             Assert.Equal("0.00000035", sif.MaximumAllowableDemandRate.StringValue);
-        }
-
-        [Fact]
-        public void ScientificNotation2()
-        {
-            var builder = new Builder();
-
-            var sif = builder.SIFs.Append("SIF-00ABC23");
 
             sif.MaximumAllowableDemandRate.Value = 3.5E-07;
 
@@ -41,10 +35,65 @@ namespace Sintef.Apos.Sif.Testing
             Assert.Equal(0.00000035, sif.MaximumAllowableDemandRate.Value);
             Assert.Equal("3.5E-07", sif.MaximumAllowableDemandRate.StringValue);
 
-            sif.MaximumAllowableDemandRate.StringValue = "0.00000035";
+            sif.MaximumAllowableDemandRate.Value = 0.00000035;
             Assert.True(sif.MaximumAllowableDemandRate.IsValid(out var _));
             Assert.Equal(0.00000035, sif.MaximumAllowableDemandRate.Value);
-            Assert.Equal("0.00000035", sif.MaximumAllowableDemandRate.StringValue);
+            Assert.Equal("3.5E-07", sif.MaximumAllowableDemandRate.StringValue);
+        }
+
+
+        [Fact]
+        public void OrderedList()
+        {
+            var builder = new Builder();
+
+            var sif = builder.SIFs.Append("SIF-00ABC23");
+
+            Assert.True(sif.QuantificationMethodOrTool.IsOrderedList);
+
+            sif.QuantificationMethodOrTool.Values = ["a", "b", "c"];
+
+            Assert.Equal(3, sif.QuantificationMethodOrTool.Items.Count);
+            Assert.Equal("a", sif.QuantificationMethodOrTool.Items[0].ObjectValue);
+            Assert.Equal("b", sif.QuantificationMethodOrTool.Items[1].ObjectValue);
+            Assert.Equal("c", sif.QuantificationMethodOrTool.Items[2].ObjectValue);
+
+            var array = sif.QuantificationMethodOrTool.Values.ToArray();
+
+            Assert.Equal("a", array[0]);
+            Assert.Equal("b", array[1]);
+            Assert.Equal("c", array[2]);
+
+            var inputDevice = sif.Subsystems.AppendInputDevice();
+            var group = inputDevice.Groups.Append();
+            var component = group.Components.Append("TT-1001") as InputDeviceRequirements;
+
+            component.TripPointValue.Values = [3.75, 4.789, 8.79, 11.436];
+
+            Assert.Equal(4, component.TripPointValue.Items.Count);
+            Assert.Equal(3.75, component.TripPointValue.Items[0].ObjectValue);
+            Assert.Equal(4.789, component.TripPointValue.Items[1].ObjectValue);
+            Assert.Equal(8.79, component.TripPointValue.Items[2].ObjectValue);
+            Assert.Equal(11.436, component.TripPointValue.Items[3].ObjectValue);
+
+            var array2 = component.TripPointValue.Values.ToArray();
+
+            Assert.Equal(3.75, array2[0]);
+            Assert.Equal(4.789, array2[1]);
+            Assert.Equal(8.79, array2[2]);
+            Assert.Equal(11.436, array2[3]);
+
+            var list = new List<double?> { 0.89, 0.42 };
+
+            component.TripPointValue.Values = list;
+            Assert.Equal(2, component.TripPointValue.Items.Count);
+            Assert.Equal(0.89, component.TripPointValue.Items[0].ObjectValue);
+            Assert.Equal(0.42, component.TripPointValue.Items[1].ObjectValue);
+
+            var list2 = component.TripPointValue.Values.ToList();
+
+            Assert.Equivalent(list, list2);
+
         }
 
         [Fact]

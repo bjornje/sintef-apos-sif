@@ -1,5 +1,4 @@
-﻿using Sintef.Apos.Sif.Model.Attributes;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -10,9 +9,9 @@ namespace Sintef.Apos.Sif.Model
     {
         public Groups Groups { get; }
         public SISComponents Components { get; }
-        public Integer MInVotingMooN { get; protected set; }
-        public Integer NumberOfDevicesWithinGroup { get; protected set; }
-        public Boolean AllowAnyComponents { get; protected set; }
+        public Attribute<int?> MInVotingMooN { get; protected set; }
+        public Attribute<int?> NumberOfDevicesWithinGroup { get; protected set; }
+        public Attribute<bool?> AllowAnyComponents { get; protected set; }
 
         private readonly Voter _voter;
 
@@ -53,11 +52,18 @@ namespace Sintef.Apos.Sif.Model
 
         public void Validate(Collection<ModelError> errors)
         {
-            foreach (var property in Attributes) property.Validate(this, errors);
+            foreach (var property in Attributes)
+            {
+                property.Validate(this, errors);
+            }
 
             if (!Components.Any() && !Groups.Any())
             {
                 errors.Add(new ModelError(this, "Group is empty."));
+            }
+            else if (!Components.Any() && Groups.Count() == 1)
+            {
+                errors.Add(new ModelError(this, "Group has no components and only one group."));
             }
             else
             {
@@ -67,6 +73,18 @@ namespace Sintef.Apos.Sif.Model
             Groups.Validate(errors);
             Components.Validate(errors);
         }
+
+        public override void PushAttributes()
+        {
+            foreach (var attribute in Definition.GetAdditionalAttributes(GetType().Name))
+            {
+                TryAddAttribute(attribute.Clone(this));
+            }
+
+            Groups.PushAttributes();
+            Components.PushAttributes();
+        }
+
 
         public IEnumerable<Group> GetAllGroups()
         {
@@ -83,7 +101,6 @@ namespace Sintef.Apos.Sif.Model
         {
             return Groups.Count() + Components.Count();
         }
-
     }
 
     public class Groups : IEnumerable<Group>
@@ -147,22 +164,33 @@ namespace Sintef.Apos.Sif.Model
 
         public void Validate(Collection<ModelError> errors)
         {
-            foreach (var group in _items) group.Validate(errors);
+            foreach (var group in _items)
+            {
+                group.Validate(errors);
+            }
+        }
+
+        public void PushAttributes()
+        {
+            foreach (var group in _items)
+            {
+                group.PushAttributes();
+            }
         }
     }
 
     public class CrossSubsystemGroups : Node, IEnumerable<Group>
     {
-        public Integer VoteBetweenGroups_M_in_MooN { get; protected set; }
-        public Integer NumberOfGroups_N { get; protected set; }
+        public Attribute<int?> VoteBetweenGroups_M_in_MooN { get; protected set; }
+        public Attribute<int?> NumberOfGroups_N { get; protected set; }
 
         private readonly Voter _voter;
 
         private readonly Collection<Group> _items = new Collection<Group>();
         public CrossSubsystemGroups(Node parent) : base(parent, "CrossSubsystemGroups")
         {
-            NumberOfGroups_N = new Integer("NumberOfGroups_N", "", "", false, this);
-            VoteBetweenGroups_M_in_MooN = new Integer("VoteBetweenGroups_M_in_MooN", "", "", false, this);
+            NumberOfGroups_N = new Attribute<int?>("NumberOfGroups_N", "", "", false, true, this);
+            VoteBetweenGroups_M_in_MooN = new Attribute<int?>("VoteBetweenGroups_M_in_MooN", "", "", false, true, this);
 
             _voter = new Voter(this, VoteBetweenGroups_M_in_MooN, "M", NumberOfGroups_N, "N");
 

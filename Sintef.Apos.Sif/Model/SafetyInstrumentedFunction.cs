@@ -1,10 +1,8 @@
-﻿using Sintef.Apos.Sif.Model.Attributes;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using String = Sintef.Apos.Sif.Model.Attributes.String;
 
 namespace Sintef.Apos.Sif.Model
 {
@@ -22,32 +20,69 @@ namespace Sintef.Apos.Sif.Model
 
         //Attributes
 
-        public FrequecyPerYear MaximumAllowableDemandRate { get; private set; }
-        public DurationSeconds MaximumAllowableSIFResponseTime { get; private set; }
-        public String SafeStateOfProcess { get; private set; }
-        public SILLevel SafetyIntegrityLevelRequirement { get; private set; }
-        public String SILAllocationMethod { get; private set; }
-        public String SIFDescription { get; private set; }
-        public ModeOfOperation ModeOfOperation { get; private set; }
-        public EnvironmentalIntegrityLevel EnvironmentalIntegrityLevelRequirement { get; private set; }
-        public AssetIntegrityLevel AssetIntegrityLevelRequirement { get; private set; }
-        public Probability PFDRequirement { get; private set; }
-        public String SIFName { get; private set; }
-        public SIFType SIFType { get; private set; }
-        public String SIFID { get; private set; }
-        public String Cause { get; private set; }
-        public String Effect { get; private set; }
-        public FrequecyPerHour MaximumAllowableSpuriousTripRate { get; private set; }
-        public String ManuallyActivatedShutdownRequirement { get; private set; }
-        public String Effect4 { get; private set; }
-        public FrequecyPerHour PFHRequirement { get; private set; }
-        public String DemandSource { get; private set; }
-        public String SIFTypicalID { get; private set; }
-        public String SIFVersion { get; private set; }
+        //public FrequecyPerYear MaximumAllowableDemandRate { get; private set; }
+        //public DurationSeconds MaximumAllowableSIFResponseTime { get; private set; }
+        //public String SafeStateOfProcess { get; private set; }
+        //public SILLevel SafetyIntegrityLevelRequirement { get; private set; }
+        //public String SILAllocationMethod { get; private set; }
+        //public String SIFDescription { get; private set; }
+        //public ModeOfOperation ModeOfOperation { get; private set; }
+        //public EnvironmentalIntegrityLevel EnvironmentalIntegrityLevelRequirement { get; private set; }
+        //public AssetIntegrityLevel AssetIntegrityLevelRequirement { get; private set; }
+        //public Probability PFDRequirement { get; private set; }
+        //public String SIFName { get; private set; }
+        //public SIFType SIFType { get; private set; }
+        //public String SIFID { get; private set; }
+        //public String Cause { get; private set; }
+        //public String Effect { get; private set; }
+        //public FrequecyPerHour MaximumAllowableSpuriousTripRate { get; private set; }
+        //public String ManuallyActivatedShutdownRequirement { get; private set; }
+        //public String Effect4 { get; private set; }
+        //public FrequecyPerHour PFHRequirement { get; private set; }
+        //public String DemandSource { get; private set; }
+        //public String SIFTypicalID { get; private set; }
+        //public String SIFVersion { get; private set; }
+        //public OrderedList<string, String> IndependentProtectionLayer { get; private set; }
+        //public OrderedList<string, String> MeasureToAvoidCommonCauseFailures { get; private set; }
+        //public OrderedList<string, String> PlantOperatingMode { get; private set; }
+        //public OrderedList<string, String> QuantificationMethodOrTool { get; private set; }
+        //public OrderedList<string, String> ReferenceToBarrier { get; private set; }
+        //public OrderedList<string, String> ReferenceToEquipmentUnderControl { get; private set; }
+        //public OrderedList<string, String> SurvivabilityRequirement { get; private set; }
+
+        public Attribute<double?> MaximumAllowableDemandRate { get; protected set; }
+        public Attribute<double?> MaximumAllowableSIFResponseTime { get; protected set; }
+        public Attribute<string> SafeStateOfProcess { get; protected set; }
+        public Attribute<string> SafetyIntegrityLevelRequirement { get; protected set; }
+        public Attribute<string> SILAllocationMethod { get; protected set; }
+        public Attribute<string> SIFDescription { get; protected set; }
+        public Attribute<string> ModeOfOperation { get; protected set; }
+        public Attribute<string> EnvironmentalIntegrityLevelRequirement { get; protected set; }
+        public Attribute<string> AssetIntegrityLevelRequirement { get; protected set; }
+        public Attribute<double?> PFDRequirement { get; protected set; }
+        public Attribute<string> SIFName { get; protected set; }
+        public Attribute<string> SIFType { get; protected set; }
+        public Attribute<string> SIFID { get; protected set; }
+        public Attribute<string> Cause { get; protected set; }
+        public Attribute<string> Effect { get; protected set; }
+        public Attribute<double?> MaximumAllowableSpuriousTripRate { get; protected set; }
+        public Attribute<string> ManuallyActivatedShutdownRequirement { get; protected set; }
+        public Attribute<double?> PFHRequirement { get; protected set; }
+        public Attribute<string> DemandSource { get; protected set; }
+        public Attribute<string> SIFTypicalID { get; protected set; }
+        public Attribute<string> SIFVersion { get; protected set; }
+        public AttributeList<string> IndependentProtectionLayer { get; protected set; }
+        public AttributeList<string> MeasureToAvoidCommonCauseFailures { get; protected set; }
+        public AttributeList<string> PlantOperatingMode { get; protected set; }
+        public AttributeList<string> QuantificationMethodOrTool { get; protected set; }
+        public AttributeList<string> ReferenceToBarrier { get; protected set; }
+        public AttributeList<string> ReferenceToEquipmentUnderControl { get; protected set; }
+        public AttributeList<string> SurvivabilityRequirement { get; protected set; }
+
 
         public SafetyInstrumentedFunction(Root parent) : base(parent, $"SIF{parent.SIFs.Count() + 1}")
         {
-            SetAttributes(Definition.GetAttributes(this, 21));
+            SetAttributes(Definition.GetAttributes(this, 28));
 
             Subsystems = new Subsystems(this);
 
@@ -65,28 +100,46 @@ namespace Sintef.Apos.Sif.Model
 
         public bool IsSameAs(SafetyInstrumentedFunction sif)
         {
-            if (!HaveSameAttributeValues(sif)) return false;
+            if (!HaveSameAttributeValues(sif))
+            {
+                return false;
+            }
 
-            if (!Subsystems.IsSameAs(sif.Subsystems)) return false;
+            if (!Subsystems.IsSameAs(sif.Subsystems))
+            {
+                return false;
+            }
             
             return true;
         }
 
         public void Validate(Collection<ModelError> errors)
         {
-            foreach(var property in Attributes) property.Validate(this, errors);
+            foreach(var property in Attributes)
+            {
+                property.Validate(this, errors);
+            }
 
             CrossSubsystemGroups.Validate(errors);
 
-            if (!Subsystems.Any()) errors.Add(new ModelError(this, "Missing SIFSubsystem."));
+            if (!Subsystems.Any())
+            {
+                errors.Add(new ModelError(this, "Missing Subsystem."));
+            }
+
             Subsystems.Validate(errors);
+
+            Documents.Validate(errors);
         }
 
         public IEnumerable<Group> GetAllGroups()
         {
             var groups = new List<Group>();
 
-            foreach (var subsystem in Subsystems) groups.AddRange(subsystem.GetAllGroups());
+            foreach (var subsystem in Subsystems)
+            {
+                groups.AddRange(subsystem.GetAllGroups());
+            }
 
             return groups;
         }
@@ -99,6 +152,16 @@ namespace Sintef.Apos.Sif.Model
             {
                 CrossSubsystemGroups.Add(group);
             }
+        }
+
+        public override void PushAttributes()
+        {
+            foreach(var attribute in Definition.GetAdditionalAttributes(GetType().Name))
+            {
+                TryAddAttribute(attribute.Clone(this));
+            }
+
+            Subsystems.PushAttributes();
         }
     }
 
@@ -159,6 +222,14 @@ namespace Sintef.Apos.Sif.Model
                 var duplicates = _items.Where(x => x.SIFID.StringValue == sif.SIFID.StringValue);
                 if (duplicates.Count() > 1) errors.Add(new ModelError(sif, "SIFID must be unique."));
                 sif.Validate(errors);
+            }
+        }
+
+        public void PushAttributes()
+        {
+            foreach (var sif in _items)
+            {
+                sif.PushAttributes();
             }
         }
     }

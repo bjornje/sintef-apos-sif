@@ -3,6 +3,7 @@ using Sintef.Apos.Sif.Model;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -35,6 +36,11 @@ namespace Sintef.Apos.Sif
             Roots.Validate(_errors);
 
             return _errors.Count == 0;
+        }
+
+        public void PushAttributes()
+        {
+            Roots.PushAttributes();
         }
         public void LoadFromFile(string fileName)
         {
@@ -183,10 +189,21 @@ namespace Sintef.Apos.Sif
                         errors.Add(new ModelError(node, $"An instance of FinalElementRequirements can only by added to an instance of Group.\n{ie.Node}"));
                     }
                     break;
-                default: //for backward compatibility
+                default: //for backward compatibility and documents
                     if (node is SafetyInstrumentedFunction sif2)
                     {
-                        childNode = sif2; // used to have a subsystem between sif and SIFComponent, skip to next internal element
+                        if (ie.Name == "Documents")
+                        {
+                            childNode = sif2.Documents;
+                        }
+                        else
+                        {
+                            childNode = sif2; // used to have a subsystem between sif and SIFComponent, skip to next internal element
+                        }
+                    }
+                    else if (node is Documents documents)
+                    {
+                        childNode = documents.Append(ie.Name);
                     }
                     else if (node is Subsystem sifSubsystem && (ie.Name == "GroupVoter" || ie.Name == "ComponentVoter"))
                     {
@@ -214,36 +231,65 @@ namespace Sintef.Apos.Sif
             }
             else
             {
-                foreach (var item in childNode.Attributes)
+                foreach(var att in ie.Attribute)
                 {
-                    var stringValue = item.StringValue;
-                    item.StringValue = ReadAttribute(item.Name, ie);
+                    var attributeName = att.Name;
 
-                    if (item.StringValue == null && item.IsMandatory)
+                    switch(att.Name)  //for backward compatibility
                     {
-                        switch(item.Name) //for backward compatibility
+                        case "NumberOfGroups_N":
+                            attributeName = "NumberOfGroups";
+                            break;
+                        case "NumberOfComponentsOrSubgroups_N":
+                            attributeName = "NumberOfDevicesWithinGroup";
+                            break;
+                        case "VoteWithinGroup_K_in_KooN":
+                        case "VoteBetweenGroups_M_in_MooN":
+                            attributeName = "MInVotingMooN";
+                            break;
+                    }
+
+                    var nameIsDepricated = attributeName != att.Name;
+
+                    var attribute = childNode.Attributes.FirstOrDefault(x => x.Name == attributeName);
+
+                    if (attribute == null && !nameIsDepricated)
+                    {    
+                        if (Definition.IsOrdereListType(att.RefAttributeType))
                         {
-                            case "TagName":
-                                item.StringValue = stringValue;
-                                break;
-                            case "NumberOfGroups":
-                                item.StringValue = ReadAttribute("NumberOfGroups_N", ie);
-                                break;
-                            case "NumberOfDevicesWithinGroup":
-                                item.StringValue = ReadAttribute("NumberOfComponentsOrSubgroups_N", ie);
-                                break;
-                            case "MInVotingMooN":
-                                if (childNode is Group)
-                                {
-                                    item.StringValue = ReadAttribute("VoteWithinGroup_K_in_KooN", ie);
-                                }
-                                else
-                                {
-                                    item.StringValue = ReadAttribute("VoteBetweenGroups_M_in_MooN", ie);
-                                }
-                                break;
+                            var itemAttribute = att.Attribute.FirstOrDefault();
+                            if (itemAttribute != null && Definition.TryAddAttribute(att.Name, itemAttribute.RefAttributeType, true, childNode.GetType().Name))
+                            {
+                                childNode.PushAttributes();
+                                attribute = childNode.Attributes.FirstOrDefault(x => x.Name == att.Name);
+                            }
+                        }
+                        else if (Definition.TryAddAttribute(att.Name, att.RefAttributeType, false, childNode.GetType().Name))
+                        {
+                            childNode.PushAttributes();
+                            attribute = childNode.Attributes.FirstOrDefault(x => x.Name == att.Name);
                         }
                     }
+
+                    if (attribute == null)
+                    {
+                        continue;
+                    }
+
+                    if (attribute.IsOrderedList)
+                    {
+                        var stringValues = ReadOrderedListAttribute(att.Name, ie);
+                        foreach(var value in stringValues)
+                        {
+                            var listItem = attribute.CreateItem();
+                            listItem.StringValue = value;
+                            attribute.Items.Add(listItem);
+                        }
+
+                        continue;
+                    }
+
+                    attribute.StringValue = ReadAttribute(att.Name, ie);
                 }
             }
 
@@ -263,6 +309,24 @@ namespace Sintef.Apos.Sif
             }
 
             return attribute.Value;
+        }
+
+        private static IEnumerable<string> ReadOrderedListAttribute(string name, InternalElementType ie)
+        {
+            var attribute = ie.Attribute.SingleOrDefault(x => x.Name == name);
+            if (attribute == null)
+            {
+                return new string[0];
+            }
+
+            var values = new List<string>();
+
+            foreach (var itemAttribute in attribute.Attribute)
+            {
+                values.Add(itemAttribute.Value);
+            }
+
+            return values;
         }
 
         public void SaveToFile(string outputFileName)
@@ -306,6 +370,17 @@ namespace Sintef.Apos.Sif
                     {
                         WriteSubsystem(subsystem, sifElement.InternalElement.Append());
                     }
+
+                    if (sif.Documents.Any())
+                    {
+                        var documentsElement = sifElement.InternalElement.Append();
+                        documentsElement.Name = "Documents";
+
+                        foreach (var document in sif.Documents)
+                        {
+                            WriteDocument(document, documentsElement.InternalElement.Append());
+                        }
+                    }
                 }
             }
 
@@ -326,6 +401,23 @@ namespace Sintef.Apos.Sif
             {
                 WriteGroup(group, subsystemElement.InternalElement.Append());
             }
+        }
+
+        private static void WriteDocument(Document document, InternalElementType documentElement)
+        {
+            documentElement.Name = document.Name.Value;
+
+            WriteBasicAttribute(document.Language, documentElement);
+
+            var externalInterface = documentElement.ExternalInterface.Append();
+            externalInterface.Name = document.ExternalInterface.Template.Name;
+            externalInterface.RefBaseClassPath = document.ExternalInterface.Template.RefBaseClassPath;
+
+            WriteBasicAttribute(document.ExternalInterface.MIMEType, externalInterface);
+            WriteBasicAttribute(document.ExternalInterface.RefURI, externalInterface);
+
+            var roleRequirement = documentElement.RoleRequirements.Append();
+            roleRequirement.RefBaseRoleClassPath = document.ExternalInterface.Template.RefBaseRoleClassPath;
         }
 
         private static void WriteGroup(Group group, InternalElementType groupElement)
@@ -372,7 +464,39 @@ namespace Sintef.Apos.Sif
             }
         }
 
-        private static void WriteAttribute(Model.Attributes.AttributeType attribute, InternalElementType ie)
+        private static void WriteAttribute(IAttribute attribute, InternalElementType ie)
+        {
+            if (attribute == null)
+            {
+                return;
+            }
+
+            if ((attribute.Items != null && attribute.Items.Count == 0) || (attribute.Items == null && attribute.StringValue == null))
+            {
+                return;
+            }
+
+            var att = ie.Attribute.Append();
+            att.Name = attribute.Name;
+            att.ID = Guid.NewGuid().ToString();
+            att.RefAttributeType = attribute.RefAttributeType;
+
+            if (attribute.Items == null)
+            {
+                att.Value = attribute.StringValue;
+            }
+            else
+            {
+                var index = 1;
+                foreach(var item in attribute.Items)
+                {
+                    WriteListItemAttribute(index, item, att);
+                    index++;
+                }
+            }
+        }
+
+        private static void WriteBasicAttribute(IAttribute attribute, InternalElementType ie)
         {
             if (attribute == null)
             {
@@ -386,6 +510,34 @@ namespace Sintef.Apos.Sif
 
             var att = ie.Attribute.Append();
             att.Name = attribute.Name;
+            att.ID = Guid.NewGuid().ToString();
+            att.AttributeDataType = attribute.RefAttributeType;
+            att.Value = attribute.StringValue;
+        }
+
+        private static void WriteBasicAttribute(IAttribute attribute, InterfaceClassType ie)
+        {
+            if (attribute == null)
+            {
+                return;
+            }
+
+            if (attribute.StringValue == null)
+            {
+                return;
+            }
+
+            var att = ie.Attribute.Append();
+            att.Name = attribute.Name;
+            att.ID = Guid.NewGuid().ToString();
+            att.AttributeDataType = attribute.RefAttributeType;
+            att.Value = attribute.StringValue;
+        }
+
+        private static void WriteListItemAttribute(int index, IAttribute attribute, AttributeType ownerAttribute)
+        {
+            var att = ownerAttribute.Attribute.Append();
+            att.Name = index.ToString(CultureInfo.InvariantCulture);
             att.ID = Guid.NewGuid().ToString();
             att.Value = attribute.StringValue;
             att.RefAttributeType = attribute.RefAttributeType;

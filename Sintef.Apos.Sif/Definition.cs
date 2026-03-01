@@ -1,12 +1,11 @@
 ﻿using Aml.Engine.CAEX;
+using Aml.Engine.Services;
 using Sintef.Apos.Sif.Model;
-using Sintef.Apos.Sif.Model.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Xml.Linq;
-using String = Sintef.Apos.Sif.Model.Attributes.String;
 
 namespace Sintef.Apos.Sif
 {
@@ -18,6 +17,7 @@ namespace Sintef.Apos.Sif
         const string FailureClassificationTypesLib = "APOS.FailureClassificationTypes_AttributeTypeLib";
         const string SIFTypesLib = "APOS.SIFTypes_AttributeTypeLib";
         const string SISDeviceTypesLib = "APOS.SISDeviceTypes_AttributeTypeLib";
+        const string AutomationMLBaseAttributeTypeLib = "AutomationMLBaseLibrariesAMLEd22_11_0@AutomationMLBaseAttributeTypeLib";
         static Definition()
         {
             ModelCAEX = CAEXDocument.LoadFromString(Model);
@@ -35,11 +35,7 @@ namespace Sintef.Apos.Sif
             {
                 var refAttributeType = $"{BasicUnitsLib}/{item.Name}";
 
-                if (!string.IsNullOrEmpty(item.Description))
-                {
-                    _typeDescriptions.Add(refAttributeType, item.Description);
-                }
-
+                _types.Add(refAttributeType, item);
 
                 if (item.Constraint.First is AttributeValueRequirementType requirementType &&
                     requirementType.NominalScaledType.ValueAttributes.Count > 1)
@@ -52,11 +48,7 @@ namespace Sintef.Apos.Sif
             {
                 var refAttributeType = $"{FailureClassificationTypesLib}/{item.Name}";
 
-                if (!string.IsNullOrEmpty(item.Description))
-                {
-                    _typeDescriptions.Add(refAttributeType, item.Description);
-                }
-
+                _types.Add(refAttributeType, item);
 
                 if (item.Constraint.First is AttributeValueRequirementType requirementType &&
                     requirementType.NominalScaledType.ValueAttributes.Count > 1)
@@ -70,11 +62,7 @@ namespace Sintef.Apos.Sif
             {
                 var refAttributeType = $"{SIFTypesLib}/{item.Name}";
 
-                if (!string.IsNullOrEmpty(item.Description))
-                {
-                    _typeDescriptions.Add(refAttributeType, item.Description);
-                }
-
+                _types.Add(refAttributeType, item);
 
                 if (item.Constraint.First is AttributeValueRequirementType requirementType &&
                     requirementType.NominalScaledType.ValueAttributes.Count > 1)
@@ -88,11 +76,7 @@ namespace Sintef.Apos.Sif
             {
                 var refAttributeType = $"{SISDeviceTypesLib}/{item.Name}";
 
-                if (!string.IsNullOrEmpty(item.Description))
-                {
-                    _typeDescriptions.Add(refAttributeType, item.Description);
-                }
-
+                _types.Add(refAttributeType, item);
 
                 if (item.Constraint.First is AttributeValueRequirementType requirementType &&
                     requirementType.NominalScaledType.ValueAttributes.Count > 1)
@@ -100,39 +84,6 @@ namespace Sintef.Apos.Sif
                     _typeValues.Add(refAttributeType, requirementType.NominalScaledType.ValueAttributes.Select(x => x.Value.ToString()).ToArray());
                 }
             }
-
-            //var expectedTypeValues = new[] { 
-            //    "TypeAB", //SISComponent
-            //    "SISType", //*** not in use ***
-            //    "SILLevel", //SIF
-            //    "SIFType", //SIF
-            //    "ResetAfterShutdown_FinalElement", //FinalElementComponent
-            //    "ModeOfOperation", //SIF
-            //    "ManualActivation", //SIF
-            //    "InputDeviceTrigger", //*** not in use ***
-            //    "ILLevel", //SIF
-            //    "FinalElementFunction", //*** not in use ***
-            //    "FailSafePosition", //*** not in use ***
-            //    "EnergizeSource", //*** not in use ***
-            //    "EffectActivationMode", //*** not in use ***
-            //    "E_DEToTrip", //SISComponent
-            //    "Comparison", //SISComponent
-            //    "CauseRole", //*** not in use ***
-            //    "BypassControl", //SISComponent
-            //    "AlarmOrWarning", //InputDeviceComponent
-            //    "Application", //*** new, not in use ***
-            //    "DetectedOrUndetected", //*** new, not in use ***
-            //    "DetectionMethods", //*** new, not in use ***
-            //    "DeviceType_ValveTopside", //*** new, not in use ***
-            //    "ExternalExposure", //*** new, not in use ***
-            //    "FailPass", //new, SISComponent
-            //    "FailureTypes", //*** new, not in use ***
-            //    "FluidSeverity", //*** new, not in use ***
-            //    "SystematicOrRHF", //*** new, not in use ***
-            //};
-            //if (_typeValues.Count != expectedTypeValues.Length) throw new Exception($"Expected number of attribute types with value list {expectedTypeValues.Length} differes from actual number {_typeValues.Count}.");
-
-            //foreach (var type in expectedTypeValues) if (!_typeValues.ContainsKey(type)) throw new Exception($"Attribute type with value list not found: {type}.");
 
             _typeValues.Add($"{BasicUnitsLib}/boolean", new[] { "true", "false" });
 
@@ -145,11 +96,6 @@ namespace Sintef.Apos.Sif
 
                 foreach (var subItem in item.InternalElement)
                 {
-                    var documentLink = subItem.ExternalInterface.FirstOrDefault(x => x.Name == "DocumentLink");
-                    if (documentLink != null)
-                    {
-                        var x = documentLink.GetType();
-                    }
 
                     foreach (var attr in subItem.Attribute)
                     {
@@ -161,6 +107,26 @@ namespace Sintef.Apos.Sif
                         foreach (var attr in subSubItem.Attribute)
                         {
                             SetAttribute(subSubItem.Name, attr);
+                        }
+                    }
+
+                    if (subItem.Name == "Documents")
+                    {
+                        foreach (var document in subItem.InternalElement)
+                        {
+                            var externalInterface = document.ExternalInterface.FirstOrDefault();
+                            var roleRequirements = document.RoleRequirements.FirstOrDefault();
+
+                            if (externalInterface == null || roleRequirements == null)
+                            {
+                                continue;
+                            }
+
+                            if (!_externalInterfaces.ContainsKey(externalInterface.Name))
+                            {
+                                _externalInterfaces.Add(externalInterface.Name, new ExternalInterfaceTemplate(externalInterface.Name, externalInterface.RefBaseClassPath, roleRequirements.RefBaseRoleClassPath));
+                            }
+
                         }
                     }
                 }
@@ -179,16 +145,74 @@ namespace Sintef.Apos.Sif
 
         }
 
-        private static Dictionary<string, string> _typeDescriptions = new Dictionary<string, string>();
+        private static Dictionary<string, AttributeFamilyType> _types = new Dictionary<string, AttributeFamilyType>();
         private static Dictionary<string, string[]> _typeValues = new Dictionary<string, string[]>();
+        private static Dictionary<string, ExternalInterfaceTemplate> _externalInterfaces = new Dictionary<string, ExternalInterfaceTemplate>();
 
-        public static bool TryGetAttributeTypeDescription(string name, out string description)
+        public static bool IsOrdereListType(string refAttributeType)
         {
-            if (_typeDescriptions.TryGetValue(name, out description))
+            return refAttributeType == $"{AutomationMLBaseAttributeTypeLib}/OrderedListType";
+        }    
+
+        public static IList<string> GetTypes()
+        {
+            return _types.Keys.ToList();
+        }
+        public static bool TryGetExternalInterface(string name, out ExternalInterfaceTemplate externalInterface)
+        {
+            if (_externalInterfaces.TryGetValue(name, out externalInterface))
             {
                 return true;
             }
 
+            return false;
+        }
+
+        public static bool TryGetAttributeTypeDescription(string name, out string description)
+        {
+            if (_types.TryGetValue(name, out var attribute) && attribute.Description != null)
+            {
+                description = attribute.Description;
+                return true;
+            }
+
+            description = null;
+            return false;
+        }
+
+        public static bool TryGetAttributeUnit(string name, out string unit)
+        {
+            if (_types.TryGetValue(name, out var attribute) && attribute.Unit != null)
+            {
+                unit = attribute.Unit;
+                return true;
+            }
+
+            unit = null;
+            return false;
+        }
+
+        public static bool TryGetAttributeTypeName(string name, out string typeName)
+        {
+            if (_types.TryGetValue(name, out var attribute) && attribute.Name != null)
+            {
+                typeName = attribute.Name;
+                return true;
+            }
+
+            if (name.StartsWith("xs:"))
+            {
+                typeName = name.Substring(3);
+                return true;
+            }
+
+            if (name == "info")
+            {
+                typeName = "info";
+                return true;
+            }
+
+            typeName = null;
             return false;
         }
 
@@ -202,22 +226,16 @@ namespace Sintef.Apos.Sif
             return false;
         }
 
-        private static void SetAttribute(string nodeName, Aml.Engine.CAEX.AttributeType attr)
+        private static void SetAttribute(string nodeName, AttributeType attr)
         {
             var attributeName = attr.Name;
             var attributeDescription = attr.Description;
-            var className = attr.Class?.Name;
+            var attributeDataType = attr.Class?.AttributeDataType;
 
             if (!_attributes.TryGetValue(nodeName, out var attributes))
             {
-                attributes = new List<Model.Attributes.AttributeType>();
+                attributes = new List<IAttribute>();
                 _attributes[nodeName] = attributes;
-            }
-
-            if (className == null)
-            {
-                Console.Write("Undefined attribute class for: " + attributeName);
-                return;
             }
 
             if (attributes.Exists(x => x.Name == attributeName))
@@ -232,105 +250,160 @@ namespace Sintef.Apos.Sif
                 isMandatory = true;
             }
 
+            var isPartOfModel = true;
             var refAttributeType = attr.RefAttributeType;
 
-            switch (className)
+            if (attributeDataType == null)
             {
-                case "accuracy":
-                    attributes.Add(new Accuracy(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "assetIntegrityLevel":
-                    attributes.Add(new AssetIntegrityLevel(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "boolean":
-                    attributes.Add(new Model.Attributes.Boolean(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "comparison":
-                    attributes.Add(new Comparison(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "duration_hours":
-                    attributes.Add(new DurationHours(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "duration_seconds":
-                    attributes.Add(new DurationSeconds(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "environmentalExtremes":
-                    attributes.Add(new EnvironmentalExtremes(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "environmentalIntegrityLevel":
-                    attributes.Add(new EnvironmentalIntegrityLevel(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "failurePhilosophy":
-                    attributes.Add(new FailurePhilosophy(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "frequency_perhour":
-                    attributes.Add(new FrequecyPerHour(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "frequency_peryear":
-                    attributes.Add(new FrequecyPerYear(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "integer":
-                    attributes.Add(new Integer(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "leakagerate_kg_s":
-                    attributes.Add(new LeakageRateKilogramsPerSecond(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "modeOfOperation":
-                    attributes.Add(new ModeOfOperation(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "percent":
-                    attributes.Add(new Percent(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "probability":
-                    attributes.Add(new Probability(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "rangeMax":
-                    attributes.Add(new RangeMax(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "rangeMin":
-                    attributes.Add(new RangeMin(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "resetAfterShutdown_FinalElement":
-                    attributes.Add(new ResetAfterShutdown_FinalElement(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "SCLevel":
-                    attributes.Add(new SCLevel(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "SIFType":
-                    attributes.Add(new SIFType(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "SILLevel":
-                    attributes.Add(new SILLevel(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "string":
-                    attributes.Add(new String(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "tagName":
-                    attributes.Add(new TagName(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "tripEnergyMode":
-                    attributes.Add(new TripEnergyMode(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "typeAB":
-                    attributes.Add(new TypeAB(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                case "unitOfMeasure":
-                    attributes.Add(new UnitOfMeasure(attributeName, attributeDescription, refAttributeType, isMandatory, null));
-                    break;
-                default:
-                    Console.Write("Unknown attribute class: " + className);
-                    break;
+                if (IsOrdereListType(refAttributeType))
+                {
+                    if (!(attr.Attribute.First is AttributeType itemType))
+                    {
+                        throw new Exception($"Missing item type template");
+                    }
+
+                    var itemAttributeDataType = itemType.AttributeTypeReference.AttributeDataType;
+
+                    var itemRefAttributeType = itemType.RefAttributeType;
+
+                    if (TryGetAttribute(itemAttributeDataType, attributeName, attributeDescription, refAttributeType, itemRefAttributeType, isMandatory, isPartOfModel, out var attributeList))
+                    {
+                        attributes.Add(attributeList);
+                    }
+                    else
+                    {
+                        throw new Exception($"Failed to instanciate ordered list attribute {attributeName} with data type: " + itemAttributeDataType);
+                    }
+
+                    return;
+                }
+
+                if (attributeName == "aml-DocLang")
+                {
+                    return;
+                }
+
+                throw new Exception($"Undefined attribute type ref {refAttributeType} for {attributeName}");
             }
+
+            if (TryGetAttribute(attributeDataType, attributeName, attributeDescription, refAttributeType, null, isMandatory, isPartOfModel, out var attribute))
+            {
+                attributes.Add(attribute);
+            }
+            else
+            {
+                throw new Exception($"Failed to instanciate attribute {attributeName} with data type: " + attributeDataType);
+            }
+
         }
 
         public static CAEXDocument ModelCAEX { get; }
         public static string Version { get; }
 
-        private static Dictionary<string, List<Model.Attributes.AttributeType>> _attributes = new Dictionary<string, List<Model.Attributes.AttributeType>>();
+        private static Dictionary<string, List<IAttribute>> _attributes = new Dictionary<string, List<IAttribute>>();
+        private static Dictionary<string, List<IAttribute>> _additionlAttributes = new Dictionary<string, List<IAttribute>>();
 
-        public static IEnumerable<Model.Attributes.AttributeType> GetAttributes(Node node)
+        private static bool TryGetAttribute(string dataType, string name, string description, string typeRef, string itemTypeRef, bool isMandatory, bool isPartOfModel, out IAttribute attribute)
         {
-            var attributes = new List<Model.Attributes.AttributeType>();
+            switch (dataType)
+            {
+                case "xs:string":
+                    if (itemTypeRef == null)
+                    {
+                        attribute = new Attribute<string>(name, description, typeRef, isMandatory, isPartOfModel, null);
+                    }
+                    else
+                    {
+                        attribute = new AttributeList<string>(name, description, typeRef, itemTypeRef, isMandatory, isPartOfModel, null);
+
+                    }
+                    return true;
+                case "xs:decimal":
+                case "xs:duration":
+                    if (itemTypeRef == null)
+                    {
+                        attribute = new Attribute<double?>(name, description, typeRef, isMandatory, isPartOfModel, null);
+                    }
+                    else
+                    {
+                        attribute = new AttributeList<double?>(name, description, typeRef, itemTypeRef, isMandatory, isPartOfModel, null);
+
+                    }
+                    return true;
+                case "xs:integer":
+                case "xs:intenger":
+                    if (itemTypeRef == null)
+                    {
+                        attribute = new Attribute<int?>(name, description, typeRef, isMandatory, isPartOfModel, null);
+                    }
+                    else
+                    {
+                        attribute = new AttributeList<int?>(name, description, typeRef, itemTypeRef, isMandatory, isPartOfModel, null);
+
+                    }
+                    return true;
+                case "xs:boolean":
+                    if (itemTypeRef == null)
+                    {
+                        attribute = new Attribute<bool?>(name, description, typeRef, isMandatory, isPartOfModel, null);
+                    }
+                    else
+                    {
+                        attribute = new AttributeList<bool?>(name, description, typeRef, itemTypeRef, isMandatory, isPartOfModel, null);
+
+                    }
+                    return true;
+                default:
+                    attribute = null;
+                    return false;
+            }
+        }
+
+        public static bool TryAddAttribute(string attributeName, string refAttributeType, bool isOrderedList, string targetNode)
+        {
+            if (!_additionlAttributes.TryGetValue(targetNode, out var attributes))
+            {
+                attributes = new List<IAttribute>();
+                _additionlAttributes.Add(targetNode, attributes);
+            }
+
+            if (_types.TryGetValue(refAttributeType, out var value))
+            {
+                if (isOrderedList)
+                {
+                    if (TryGetAttribute(value.AttributeDataType, attributeName, $"This attribute does not belong to the current UML-model version {Version}", $"{AutomationMLBaseAttributeTypeLib}/OrderedListType", refAttributeType, false, false, out var attribute))
+                    {
+                        attributes.Add(attribute);
+                        return true;
+                    }
+                }
+                else
+                {
+                    if (TryGetAttribute(value.AttributeDataType, attributeName, $"This attribute does not belong to the current UML-model version {Version}", refAttributeType, null, false, false, out var attribute))
+                    {
+                        attributes.Add(attribute);
+                        return true;
+                    }
+                }
+
+            }
+
+            return false;
+        }
+
+        public static IEnumerable<IAttribute> GetAdditionalAttributes(string targetNode)
+        {
+            if (_additionlAttributes.TryGetValue(targetNode, out var value))
+            {
+                return value;
+            }
+
+            return Enumerable.Empty<IAttribute>();
+        }
+
+        public static IEnumerable<IAttribute> GetAttributes(Node node)
+        {
+            var attributes = new List<IAttribute>();
 
             if (node is Subsystem)
             {
@@ -349,23 +422,6 @@ namespace Sintef.Apos.Sif
 
             var name = node.GetType().Name;
 
-            if (name == "SIF")
-            {
-                name = "SafetyInstrumentedFunction";
-            }
-            else if (name == "InputDeviceComponent")
-            {
-                name = "InputDeviceRequirements";
-            }
-            else if (name == "LogicSolverComponent")
-            {
-                name = "LogicSolverRequirements";
-            }
-            else if (name == "FinalElementComponent")
-            {
-                name = "FinalElementRequirements";
-            }
-
             if (_attributes.TryGetValue(name, out var ownAttributes))
             {
                 attributes.AddRange(ownAttributes);
@@ -382,17 +438,25 @@ namespace Sintef.Apos.Sif
             return attributes;
         }
 
-        public static Collection<Model.Attributes.AttributeType> GetAttributes(Node target, int expectedNumberOfAttributes)
+        public static Collection<IAttribute> GetAttributes(Node target, int expectedNumberOfAttributes)
         {
+            var type = target.GetType();
             var attributes = GetAttributes(target);
             if (attributes.Count() != expectedNumberOfAttributes)
             {
+                foreach(var prop in type.GetProperties())
+                {
+                    if (!attributes.Any(x => x.Name == prop.Name))
+                    {
+                        Console.WriteLine(prop.Name);
+                    }
+                }
+
                 throw new Exception($"Expected {expectedNumberOfAttributes} attributes but got {attributes.Count()}.");
             }
 
-            var type = target.GetType();
 
-            var attributeTypes = new Collection<Model.Attributes.AttributeType>();
+            var attributeTypes = new Collection<IAttribute>();
 
             foreach (var attribute in attributes)
             {
@@ -414,14 +478,14 @@ namespace Sintef.Apos.Sif
 <CAEXFile SchemaVersion=""3.0"" FileName="""" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""
     xmlns=""http://www.dke.de/CAEX""
     xsi:schemaLocation=""http://www.dke.de/CAEX CAEX_ClassModel_V.3.0.xsd"">
-    <Description>This document is generated from the APOS_SIF.qea model version 26 by the
+    <Description>This document is generated from the APOS_SIF.qea model version 30 by the
         EA_UML_to_AML.js transformation script.
         The model and transformation script are derived from initial SIF model and transformation
         script from Kongsberg.</Description>
     <AdditionalInformation />
     <SuperiorStandardVersion>AutomationML 2.10</SuperiorStandardVersion>
-    <SourceDocumentInformation OriginName=""APOS_SIF.qea"" OriginID="""" OriginVersion=""26""
-        LastWritingDateTime=""2024-12-02T10:21:46.000Z"" OriginVendor=""SINTEF""
+    <SourceDocumentInformation OriginName=""APOS_SIF.qea"" OriginID="""" OriginVersion=""30""
+        LastWritingDateTime=""2026-02-26T16:30:37.000Z"" OriginVendor=""SINTEF""
         OriginVendorURL=""www.sintef.no"" />
     <ExternalReference
         Path=""https://9t4kqL7NX8JsW6o@automationml.ovgu.de/public.php/webdav/AutomationML_Base_Libraries_AMLEd2_2.11.0.aml""
@@ -601,7 +665,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Mandatory</Requirements>
                     </UnknownType>
                 </Constraint>
-                <Attribute Name=""1"" AttributeDataType=""APOS.BasicUnits_AttributeTypeLib/string"" />
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""EnvironmentalIntegrityLevelRequirement""
                 ID=""{6A963F8D-A12D-4a29-9C85-5FEF7CB75A2A}""
@@ -646,6 +710,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""PFHRequirement"" ID=""{7CBCC5DF-724B-433b-AA4B-B5893A9BE9E5}""
                 RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/frequency_perhour"">
@@ -698,8 +763,9 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
-            <Attribute Name=""SurvaivabilityRequirement"" ID=""{039EE23D-5153-488d-8930-62F1FFA8D4BB}""
+            <Attribute Name=""SurvivabilityRequirement"" ID=""{039EE23D-5153-488d-8930-62F1FFA8D4BB}""
                 RefAttributeType=""AutomationMLBaseLibrariesAMLEd22_11_0@AutomationMLBaseAttributeTypeLib/OrderedListType"">
                 <Description>requirements for the safety systems and barriers to function in or
                     after a design accidental event</Description>
@@ -708,6 +774,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""ReferenceToEquipmentUnderControl""
                 ID=""{3590BE2B-BA33-40d1-843C-4F6D3F44CA1E}""
@@ -718,7 +785,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Mandatory</Requirements>
                     </UnknownType>
                 </Constraint>
-                <Attribute Name=""1"" AttributeDataType=""APOS.BasicUnits_AttributeTypeLib/string"" />
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""SIFTypicalID"" ID=""{70F9AE68-B985-47db-853C-93D2D2A02A1F}""
                 RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"">
@@ -747,6 +814,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""IndependentProtectionLayer"" ID=""{8847E81D-A676-41b5-8FC8-EEA697972966}""
                 RefAttributeType=""AutomationMLBaseLibrariesAMLEd22_11_0@AutomationMLBaseAttributeTypeLib/OrderedListType"">
@@ -757,16 +825,19 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
-            <InternalElement Name=""Document1"" ID=""{7A41F664-9972-4d58-81AE-7078CB05359A}"">
-                <Attribute Name=""aml-DocLang"" AttributeDataType=""xs:string"">
-                    <Value>en-US</Value>
-                </Attribute>
-                <ExternalInterface Name=""DocumentLink""
-                    RefBaseClassPath=""AutomationMLBaseLibrariesAMLEd22_11_0@AutomationMLInterfaceClassLib/AutomationMLBaseInterface/ExternalDataConnector/ExternalDataReference""
-                    ID=""0a5ec13b-949e-4ac1-894b-0875d96fa204"" />
-                <RoleRequirements
-                    RefBaseRoleClassPath=""AutomationMLBaseLibrariesAMLEd22_11_0@AutomationMLBaseRoleClassLib/AutomationMLBaseRole/ExternalData"" />
+            <InternalElement Name=""Documents"" ID=""{7A41F664-9972-4d58-81AE-7078CB05359A}"">
+                <InternalElement Name=""Document1"" ID=""{5ec17714-75d7-4fd9-94e4-8daad9bf33f0}"">
+                    <Attribute Name=""aml-DocLang"" AttributeDataType=""xs:string"">
+                        <Value>en-US</Value>
+                    </Attribute>
+                    <ExternalInterface Name=""DocumentLink""
+                        RefBaseClassPath=""AutomationMLBaseLibrariesAMLEd22_11_0@AutomationMLInterfaceClassLib/AutomationMLBaseInterface/ExternalDataConnector/ExternalDataReference""
+                        ID=""0a5ec13b-949e-4ac1-894b-0875d96fa204"" />
+                    <RoleRequirements
+                        RefBaseRoleClassPath=""AutomationMLBaseLibrariesAMLEd22_11_0@AutomationMLBaseRoleClassLib/AutomationMLBaseRole/ExternalData"" />
+                </InternalElement>
             </InternalElement>
             <InternalElement Name=""InputDeviceSubsystem"" ID=""{63D8A4F8-DEF5-4ead-BA95-B3F8399A1B77}""
                 RefBaseSystemUnitPath=""SIF Unit Classes/Subsystem"">
@@ -879,27 +950,6 @@ namespace Sintef.Apos.Sif
                     </UnknownType>
                 </Constraint>
             </Attribute>
-            <!-- <Attribute Name=""MaximumTestIntervalForSILCompliance""
-                ID=""{A3C0D27B-A8AA-4d66-9A11-96B0BDA5859B}""
-                RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/duration_hours"">
-                <Description>maximum allowable number of hours between two consecutive proof tests
-                    (or partial stroke tests) for the device, to achieve SIL compliance.</Description>
-                <Constraint Name=""ModellingRule"">
-                    <UnknownType>
-                        <Requirements>Mandatory</Requirements>
-                    </UnknownType>
-                </Constraint>
-            </Attribute> -->
-            <!-- <Attribute Name=""TestCoverage"" ID=""{362DCA97-B3ED-4ce3-BBBB-C1EAB3BD310A}""
-                RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/percent"">
-                <Description>fraction of dangerous undetected failures assumed detected during a
-                    test</Description>
-                <Constraint Name=""ModellingRule"">
-                    <UnknownType>
-                        <Requirements>Mandatory</Requirements>
-                    </UnknownType>
-                </Constraint>
-            </Attribute> -->
         </SystemUnitClass>
         <SystemUnitClass Name=""InputDeviceRequirements"" ID=""{D0101401-669D-4476-8960-CB1FE6BE378E}""
             RefBaseClassPath=""SIS Unit Classes/SISDeviceRequirements"">
@@ -913,6 +963,8 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1""
+                    RefAttributeType=""APOS.SISDeviceTypes_AttributeTypeLib/alarmType"" />
             </Attribute>
             <Attribute Name=""UnitOfMeasure"" ID=""{BAD5EF7D-EE9D-40f0-9ECD-A9F2887BAF60}""
                 RefAttributeType=""APOS.SISDeviceTypes_AttributeTypeLib/unitOfMeasure"">
@@ -933,7 +985,7 @@ namespace Sintef.Apos.Sif
                     </UnknownType>
                 </Constraint>
                 <Attribute Name=""1""
-                    AttributeDataType=""APOS.SISDeviceTypes_AttributeTypeLib/tripPointValue"" />
+                    RefAttributeType=""APOS.SISDeviceTypes_AttributeTypeLib/tripPointValue"" />
             </Attribute>
             <Attribute Name=""RangeMin"" ID=""{D1E09A88-A0E8-4dfd-BF70-E1C1B1542059}""
                 RefAttributeType=""APOS.SISDeviceTypes_AttributeTypeLib/rangeMin"">
@@ -992,6 +1044,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""MeasurementComparisonIsRequired""
                 ID=""{32EC43E3-435F-46d4-A585-B93201B4E69C}""
@@ -1052,10 +1105,10 @@ namespace Sintef.Apos.Sif
                 <Description>specification or description of an interfacing system</Description>
                 <Constraint Name=""ModellingRule"">
                     <UnknownType>
-                        <Requirements>Mandatory</Requirements>
+                        <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
-                <Attribute Name=""1"" AttributeDataType=""APOS.BasicUnits_AttributeTypeLib/string"" />
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""RequirementForStartingUpAndRestartingSIS""
                 ID=""{574EE055-151C-4569-A232-F015F267A000}""
@@ -1067,6 +1120,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
         </SystemUnitClass>
         <SystemUnitClass Name=""SISDeviceRequirements"" ID=""{FF6852CF-0D99-4105-9F7C-8C12781E0A0C}"">
@@ -1222,7 +1276,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Mandatory</Requirements>
                     </UnknownType>
                 </Constraint>
-                <Attribute Name=""1"" AttributeDataType=""APOS.BasicUnits_AttributeTypeLib/string"" />
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""NumericFailCriterionValue"" ID=""{EDD79564-6174-4c90-99B3-559C2E11A49C}""
                 RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"">
@@ -1285,6 +1339,8 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1""
+                    RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/duration_seconds"" />
             </Attribute>
             <Attribute Name=""TripEnergyMode"" ID=""{3FC7CB67-CDA0-47d0-9E39-9B2F610B0EA9}""
                 RefAttributeType=""APOS.SISDeviceTypes_AttributeTypeLib/tripEnergyMode"">
@@ -1296,7 +1352,7 @@ namespace Sintef.Apos.Sif
                     </UnknownType>
                 </Constraint>
             </Attribute>
-            <Attribute Name=""SurvaibabilityRequirement"" ID=""{0D4DE559-767E-4293-B5BB-224D2D1BE40B}""
+            <Attribute Name=""SurvivabilityRequirement"" ID=""{0D4DE559-767E-4293-B5BB-224D2D1BE40B}""
                 RefAttributeType=""AutomationMLBaseLibrariesAMLEd22_11_0@AutomationMLBaseAttributeTypeLib/OrderedListType"">
                 <Description>requirements for the safety systems and barriers to function in or
                     after a design accidental event</Description>
@@ -1305,6 +1361,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""AdditionalDiagnosticRequirementForImplementation""
                 ID=""{75D259C0-55B7-46cd-9D42-9A26C734D1DF}""
@@ -1316,6 +1373,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""FailurePhilosophy"" ID=""{CA19FE3A-80EF-45ab-8EC4-91AFAA1952F0}""
                 RefAttributeType=""APOS.SISDeviceTypes_AttributeTypeLib/failurePhilosophy"">
@@ -1337,6 +1395,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""RequirementsForTesting"" ID=""{B4D9E10D-E358-4c91-A50F-0D02F3758A3C}""
                 RefAttributeType=""AutomationMLBaseLibrariesAMLEd22_11_0@AutomationMLBaseAttributeTypeLib/OrderedListType"">
@@ -1347,6 +1406,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""EnvironmentalExtremes"" ID=""{C5919075-1F2B-4878-B789-49D05707266E}""
                 RefAttributeType=""APOS.SISDeviceTypes_AttributeTypeLib/environmentalExtremes"">
@@ -1355,6 +1415,16 @@ namespace Sintef.Apos.Sif
                 <Constraint Name=""ModellingRule"">
                     <UnknownType>
                         <Requirements>Optional</Requirements>
+                    </UnknownType>
+                </Constraint>
+            </Attribute>
+            <Attribute Name=""SISDeviceRequirementsVersion""
+                ID=""{9E6FCA53-63BA-4561-B6D3-F2063B3320C7}""
+                RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"">
+                <Description>version of SIS device requirements</Description>
+                <Constraint Name=""ModellingRule"">
+                    <UnknownType>
+                        <Requirements>Mandatory</Requirements>
                     </UnknownType>
                 </Constraint>
             </Attribute>
@@ -1367,6 +1437,7 @@ namespace Sintef.Apos.Sif
                         <Requirements>Optional</Requirements>
                     </UnknownType>
                 </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
             <Attribute Name=""MaximumPermittedRepairTime"" ID=""{00EA4662-E8C6-47ab-AA7D-CD710372DA0C}""
                 RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/duration_hours"">

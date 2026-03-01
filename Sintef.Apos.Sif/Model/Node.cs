@@ -1,5 +1,4 @@
-﻿using Sintef.Apos.Sif.Model.Attributes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -9,7 +8,7 @@ namespace Sintef.Apos.Sif.Model
     public class Node
     {
         public Node Parent { get; }
-        public IEnumerable<AttributeType> Attributes => _attributes ?? Enumerable.Empty<AttributeType>();
+        public IEnumerable<IAttribute> Attributes => _attributes ?? Enumerable.Empty<IAttribute>();
         public string PathStepX { get; }
 
         public string GetPathStep()
@@ -79,16 +78,24 @@ namespace Sintef.Apos.Sif.Model
             return 0;
         }
 
-        private Collection<AttributeType> _attributes;
+        private Collection<IAttribute> _attributes;
         public Node(Node parent, string pathStep)
         {
             Parent = parent;
             PathStepX = pathStep;
         }
 
-        protected void SetAttributes(Collection<AttributeType> attributes)
+        protected void SetAttributes(Collection<IAttribute> attributes)
         {
             _attributes = attributes;
+        }
+
+        protected void TryAddAttribute(IAttribute attribute)
+        {
+            if (!_attributes.Any(x => x.Name == attribute.Name))
+            {
+                _attributes.Add(attribute);
+            }
         }
 
         public string Path => GetPath(null);
@@ -178,6 +185,11 @@ namespace Sintef.Apos.Sif.Model
             }
 
             return true;
+        }
+
+        public virtual void PushAttributes()
+        {
+
         }
 
     }

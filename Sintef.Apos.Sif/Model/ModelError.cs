@@ -1,11 +1,9 @@
-﻿using Sintef.Apos.Sif.Model.Attributes;
-
-namespace Sintef.Apos.Sif.Model
+﻿namespace Sintef.Apos.Sif.Model
 {
     public class ModelError
     {
         public Node Node { get; }
-        public AttributeType Attribute { get; }
+        public IAttribute Attribute { get; }
         public string Message { get; }
 
         public ModelError(Node node, string message)
@@ -14,7 +12,7 @@ namespace Sintef.Apos.Sif.Model
             Message = message;
         }
 
-        public ModelError(Node node, AttributeType attribute, string message)
+        public ModelError(Node node, IAttribute attribute, string message)
         {
             Node = node;
             Attribute = attribute;

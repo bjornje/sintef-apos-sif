@@ -1,44 +1,48 @@
-﻿using Sintef.Apos.Sif.Model.Attributes;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Boolean = Sintef.Apos.Sif.Model.Attributes.Boolean;
-using String = Sintef.Apos.Sif.Model.Attributes.String;
 
 namespace Sintef.Apos.Sif.Model
 {
     public class SISDeviceRequirements : Node
     {
-        public DurationHours MaximumTestIntervalForSILCompliance { get; protected set; } //1
-        public TagName TagName { get; protected set; }
-        public Percent PFDBudget { get; protected set; }
-        public String TagInformation { get; protected set; }
-        public String SafeStateOfDevice { get; protected set; } //5
-        public TypeAB TypeAOrB { get; protected set; }
-        public String EquipmentType { get; protected set; }
-        public Percent PFHBudget { get; protected set; }
-        //public String RequirementsForTesting { get; protected set; }
-        public SCLevel SystematicCapabilityRequirement { get; protected set; } //10
-        public Percent TestCoverage { get; protected set; }
-        public DurationHours MeanTimeToRestoration { get; protected set; }
-        public DurationHours MinimumTestIntervalOperatorSpecification { get; protected set; }
-        public DurationSeconds MaximumAllowableSISDeviceResponseTime { get; protected set; }
-        public DurationHours ExpectedRepairTime { get; protected set; } //15
-        public String NumericFailCriterionValue { get; protected set; }
-        public Comparison NumericFailCriterionOperator { get; protected set; }
-        public String NumericFailCriterionDescriptionOfMeasurement { get; protected set; }
-        public Boolean BypassAdministrativeControlRequired { get; protected set; }
-        public DurationSeconds MaximumAllowableBypassTime { get; protected set; } //20
-        public TripEnergyMode TripEnergyMode { get; protected set; }
-        public FailurePhilosophy FailurePhilosophy { get; protected set; }
-        public EnvironmentalExtremes EnvironmentalExtremes { get; protected set; }
-        public DurationHours MaximumPermittedRepairTime { get; protected set; } //24
+        public AttributeList<string> AdditionalDiagnosticRequirementForImplementation { get; protected set; } //1
+        public Attribute<bool?> BypassAdministrativeControlRequired { get; protected set; }
+        public AttributeList<string> DiagnosticRequired { get; protected set; }
+        public Attribute<string> EnvironmentalExtremes { get; protected set; }
+        public Attribute<string> EquipmentType { get; protected set; } //5
+        public Attribute<double?> ExpectedRepairTime { get; protected set; }
+        public AttributeList<string> FailCriterion { get; protected set; }
+        public AttributeList<string> FailureModeResponses { get; protected set; }
+        public Attribute<string> FailurePhilosophy { get; protected set; }
+        public Attribute<double?> MaximumAllowableBypassTime { get; protected set; } //10
+        public Attribute<double?> MaximumAllowableSISDeviceResponseTime { get; protected set; }
+        public Attribute<double?> MaximumPermittedRepairTime { get; protected set; }
+        public Attribute<double?> MaximumTestIntervalForSILCompliance { get; protected set; }
+        public Attribute<double?> MeanTimeToRestoration { get; protected set; }
+        public Attribute<double?> MinimumTestIntervalOperatorSpecification { get; protected set; } //15
+        public Attribute<string> NumericFailCriterionDescriptionOfMeasurement { get; protected set; }
+        public Attribute<string> NumericFailCriterionOperator { get; protected set; }
+        public Attribute<string> NumericFailCriterionValue { get; protected set; }
+        public Attribute<double?> PFDBudget { get; protected set; }
+        public Attribute<double?> PFHBudget { get; protected set; } //20
+        public AttributeList<string> RequirementsForTesting { get; protected set; }
+        public Attribute<string> SafeStateOfDevice { get; protected set; }
+        public Attribute<string> SISDeviceRequirementsVersion { get; protected set; }
+        public AttributeList<string> SurvivabilityRequirement { get; protected set; }
+        public Attribute<string> SystematicCapabilityRequirement { get; protected set; } //25
+        public Attribute<string> TagInformation { get; protected set; }
+        public Attribute<string> TagName { get; protected set; }
+        public Attribute<double?> TestCoverage { get; protected set; }
+        public AttributeList<double?> TimeDelayOfAction { get; protected set; }
+        public Attribute<string> TripEnergyMode { get; protected set; } //30
+        public Attribute<string> TypeAOrB { get; protected set; } //31
 
         public SISDeviceRequirements(Group parent, string name, int expectedNumberOfAttributes) : base(parent, name)
         {
-            SetAttributes(Definition.GetAttributes(this, expectedNumberOfAttributes + 23));
+            SetAttributes(Definition.GetAttributes(this, expectedNumberOfAttributes + 31));
 
             TagName.StringValue = name;
         }
@@ -57,6 +61,15 @@ namespace Sintef.Apos.Sif.Model
         public void Validate(Collection<ModelError> errors)
         {
             foreach (var property in Attributes) property.Validate(this, errors);
+        }
+
+
+        public override void PushAttributes()
+        {
+            foreach (var attribute in Definition.GetAdditionalAttributes(GetType().Name))
+            {
+                TryAddAttribute(attribute.Clone(this));
+            }
         }
 
     }
@@ -145,6 +158,14 @@ namespace Sintef.Apos.Sif.Model
                 var duplicates = _items.Where(x => x.TagName.StringValue == component.TagName.StringValue);
                 if (duplicates.Count() > 1) errors.Add(new ModelError(component, component.TagName, $"{component.TagName.Name} must be unique."));
                 component.Validate(errors);
+            }
+        }
+
+        public void PushAttributes()
+        {
+            foreach (var component in _items)
+            {
+                component.PushAttributes();
             }
         }
 

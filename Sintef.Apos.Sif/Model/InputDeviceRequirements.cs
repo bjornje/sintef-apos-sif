@@ -1,18 +1,19 @@
-﻿using Sintef.Apos.Sif.Model.Attributes;
-
-namespace Sintef.Apos.Sif.Model
+﻿namespace Sintef.Apos.Sif.Model
 {
     public class InputDeviceRequirements : SISDeviceRequirements
     {
-        public UnitOfMeasure UnitOfMeasure { get; protected set; }
-        public RangeMax RangeMax { get; protected set; }
-        public RangeMin RangeMin { get; protected set; }
-        public Accuracy Accuracy { get; protected set; }
-        public Boolean AlarmResetAfterShutdownIsRequired { get; protected set; }
-        public String AlarmDescription { get; protected set; }
-        public Boolean MeasurementComparisonIsRequired { get; protected set; }
+        public Attribute<double?> Accuracy { get; protected set; } //1
+        public Attribute<string> AlarmDescription { get; protected set; }
+        public Attribute<bool?> AlarmResetAfterShutdownIsRequired { get; protected set; }
+        public AttributeList<string> AlarmType { get; protected set; }
+        public Attribute<bool?> MeasurementComparisonIsRequired { get; protected set; } //5
+        public AttributeList<string> OtherAlarmType { get; protected set; }
+        public Attribute<double?> RangeMax { get; protected set; }
+        public Attribute<double?> RangeMin { get; protected set; }
+        public AttributeList<double?> TripPointValue { get; protected set; }
+        public Attribute<string> UnitOfMeasure { get; protected set; } //10
 
-        public InputDeviceRequirements(Group parent, string name) : base(parent, name, 7)
+        public InputDeviceRequirements(Group parent, string name) : base(parent, name, 10)
         {
         }
     }

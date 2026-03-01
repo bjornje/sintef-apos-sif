@@ -1,22 +1,16 @@
-﻿using Sintef.Apos.Sif.Model.Attributes;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 
 namespace Sintef.Apos.Sif.Model
 {
     public class Voter
     {
         private readonly Node _parent;
-        private readonly Integer _numberOfElements;
-        private readonly Integer _threshhold;
+        private readonly Attribute<int?> _numberOfElements;
+        private readonly Attribute<int?> _threshhold;
         private readonly string _threshholdName;
         private readonly string _numberOfElementsName;
 
-        public Voter(Node parent, Integer threshhold, string threshholdName, Integer numberOfElements, string numberOfElementsName) 
+        public Voter(Node parent, Attribute<int?> threshhold, string threshholdName, Attribute<int?> numberOfElements, string numberOfElementsName) 
         {
             _parent = parent;
             _threshhold = threshhold;

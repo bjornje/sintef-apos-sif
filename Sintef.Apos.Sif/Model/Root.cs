@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -36,7 +37,7 @@ namespace Sintef.Apos.Sif.Model
 
 
 
-        public IEnumerable<Node> GetLeafs()
+        public IEnumerable<Node> GetLeaves()
         {
             var list = new List<Node>();
 
@@ -107,6 +108,10 @@ namespace Sintef.Apos.Sif.Model
             SIFs.Validate(errors);
         }
 
+        public void PushAttributes()
+        {
+            SIFs.PushAttributes();
+        }
     }
 
     public class Roots : IEnumerable<Root>
@@ -213,15 +218,35 @@ namespace Sintef.Apos.Sif.Model
 
         private static void CopyAttributeValues(Node fromNode, Node toNode)
         {
-            if (fromNode.Attributes.Count() != toNode.Attributes.Count())
-            {
-                throw new System.Exception("Nuber of properties differ in fromNode and toNode.");
-            }
+            toNode.PushAttributes();
 
-            foreach(var fromProperty in fromNode.Attributes)
+            //if (fromNode.Attributes.Count() != toNode.Attributes.Count())
+            //{
+            //    throw new Exception("Number of properties differ in fromNode and toNode.");
+            //}
+
+            foreach (var fromProperty in fromNode.Attributes)
             {
-                var toProperty = toNode.Attributes.Single(x => x.Name == fromProperty.Name);
-                toProperty.StringValue = fromProperty.StringValue;
+                var toProperty = toNode.Attributes.FirstOrDefault(x => x.Name == fromProperty.Name);
+
+                if (toProperty == null)
+                {
+                    continue;
+                }
+
+                if (fromProperty.IsOrderedList)
+                {
+                    foreach(var fromItem in fromProperty.Items)
+                    {
+                        var toItem = toProperty.CreateItem();
+                        toItem.StringValue = fromItem.StringValue;
+                        toProperty.Items.Add(toItem);
+                    }
+                }
+                else
+                {
+                    toProperty.StringValue = fromProperty.StringValue;
+                }
             }
         }
 
@@ -254,6 +279,14 @@ namespace Sintef.Apos.Sif.Model
             foreach(var root in _items)
             {
                 root.Validate(errors);
+            }
+        }
+
+        public void PushAttributes()
+        {
+            foreach (var root in _items)
+            {
+                root.PushAttributes();
             }
         }
 
