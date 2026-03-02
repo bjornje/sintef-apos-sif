@@ -331,7 +331,6 @@ namespace Sintef.Apos.Sif
                     }
                     return true;
                 case "xs:integer":
-                case "xs:intenger":
                     if (itemTypeRef == null)
                     {
                         attribute = new Attribute<int?>(name, description, typeRef, isMandatory, isPartOfModel, null);
@@ -478,14 +477,14 @@ namespace Sintef.Apos.Sif
 <CAEXFile SchemaVersion=""3.0"" FileName="""" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""
     xmlns=""http://www.dke.de/CAEX""
     xsi:schemaLocation=""http://www.dke.de/CAEX CAEX_ClassModel_V.3.0.xsd"">
-    <Description>This document is generated from the APOS_SIF.qea model version 30 by the
+    <Description>This document is generated from the APOS_SIF.qea model version 31 by the
         EA_UML_to_AML.js transformation script.
         The model and transformation script are derived from initial SIF model and transformation
         script from Kongsberg.</Description>
     <AdditionalInformation />
     <SuperiorStandardVersion>AutomationML 2.10</SuperiorStandardVersion>
-    <SourceDocumentInformation OriginName=""APOS_SIF.qea"" OriginID="""" OriginVersion=""30""
-        LastWritingDateTime=""2026-02-26T16:30:37.000Z"" OriginVendor=""SINTEF""
+    <SourceDocumentInformation OriginName=""APOS_SIF.qea"" OriginID="""" OriginVersion=""31""
+        LastWritingDateTime=""2026-03-02T08:25:25.000Z"" OriginVendor=""SINTEF""
         OriginVendorURL=""www.sintef.no"" />
     <ExternalReference
         Path=""https://9t4kqL7NX8JsW6o@automationml.ovgu.de/public.php/webdav/AutomationML_Base_Libraries_AMLEd2_2.11.0.aml""
@@ -1489,7 +1488,7 @@ namespace Sintef.Apos.Sif
             <Version>1.0</Version>
         </AttributeType>
         <AttributeType Name=""integer"" ID=""{A4662FA1-C30C-4dbb-8003-70950AEFC83C}""
-            AttributeDataType=""xs:intenger"">
+            AttributeDataType=""xs:integer"">
             <Description>number as integer</Description>
             <Version>1.0</Version>
         </AttributeType>

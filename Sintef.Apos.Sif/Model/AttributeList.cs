@@ -55,6 +55,36 @@ namespace Sintef.Apos.Sif.Model
             }
         }
 
+        public IEnumerable<object> ObjectValues
+        {
+            get => Items?.Select(x => x.ObjectValue);
+            set
+            {
+                Items?.Clear();
+                foreach (var sValue in value)
+                {
+                    var item = CreateItem();
+                    item.ObjectValue = sValue;
+                    Items?.Add(item);
+                }
+            }
+        }
+
+        public IEnumerable<string> StringValues
+        {
+            get => Items?.Select(x => x.StringValue);
+            set
+            {
+                Items?.Clear();
+                foreach (var sValue in value)
+                {
+                    var item = CreateItem();
+                    item.StringValue = sValue;
+                    Items?.Add(item);
+                }
+            }
+        }
+
 
         public bool IsValid(out Collection<ModelError> errors)
         {
