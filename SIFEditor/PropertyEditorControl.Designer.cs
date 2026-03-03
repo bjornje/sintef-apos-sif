@@ -94,6 +94,7 @@
             labelValue.TabIndex = 5;
             labelValue.Text = "labelValue";
             labelValue.TextAlign = ContentAlignment.MiddleLeft;
+            labelValue.UseMnemonic = false;
             labelValue.Click += labelValue_Click;
             // 
             // labelType

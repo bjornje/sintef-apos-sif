@@ -358,6 +358,100 @@ namespace Sintef.Apos.Sif
             }
         }
 
+        public static bool IstOldTypeRef(string oldRefAttributeType, out string refAttributeType)
+        {
+            if (!oldRefAttributeType.StartsWith("Types/"))
+            {
+                refAttributeType = null;
+                return false;
+            }
+
+            var className = oldRefAttributeType.Substring(6);
+
+            switch (className)
+            {
+                case "String":
+                    refAttributeType = "APOS.BasicUnits_AttributeTypeLib/string";
+                    return true;
+                case "Frequency":
+                    refAttributeType = "APOS.BasicUnits_AttributeTypeLib/frequency_peryear";
+                    return true;
+                case "Percent":
+                    refAttributeType = "APOS.BasicUnits_AttributeTypeLib/percent";
+                    return true;
+                case "Hours":
+                    refAttributeType = "APOS.BasicUnits_AttributeTypeLib/duration_hours";
+                    return true;
+                case "Seconds":
+                    refAttributeType = "APOS.BasicUnits_AttributeTypeLib/duration_seconds";
+                    return true;
+                case "Integer":
+                    refAttributeType = "APOS.BasicUnits_AttributeTypeLib/integer";
+                    return true;
+                case "SILLevel":
+                    refAttributeType = "APOS.SIFTypes_AttributeTypeLib/SILLevel";
+                    return true;
+                //case "FITs":
+                //attributes.Add(new FITs(attributeName, attiributeDescription));
+                //case "E_DEToTrip":
+                //    attributes.Add(new E_DEToTrip(attributeName, attiributeDescription));
+                //    break;
+                //case "InputDeviceTrigger":
+                //    attributes.Add(new InputDeviceTrigger(attributeName, attiributeDescription));
+                //    break;
+                //case "FinalElementFunction":
+                //    attributes.Add(new FinalElementFunction(attributeName, attiributeDescription));
+                //    break;
+                //case "FailSafePosition":
+                //    attributes.Add(new FailSafePosition(attributeName, attiributeDescription));
+                //    break;
+                case "PerYear":
+                    refAttributeType = "APOS.BasicUnits_AttributeTypeLib/frequency_peryear";
+                    return true;
+                case "SIFType":
+                    refAttributeType = "APOS.SIFTypes_AttributeTypeLib/SIFType";
+                    return true;
+                case "ModeOfOperation":
+                    refAttributeType = "APOS.SIFTypes_AttributeTypeLib/modeOfOperation";
+                    return true;
+                //case "ILLevel":
+                //    attributes.Add(new ILLevel(attributeName, attiributeDescription));
+                //    break;
+                //case "PerHour":
+                //    attributes.Add(new PerHour(attributeName, attiributeDescription));
+                //    break;
+                //case "ManualActivation":
+                //    attributes.Add(new ManualActivation(attributeName, attiributeDescription));
+                //    break;
+                case "ResetAfterShutdown_FinalElement":
+                    refAttributeType = "ResetAfterShutdownRequirement";
+                    break;
+                //case "AlarmOrWarning":
+                //    attributes.Add(new AlarmOrWarning(attributeName, attiributeDescription));
+                //    break;
+                //case "TagNumber":
+                //    attributes.Add(new TagNumber(attributeName, attiributeDescription));
+                //    break;
+                //case "TypeAB":
+                //    return "APOS.SISDeviceTypes_AttributeTypeLib/typeAB";
+                //case "Comparison":
+                //    attributes.Add(new Comparison(attributeName, attiributeDescription));
+                //    break;
+                //case "BypassControl":
+                //    attributes.Add(new BypassControl(attributeName, attiributeDescription));
+                //    break;
+                case "kg_s":
+                    refAttributeType = "APOS.FailureClassificationTypes_AttributeTypeLib/leakagerate_kg_s";
+                    return true;
+                case "Boolean":
+                    refAttributeType = "APOS.BasicUnits_AttributeTypeLib/boolean";
+                    return true;
+                default:
+                    refAttributeType = null;
+                    return true;
+            }
+        }
+
         public static bool TryAddAttribute(string attributeName, string refAttributeType, bool isOrderedList, string targetNode)
         {
             if (!_additionlAttributes.TryGetValue(targetNode, out var attributes))

@@ -1,4 +1,5 @@
-﻿using Aml.Engine.CAEX;
+﻿using Aml.Engine.AmlObjects;
+using Aml.Engine.CAEX;
 using Sintef.Apos.Sif.Model;
 using System;
 using System.Collections.Generic;
@@ -234,8 +235,11 @@ namespace Sintef.Apos.Sif
                 foreach(var att in ie.Attribute)
                 {
                     var attributeName = att.Name;
+                    var attributeValue = ReadAttribute(att.Name, ie);
+                    var refAttributeType = att.RefAttributeType;
+                    var itemRefAttributeType = att.Attribute.FirstOrDefault()?.RefAttributeType;
 
-                    switch(att.Name)  //for backward compatibility
+                    switch (att.Name)  //for backward compatibility
                     {
                         case "NumberOfGroups_N":
                             attributeName = "NumberOfGroups";
@@ -247,24 +251,77 @@ namespace Sintef.Apos.Sif
                         case "VoteBetweenGroups_M_in_MooN":
                             attributeName = "MInVotingMooN";
                             break;
+                        case "SILLevel":
+                            attributeName = "SafetyIntegrityLevelRequirement";
+                            break;
+                        case "MaxAllowableResponseTime":
+                            attributeName = "MaximumAllowableSIFResponseTime";
+                            break;
+                        case "SafeProcessState":
+                            attributeName = "SafeStateOfProcess";
+                            break;
+                        case "DemandRate":
+                            attributeName = "MaximumAllowableDemandRate";
+                            break;
+                        case "SIFType":
+                            attributeValue = attributeValue?.ToLower(CultureInfo.InvariantCulture);
+                            break;
+                        case "ProofTestCoverage":
+                            attributeName = "TestCoverage";
+                            break;
+                        case "TripAction":
+                            attributeName = "TripEnergyMode";
+                            break;
+                        case "TagDescription":
+                            attributeName = "TagInformation";
+                            break;
+                        case "MTTR":
+                            attributeName = "MeanTimeToRestoration";
+                            break;
+                        case "SystematicCapability":
+                            attributeName = "SystematicCapabilityRequirement";
+                            refAttributeType = "APOS.SISDeviceTypes_AttributeTypeLib/SCLevel";
+                            attributeValue = attributeValue?.Replace("SIL ", "SC ");
+                            break;
+                        case "ProofTestIntervalSILCompliance":
+                            attributeName = "MaximumTestIntervalForSILCompliance";
+                            break;
+                        case "SurvaivabilityRequirement":
+                            attributeName = "SurvivabilityRequirement";
+                            itemRefAttributeType = "APOS.BasicUnits_AttributeTypeLib/string";
+                            break;
+                        case "EUCReference":
+                            attributeName = "ReferenceToEquipmentUnderControl";
+                            itemRefAttributeType = "APOS.BasicUnits_AttributeTypeLib/string";
+                            break;
+                    }
+
+                    if (Definition.IstOldTypeRef(refAttributeType, out var newRefAttributeType)) // for backward compatibility
+                    {
+                        if (newRefAttributeType == null)
+                        {
+                            continue;
+                        }
+
+                        refAttributeType = newRefAttributeType;
                     }
 
                     var nameIsDepricated = attributeName != att.Name;
+
 
                     var attribute = childNode.Attributes.FirstOrDefault(x => x.Name == attributeName);
 
                     if (attribute == null && !nameIsDepricated)
                     {    
-                        if (Definition.IsOrdereListType(att.RefAttributeType))
+                        if (Definition.IsOrdereListType(refAttributeType))
                         {
-                            var itemAttribute = att.Attribute.FirstOrDefault();
-                            if (itemAttribute != null && Definition.TryAddAttribute(att.Name, itemAttribute.RefAttributeType, true, childNode.GetType().Name))
+                            if (itemRefAttributeType != null && Definition.TryAddAttribute(att.Name, itemRefAttributeType, true, childNode.GetType().Name))
                             {
                                 childNode.PushAttributes();
                                 attribute = childNode.Attributes.FirstOrDefault(x => x.Name == att.Name);
                             }
                         }
-                        else if (Definition.TryAddAttribute(att.Name, att.RefAttributeType, false, childNode.GetType().Name))
+                        else if (Definition.TryAddAttribute(att.Name, refAttributeType, false, childNode.GetType().Name))
                         {
                             childNode.PushAttributes();
                             attribute = childNode.Attributes.FirstOrDefault(x => x.Name == att.Name);
@@ -279,6 +336,17 @@ namespace Sintef.Apos.Sif
                     if (attribute.IsOrderedList)
                     {
                         var stringValues = ReadOrderedListAttribute(att.Name, ie);
+
+                        if (!stringValues.Any())
+                        {
+                            var stringValue = attributeValue;
+
+                            if (!string.IsNullOrEmpty(stringValue))
+                            {
+                                stringValues = new[] { stringValue };
+                            }
+                        }
+
                         foreach(var value in stringValues)
                         {
                             var listItem = attribute.CreateItem();
@@ -289,7 +357,7 @@ namespace Sintef.Apos.Sif
                         continue;
                     }
 
-                    attribute.StringValue = ReadAttribute(att.Name, ie);
+                    attribute.StringValue = attributeValue;
                 }
             }
 
