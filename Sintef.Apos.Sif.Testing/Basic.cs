@@ -7,7 +7,7 @@ namespace Sintef.Apos.Sif.Testing
         [Fact]
         public void VerifyModelVersion()
         {
-            Assert.Equal("30", Definition.Version);
+            Assert.Equal("31", Definition.Version);
         }
 
         [Fact]
@@ -39,6 +39,37 @@ namespace Sintef.Apos.Sif.Testing
             Assert.True(sif.MaximumAllowableDemandRate.IsValid(out var _));
             Assert.Equal(0.00000035, sif.MaximumAllowableDemandRate.Value);
             Assert.Equal("3.5E-07", sif.MaximumAllowableDemandRate.StringValue);
+        }
+
+        [Fact]
+        public void ScientificNotification2()
+        {
+            var builder = new Builder();
+
+            var sif = builder.SIFs.Append("SIF-00ABC23");
+
+            sif.MaximumAllowableDemandRate.StringValue = "3E-07";
+
+            Assert.True(sif.MaximumAllowableDemandRate.IsValid(out var _));
+            Assert.Equal(0.0000003, sif.MaximumAllowableDemandRate.Value);
+            Assert.Equal("3E-07", sif.MaximumAllowableDemandRate.StringValue);
+
+            sif.MaximumAllowableDemandRate.StringValue = "0.0000003";
+
+            Assert.True(sif.MaximumAllowableDemandRate.IsValid(out var _));
+            Assert.Equal(0.0000003, sif.MaximumAllowableDemandRate.Value);
+            Assert.Equal("0.0000003", sif.MaximumAllowableDemandRate.StringValue);
+
+            sif.MaximumAllowableDemandRate.Value = 3E-07;
+
+            Assert.True(sif.MaximumAllowableDemandRate.IsValid(out var _));
+            Assert.Equal(0.0000003, sif.MaximumAllowableDemandRate.Value);
+            Assert.Equal("3E-07", sif.MaximumAllowableDemandRate.StringValue);
+
+            sif.MaximumAllowableDemandRate.Value = 0.0000003;
+            Assert.True(sif.MaximumAllowableDemandRate.IsValid(out var _));
+            Assert.Equal(0.0000003, sif.MaximumAllowableDemandRate.Value);
+            Assert.Equal("3E-07", sif.MaximumAllowableDemandRate.StringValue);
         }
 
 
@@ -363,5 +394,85 @@ namespace Sintef.Apos.Sif.Testing
 
             Assert.True(sif.IsSameAs(sif2));
         }
+
+        [Fact]
+        public void AddAttribute()
+        {
+            const string attributeName = "MyNewAttribute";
+
+            var types = Definition.GetTypes();
+
+            var refAttributeType = types.FirstOrDefault(x => x.EndsWith("/string"));
+            Assert.NotNull(refAttributeType);
+
+            var isOrderedList = false;
+            var targetNode = typeof(SafetyInstrumentedFunction).Name;
+
+            Assert.True(Definition.TryAddAttribute(attributeName, refAttributeType, isOrderedList, targetNode));
+
+            var builder = new Builder();
+
+            var sif = builder.SIFs.Append("SIF-00ABC23");
+
+            builder.PushAttributes();
+
+            var attribute = sif.Attributes.FirstOrDefault(x => x.Name == attributeName);
+
+            Assert.NotNull(attribute);
+            Assert.IsType<Attribute<string>>(attribute);
+
+            var myNewAttribute = attribute as Attribute<string>;
+
+            Assert.NotNull(myNewAttribute);
+
+            myNewAttribute.Value = "Hello";
+
+            Assert.Equal("Hello", myNewAttribute.ObjectValue);
+            Assert.Equal("Hello", myNewAttribute.StringValue);
+        }
+
+        [Fact]
+        public void AddOrderedListAttribute()
+        {
+            const string attributeName = "MyNewAttributeList";
+
+            var types = Definition.GetTypes();
+
+            var refAttributeType = types.FirstOrDefault(x => x.EndsWith("/integer"));
+            Assert.NotNull(refAttributeType);
+
+            var isOrderedList = true;
+            var targetNode = typeof(SafetyInstrumentedFunction).Name;
+
+            Assert.True(Definition.TryAddAttribute(attributeName, refAttributeType, isOrderedList, targetNode));
+
+            var builder = new Builder();
+
+            var sif = builder.SIFs.Append("SIF-00ABC23");
+
+            builder.PushAttributes();
+
+            var attribute = sif.Attributes.FirstOrDefault(x => x.Name == attributeName);
+
+            Assert.NotNull(attribute);
+            Assert.IsType<AttributeList<int?>>(attribute);
+
+            var myNewAttribute = attribute as AttributeList<int?>;
+
+            Assert.NotNull(myNewAttribute);
+
+            myNewAttribute.Values = [81, 82, 83];
+
+            Assert.Equal(81, myNewAttribute.Items[0].ObjectValue);
+            Assert.Equal(82, myNewAttribute.Items[1].ObjectValue);
+            Assert.Equal(83, myNewAttribute.Items[2].ObjectValue);
+
+            Assert.Equal("81", myNewAttribute.Items[0].StringValue);
+            Assert.Equal("82", myNewAttribute.Items[1].StringValue);
+            Assert.Equal("83", myNewAttribute.Items[2].StringValue);
+
+        }
+
+
     }
 }

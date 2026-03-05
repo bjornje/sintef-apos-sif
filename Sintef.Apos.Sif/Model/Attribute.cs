@@ -78,21 +78,10 @@ namespace Sintef.Apos.Sif.Model
             if (typeof(T) == typeof(double?))
             {
                 var valueAsObject = GetValueAsObject(StringValue);
-                var valueAsString = GetValueAsString(valueAsObject);
 
-                if (StringValue == valueAsString)
+                if (valueAsObject != null)
                 {
                     return;
-                }
-
-                if (!StringValue.Contains('E'))
-                {
-                    valueAsString = GetValueAsStringNotScientific(valueAsObject);
-
-                    if (StringValue == valueAsString)
-                    {
-                        return;
-                    }
                 }
 
                 errors.Add(new ModelError(node, this, $"The value {StringValue} provided for {Name} is not a valid decimal number."));
@@ -100,9 +89,8 @@ namespace Sintef.Apos.Sif.Model
             else if (typeof(T) == typeof(int?))
             {
                 var valueAsObject = GetValueAsObject(StringValue);
-                var valueAsString = GetValueAsString(valueAsObject);
 
-                if (StringValue == valueAsString)
+                if (valueAsObject != null)
                 {
                     return;
                 }
@@ -112,9 +100,8 @@ namespace Sintef.Apos.Sif.Model
             else if (typeof(T) == typeof(bool?))
             {
                 var valueAsObject = GetValueAsObject(StringValue);
-                var valueAsString = GetValueAsString(valueAsObject);
 
-                if (StringValue == valueAsString)
+                if (valueAsObject != null)
                 {
                     return;
                 }
@@ -123,11 +110,6 @@ namespace Sintef.Apos.Sif.Model
             }
             else if (typeof(T) == typeof(string))
             {
-                if (string.IsNullOrEmpty(StringValue))
-                {
-                    return;
-                }
-
                 if (!Definition.TryGetAttributeTypeValues(RefAttributeType, out var values))
                 {
                     return;
@@ -146,7 +128,7 @@ namespace Sintef.Apos.Sif.Model
             {
                 if (HasExponent(value, out var significand, out var exponent))
                 {
-                    if (double.TryParse(significand, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var doubleSignificand) &&
+                    if (double.TryParse(significand, NumberStyles.Float, CultureInfo.InvariantCulture, out var doubleSignificand) &&
                         int.TryParse(exponent, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intExponent))
                     {
                         return doubleSignificand * Math.Pow(10, intExponent);
@@ -154,12 +136,12 @@ namespace Sintef.Apos.Sif.Model
                 }
                 else
                 {
-                    if (double.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var doubleValue))
+                    if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var doubleValue))
                     {
                         return doubleValue;
                     }
 
-                    if (decimal.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var decimalValue))
+                    if (decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var decimalValue))
                     {
                         return decimalValue;
                     }

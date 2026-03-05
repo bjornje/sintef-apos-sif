@@ -257,11 +257,33 @@ namespace Sintef.Apos.Sif
                         case "MaxAllowableResponseTime":
                             attributeName = "MaximumAllowableSIFResponseTime";
                             break;
+                        case "SpuriousTripRate":
+                            attributeName = "MaximumAllowableSpuriousTripRate";
+                            break;
+                        case "TightShutOff":
+                            attributeName = "TightShutoffIsRequired";
+                            break;
+                        case "ManualOperation":
+                            attributeName = "ManualOperationIsPossible";
+                            break;
                         case "SafeProcessState":
                             attributeName = "SafeStateOfProcess";
                             break;
+                        case "DiagnosticRequirementsForImplementation":
+                            attributeName = "AdditionalDiagnosticRequirementForImplementation";
+                            itemRefAttributeType = "APOS.BasicUnits_AttributeTypeLib/string";
+                            break;
                         case "DemandRate":
                             attributeName = "MaximumAllowableDemandRate";
+                            break;
+                        case "FailPass_Masurement":
+                            attributeName = "NumericFailCriterionValue";
+                            break;
+                        case "FailPass_Requirement":
+                            attributeName = "NumericFailCriterionDescriptionOfMeasurement";
+                            break;
+                        case "FailPass_ComparisonToPass":
+                            attributeName = "NumericFailCriterionOperator";
                             break;
                         case "SIFType":
                             attributeValue = attributeValue?.ToLower(CultureInfo.InvariantCulture);
@@ -269,23 +291,105 @@ namespace Sintef.Apos.Sif
                         case "ProofTestCoverage":
                             attributeName = "TestCoverage";
                             break;
-                        case "TripAction":
+                        case "E_DEToTrip":
                             attributeName = "TripEnergyMode";
+                            if (attributeValue != null)
+                            {
+                                if (attributeValue == "E")
+                                {
+                                    attributeValue = "energize to trip";
+                                }
+                                else if (attributeValue == "DE")
+                                {
+                                    attributeValue = "de-energize to trip";
+                                }
+                            }
+                            break;
+                        case "ResetAfterShutdown":
+                            attributeName = "ResetAfterShutdownRequirement";
+                            break;
+                        case "ResetAfterShutdown_FinalElement":
+                            attributeName = "ResetAfterShutdownRequirement";
+                            refAttributeType = "APOS.SISDeviceTypes_AttributeTypeLib/resetAfterShutdown_FinalElement";
                             break;
                         case "TagDescription":
                             attributeName = "TagInformation";
                             break;
+                        case "MeasurementComparison":
+                            attributeName = "MeasurementComparisonIsRequired";
+                            break;
+                        case "SafeState":
+                            attributeName = "SafeStateOfDevice";
+                            break;
+                        case "AlarmResetAfterShutdown":
+                            attributeName = "AlarmResetAfterShutdownIsRequired";
+                            break;
+                        case "Bypass_Approvement":
+                            attributeName = "BypassAdministrativeControlRequired";
+                            break;
+                        case "Bypass_MaxAllowableBypassTime":
+                            attributeName = "MaximumAllowableBypassTime";
+                            break;
+                        case "TimeDelay":
+                            attributeName = "TimeDelayOfAction";
+                            itemRefAttributeType = "APOS.BasicUnits_AttributeTypeLib/duration_seconds";
+                            break;
                         case "MTTR":
                             attributeName = "MeanTimeToRestoration";
+                            break;
+                        case "TypeAB":
+                            attributeName = "TypeAOrB";
+                            attributeValue = attributeValue == null ? null : $"type {attributeValue}";
+                            break;
+                        case "ManualActivation":
+                            attributeName = "ManuallyActivatedShutdownRequirement";
+                            break;
+                        case "MeasureToAvoidCCF":
+                            attributeName = "MeasureToAvoidCommonCauseFailures";
+                            itemRefAttributeType = "APOS.BasicUnits_AttributeTypeLib/string";
                             break;
                         case "SystematicCapability":
                             attributeName = "SystematicCapabilityRequirement";
                             refAttributeType = "APOS.SISDeviceTypes_AttributeTypeLib/SCLevel";
                             attributeValue = attributeValue?.Replace("SIL ", "SC ");
                             break;
+                        case "AILLevel":
+                            attributeName = "AssetIntegrityLevelRequirement";
+                            refAttributeType = "APOS.SIFTypes_AttributeTypeLib/assetIntegrityLevel";
+                            if (attributeValue != null)
+                            {
+                                if (attributeValue == "no IL")
+                                {
+                                    attributeValue = "no AIL";
+                                }
+                                else
+                                {
+                                    attributeValue = attributeValue.Replace("IL", "AIL ");
+                                }
+                            }
+                            break;
+                        case "EILLevel":
+                            attributeName = "EnvironmentalIntegrityLevelRequirement";
+                            refAttributeType = "APOS.SIFTypes_AttributeTypeLib/environmentalIntegrityLevel";
+                            if (attributeValue != null)
+                            {
+                                if (attributeValue == "no IL")
+                                {
+                                    attributeValue = "no EIL";
+                                }
+                                else
+                                {
+                                    attributeValue = attributeValue.Replace("IL", "EIL ");
+                                }
+                            }
+                            break;
                         case "ProofTestIntervalSILCompliance":
                             attributeName = "MaximumTestIntervalForSILCompliance";
                             break;
+                        case "ProofTestIntervalOperatorSpec":
+                            attributeName = "MinimumTestIntervalOperatorSpecification";
+                            break;
+                        case "SurvaibabilityRequirement":
                         case "SurvaivabilityRequirement":
                             attributeName = "SurvivabilityRequirement";
                             itemRefAttributeType = "APOS.BasicUnits_AttributeTypeLib/string";
@@ -298,11 +402,6 @@ namespace Sintef.Apos.Sif
 
                     if (Definition.IstOldTypeRef(refAttributeType, out var newRefAttributeType)) // for backward compatibility
                     {
-                        if (newRefAttributeType == null)
-                        {
-                            continue;
-                        }
-
                         refAttributeType = newRefAttributeType;
                     }
 

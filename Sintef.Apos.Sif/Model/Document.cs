@@ -72,7 +72,7 @@ namespace Sintef.Apos.Sif.Model
 
             var document = new Document(this, name, externalInterface);
 
-            document.Name.StringValue = name ?? "New Document";
+            document.Name.StringValue = name ?? "New document";
             document.Language.StringValue = "en-US";
 
             _items.Add(document);

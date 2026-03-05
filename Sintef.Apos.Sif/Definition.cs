@@ -1,11 +1,9 @@
 ﻿using Aml.Engine.CAEX;
-using Aml.Engine.Services;
 using Sintef.Apos.Sif.Model;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Xml.Linq;
 
 namespace Sintef.Apos.Sif
 {
@@ -391,20 +389,6 @@ namespace Sintef.Apos.Sif
                 case "SILLevel":
                     refAttributeType = "APOS.SIFTypes_AttributeTypeLib/SILLevel";
                     return true;
-                //case "FITs":
-                //attributes.Add(new FITs(attributeName, attiributeDescription));
-                //case "E_DEToTrip":
-                //    attributes.Add(new E_DEToTrip(attributeName, attiributeDescription));
-                //    break;
-                //case "InputDeviceTrigger":
-                //    attributes.Add(new InputDeviceTrigger(attributeName, attiributeDescription));
-                //    break;
-                //case "FinalElementFunction":
-                //    attributes.Add(new FinalElementFunction(attributeName, attiributeDescription));
-                //    break;
-                //case "FailSafePosition":
-                //    attributes.Add(new FailSafePosition(attributeName, attiributeDescription));
-                //    break;
                 case "PerYear":
                     refAttributeType = "APOS.BasicUnits_AttributeTypeLib/frequency_peryear";
                     return true;
@@ -414,40 +398,23 @@ namespace Sintef.Apos.Sif
                 case "ModeOfOperation":
                     refAttributeType = "APOS.SIFTypes_AttributeTypeLib/modeOfOperation";
                     return true;
-                //case "ILLevel":
-                //    attributes.Add(new ILLevel(attributeName, attiributeDescription));
-                //    break;
-                //case "PerHour":
-                //    attributes.Add(new PerHour(attributeName, attiributeDescription));
-                //    break;
-                //case "ManualActivation":
-                //    attributes.Add(new ManualActivation(attributeName, attiributeDescription));
-                //    break;
-                case "ResetAfterShutdown_FinalElement":
-                    refAttributeType = "ResetAfterShutdownRequirement";
-                    break;
-                //case "AlarmOrWarning":
-                //    attributes.Add(new AlarmOrWarning(attributeName, attiributeDescription));
-                //    break;
-                //case "TagNumber":
-                //    attributes.Add(new TagNumber(attributeName, attiributeDescription));
-                //    break;
-                //case "TypeAB":
-                //    return "APOS.SISDeviceTypes_AttributeTypeLib/typeAB";
-                //case "Comparison":
-                //    attributes.Add(new Comparison(attributeName, attiributeDescription));
-                //    break;
-                //case "BypassControl":
-                //    attributes.Add(new BypassControl(attributeName, attiributeDescription));
-                //    break;
                 case "kg_s":
                     refAttributeType = "APOS.FailureClassificationTypes_AttributeTypeLib/leakagerate_kg_s";
                     return true;
                 case "Boolean":
                     refAttributeType = "APOS.BasicUnits_AttributeTypeLib/boolean";
                     return true;
+                case "Comparison":
+                    refAttributeType = "APOS.FailureClassificationTypes_AttributeTypeLib/comparison";
+                    return true;
+                case "TypeAB":
+                    refAttributeType = "APOS.SISDeviceTypes_AttributeTypeLib/typeAB";
+                    return true;
+                case "E_DEToTrip":
+                    refAttributeType = "APOS.SISDeviceTypes_AttributeTypeLib/tripEnergyMode";
+                    return true;
                 default:
-                    refAttributeType = null;
+                    refAttributeType = "APOS.BasicUnits_AttributeTypeLib/string";
                     return true;
             }
         }
