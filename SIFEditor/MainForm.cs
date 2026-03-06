@@ -3,6 +3,7 @@ using Sintef.Apos.Sif.Model;
 using System;
 using System.ComponentModel;
 using System.Reflection;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using ComboBox = System.Windows.Forms.ComboBox;
 using TextBox = System.Windows.Forms.TextBox;
@@ -97,7 +98,7 @@ namespace SIFEditor
             {
                 if (treeNode.Tag is not Node node) continue;
 
-                var text = node.DisplayName(treeNode.Parent);
+                var text = node.NodeDisplayName(treeNode.Parent);
                 if (treeNode.Text != text)
                 {
                     treeNode.Text = text;
@@ -118,7 +119,7 @@ namespace SIFEditor
         {
             treeView1.Nodes.Clear();
 
-            var node = new TreeNode(root.DisplayName(new TreeNode()));
+            var node = new TreeNode(root.NodeDisplayName(new TreeNode()));
             node.ContextMenuStrip = contextMenuStripSIFs;
             node.Tag = root;
             treeView1.Nodes.Add(node);
@@ -132,7 +133,7 @@ namespace SIFEditor
         {
             foreach (var sif in sifs)
             {
-                var childNode = new TreeNode(sif.DisplayName(node));
+                var childNode = new TreeNode(sif.NodeDisplayName(node));
                 childNode.ContextMenuStrip = contextMenuStripSIF;
                 childNode.Tag = sif;
                 node.Nodes.Add(childNode);
@@ -149,7 +150,7 @@ namespace SIFEditor
         {
             foreach (var subsystem in subsystems)
             {
-                var childNode = new TreeNode(subsystem.DisplayName(node));
+                var childNode = new TreeNode(subsystem.NodeDisplayName(node));
                 childNode.ContextMenuStrip = contextMenuStripSubsystem;
                 childNode.Tag = subsystem;
                 node.Nodes.Add(childNode);
@@ -162,7 +163,7 @@ namespace SIFEditor
         {
             foreach (var group in groups)
             {
-                var childNode = new TreeNode(group.DisplayName(node));
+                var childNode = new TreeNode(group.NodeDisplayName(node));
                 childNode.ContextMenuStrip = contextMenuCrossGroup;
                 childNode.Tag = group;
                 node.Nodes.Add(childNode);
@@ -171,9 +172,22 @@ namespace SIFEditor
 
         private void AddDocuments(Documents documents, TreeNode node)
         {
-            var childNode = new TreeNode(documents.DisplayName(node));
+            var childNode = new TreeNode(documents.NodeDisplayName(node));
             childNode.ContextMenuStrip = contextMenuStripDocuments;
             childNode.Tag = documents;
+            node.Nodes.Add(childNode);
+
+            foreach (var document in documents)
+            {
+                AddDocument(document, childNode);
+            }
+        }
+
+        private void AddDocument(Document document, TreeNode node)
+        {
+            var childNode = new TreeNode(document.NodeDisplayName(node));
+            childNode.ContextMenuStrip = contextMenuStripDocument;
+            childNode.Tag = document;
             node.Nodes.Add(childNode);
         }
 
@@ -181,7 +195,7 @@ namespace SIFEditor
         {
             foreach (var group in groups)
             {
-                var childNode = new TreeNode(group.DisplayName(node));
+                var childNode = new TreeNode(group.NodeDisplayName(node));
                 childNode.ContextMenuStrip = contextMenuStripGroup;
                 childNode.Tag = group;
                 node.Nodes.Add(childNode);
@@ -194,7 +208,7 @@ namespace SIFEditor
         {
             foreach (var component in components)
             {
-                var childNode = new TreeNode(component.DisplayName(node));
+                var childNode = new TreeNode(component.NodeDisplayName(node));
                 childNode.ContextMenuStrip = contextMenuStripSISComponent;
                 childNode.Tag = component;
                 node.Nodes.Add(childNode);
@@ -307,7 +321,7 @@ namespace SIFEditor
                         if (crossGroupsTreeNode != null && crossGroupsTreeNode.Tag is CrossSubsystemGroups groups)
                         {
                             groups.Add(group);
-                            var childNode = new TreeNode(group.DisplayName(crossGroupsTreeNode));
+                            var childNode = new TreeNode(group.NodeDisplayName(crossGroupsTreeNode));
                             childNode.ContextMenuStrip = contextMenuCrossGroup;
                             childNode.Tag = group;
                             crossGroupsTreeNode.Nodes.Add(childNode);
@@ -516,7 +530,7 @@ namespace SIFEditor
 
         private static TreeNode AppendTreeNode(Node tag, TreeNode parent, ContextMenuStrip? contextMenuStrip)
         {
-            var treeNode = new TreeNode(tag.DisplayName(parent));
+            var treeNode = new TreeNode(tag.NodeDisplayName(parent));
             treeNode.ContextMenuStrip = contextMenuStrip;
             treeNode.Tag = tag;
             parent.Nodes.Add(treeNode);
@@ -668,6 +682,7 @@ namespace SIFEditor
             TreeChanged();
         }
 
+
         private void SaveAsTextFile(string fileName)
         {
             if (_builder == null)
@@ -676,13 +691,13 @@ namespace SIFEditor
             }
 
             var sb = new StringBuilder();
-            AppendLine(sb, "Path", "SIFID", "Component name", "Attribute name", "Attribute value");
+            AppendLine(sb, "Path", "SIFID", "Component name", "Attribute name", "Attribute value", "Attribute type", "Attribute requirement");
 
             foreach (var sif in _builder.SIFs)
             {
                 foreach (var attribute in sif.Attributes)
                 {
-                    AppendLine(sb, sif.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue);
+                    AppendLine(sb, sif.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue, attribute.TypeDisplayName(out _), attribute.RequirementText());
 
                 }
 
@@ -690,13 +705,21 @@ namespace SIFEditor
                 {
                     foreach (var attribute in subsystem.Attributes)
                     {
-                        AppendLine(sb, subsystem.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue);
+                        AppendLine(sb, subsystem.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue, attribute.TypeDisplayName(out _), attribute.RequirementText());
                     }
                 }
 
                 foreach (var group in sif.GetAllGroups())
                 {
                     AppendGroup(sb, sif, group);
+                }
+
+                foreach (var document in sif.Documents)
+                {
+                    foreach (var attribute in document.Attributes)
+                    {
+                        AppendLine(sb, document.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue, attribute.TypeDisplayName(out _), attribute.RequirementText());
+                    }
                 }
             }
 
@@ -707,21 +730,21 @@ namespace SIFEditor
         {
             foreach (var attribute in group.Attributes)
             {
-                AppendLine(sb, group.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue);
+                AppendLine(sb, group.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue, attribute.TypeDisplayName(out _), attribute.RequirementText());
             }
 
             foreach (var component in group.Components)
             {
                 foreach (var attribute in component.Attributes)
                 {
-                    AppendLine(sb, component.GetPath(sif.Parent), sif.SIFID.Value, component.TagName.Value, attribute.Name, attribute.StringValue);
+                    AppendLine(sb, component.GetPath(sif.Parent), sif.SIFID.Value, component.TagName.Value, attribute.Name, attribute.StringValue, attribute.TypeDisplayName(out _), attribute.RequirementText());
                 }
             }
         }
 
-        private static void AppendLine(StringBuilder sb, string col1, string col2, string col3, string col4, string col5)
+        private static void AppendLine(StringBuilder sb, string col1, string col2, string col3, string col4, string col5, string col6, string col7)
         {
-            sb.AppendLine($"{col1}\t{col2}\t{col3}\t{col4}\t{col5}");
+            sb.AppendLine($"{col1}\t{col2}\t{col3}\t{col4}\t{col5}\t{col6}\t{col7}");
         }
 
         private void addGroupToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -813,7 +836,7 @@ namespace SIFEditor
                 if (crossGroupsTreeNode != null && crossGroupsTreeNode.Tag is CrossSubsystemGroups groups)
                 {
                     groups.Add(group);
-                    var childNode = new TreeNode(group.DisplayName(crossGroupsTreeNode));
+                    var childNode = new TreeNode(group.NodeDisplayName(crossGroupsTreeNode));
                     childNode.ContextMenuStrip = contextMenuCrossGroup;
                     childNode.Tag = group;
                     crossGroupsTreeNode.Nodes.Add(childNode);

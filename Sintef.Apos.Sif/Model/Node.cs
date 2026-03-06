@@ -66,7 +66,25 @@ namespace Sintef.Apos.Sif.Model
             else if (Parent is SafetyInstrumentedFunction)
             {
                 var name = GetType().Name;
+
+                if (GetType() == typeof(Documents))
+                {
+                    return name;
+                }
+
                 return name.Substring(0, name.Length - 9);
+            }
+            else if (Parent is Documents documents)
+            {
+                foreach (var item in documents)
+                {
+                    if (item == this)
+                    {
+                        return GetType().Name + index;
+                    }
+
+                    index++;
+                }
             }
 
 

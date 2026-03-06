@@ -115,6 +115,16 @@ namespace Sintef.Apos.Sif.Model
         {
             foreach (var item in _items)
             {
+                if (_items.Any(x => !string.IsNullOrEmpty(x.Name.Value) && x.Name.Value == item.Name.Value && x != item))
+                {
+                    errors.Add(new ModelError(item, item.Name, $"{item.Name.Name} must be unique."));
+                }
+
+                if (_items.Any(x => !string.IsNullOrEmpty(x.RefURI.Value) && x.RefURI.Value == item.RefURI.Value && x != item))
+                {
+                    errors.Add(new ModelError(item, item.RefURI, $"{item.RefURI.Name} must be unique."));
+                }
+
                 item.Validate(errors);
             }
         }

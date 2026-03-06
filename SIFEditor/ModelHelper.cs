@@ -1,10 +1,11 @@
-﻿using Sintef.Apos.Sif.Model;
+﻿using Sintef.Apos.Sif;
+using Sintef.Apos.Sif.Model;
 
 namespace SIFEditor
 {
     static class ModelHelper
     {
-        public static string DisplayName(this Node node, TreeNode parent)
+        public static string NodeDisplayName(this Node node, TreeNode parent)
         {
             if (node is Root) return "SIFs";
 
@@ -52,6 +53,64 @@ namespace SIFEditor
 
             return node.GetType().Name;
         }
+
+        public static string TypeDisplayName(this IAttribute attribute, out string? itemRefAttributeType)
+        {
+            var displayName = "";
+
+            if (attribute.IsOrderedList)
+            {
+                var listItem = attribute.CreateItem();
+                itemRefAttributeType = listItem.RefAttributeType;
+
+                if (Definition.TryGetAttributeTypeName(listItem.RefAttributeType, out var typeName))
+                {
+                    displayName = $"List of {typeName} values";
+                }
+
+                if (Definition.TryGetAttributeUnit(listItem.RefAttributeType, out var unit))
+                {
+                    displayName = $"[{unit}] {displayName}";
+                }
+            }
+            else
+            {
+                itemRefAttributeType = null;
+
+                if (Definition.TryGetAttributeTypeName(attribute.RefAttributeType, out var typeName))
+                {
+                    displayName = typeName;
+                }
+
+                if (Definition.TryGetAttributeUnit(attribute.RefAttributeType, out var unit))
+                {
+                    displayName = $"[{unit}] {displayName}";
+                }
+            }
+
+            return displayName;
+        }
+
+        public static string RequirementText(this IAttribute attribute)
+        {
+            if (Definition.TryGetAttributeTypeName(attribute.RefAttributeType, out var typeName) && typeName == "info")
+            {
+                return "";
+            }
+
+            if (attribute.IsMandatory)
+            {
+                return "Mandatory";
+            }
+
+            if (attribute.IsPartOfModel)
+            {
+                return "Optional";
+            }
+
+            return $"Not part of model version {Definition.Version}";
+        }
+
     }
 }
 

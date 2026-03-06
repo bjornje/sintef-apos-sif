@@ -190,7 +190,7 @@ namespace Sintef.Apos.Sif
                         errors.Add(new ModelError(node, $"An instance of FinalElementRequirements can only by added to an instance of Group.\n{ie.Node}"));
                     }
                     break;
-                default: //for backward compatibility and documents
+                default:  //for documents and backward compatibility
                     if (node is SafetyInstrumentedFunction sif2)
                     {
                         if (ie.Name == "Documents")
@@ -205,6 +205,11 @@ namespace Sintef.Apos.Sif
                     else if (node is Documents documents)
                     {
                         childNode = documents.Append(ie.Name);
+                        if (childNode is Document document && ie.ExternalInterface.First != null && ie.ExternalInterface.First.Name == document.ExternalInterface.Template.Name)
+                        {
+                            document.RefURI.StringValue = ReadAttribute(document.RefURI.Name, ie.ExternalInterface.First);
+                            document.MIMEType.StringValue = ReadAttribute(document.MIMEType.Name, ie.ExternalInterface.First);
+                        }
                     }
                     else if (node is Subsystem sifSubsystem && (ie.Name == "GroupVoter" || ie.Name == "ComponentVoter"))
                     {
@@ -400,6 +405,7 @@ namespace Sintef.Apos.Sif
                             break;
                     }
 
+
                     if (Definition.IstOldTypeRef(refAttributeType, out var newRefAttributeType)) // for backward compatibility
                     {
                         refAttributeType = newRefAttributeType;
@@ -470,6 +476,17 @@ namespace Sintef.Apos.Sif
         private static string ReadAttribute(string name, InternalElementType ie)
         {
             var attribute = ie.Attribute.SingleOrDefault(x => x.Name == name);
+            if (attribute == null)
+            {
+                return null;
+            }
+
+            return attribute.Value;
+        }
+
+        private static string ReadAttribute(string name, ExternalInterfaceType ei)
+        {
+            var attribute = ei.Attribute.SingleOrDefault(x => x.Name == name);
             if (attribute == null)
             {
                 return null;

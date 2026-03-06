@@ -42,21 +42,11 @@ namespace SIFEditor
 
             toolTipProperty.SetToolTip(labelName, property.Description);
 
+            labelType.Text = property.TypeDisplayName(out var itemRefAttributeType);
+
             if (property.IsOrderedList)
             {
-                var listItem = property.CreateItem();
-
-                if (Definition.TryGetAttributeTypeName(listItem.RefAttributeType, out var typeName))
-                {
-                    labelType.Text = $"List of {typeName} values";
-                }
-
-                if (Definition.TryGetAttributeUnit(listItem.RefAttributeType, out var unit))
-                {
-                    labelType.Text = $"[{unit}] {labelType.Text}";
-                }
-
-                if (Definition.TryGetAttributeTypeDescription(listItem.RefAttributeType, out var description))
+                if (Definition.TryGetAttributeTypeDescription(itemRefAttributeType, out var description))
                 {
                     toolTipPropertyType.SetToolTip(labelType, description);
                 }
@@ -66,16 +56,6 @@ namespace SIFEditor
             }
             else
             {
-                if (Definition.TryGetAttributeTypeName(property.RefAttributeType, out var typeName))
-                {
-                    labelType.Text = typeName;
-                }
-
-                if (Definition.TryGetAttributeUnit(property.RefAttributeType, out var unit))
-                {
-                    labelType.Text = $"[{unit}] {labelType.Text}";
-                }
-
                 if (Definition.TryGetAttributeTypeDescription(property.RefAttributeType, out var description))
                 {
                     toolTipPropertyType.SetToolTip(labelType, description);
