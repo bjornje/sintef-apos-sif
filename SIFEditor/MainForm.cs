@@ -415,7 +415,17 @@ namespace SIFEditor
 
                 _builder = new Builder();
 
-                _builder.LoadFromFile(openFileDialog.FileName);
+                try
+                {
+                    _builder.LoadFromFile(openFileDialog.FileName);
+                }
+                catch
+                {
+                    if (!TryRecoverFile(openFileDialog.FileName))
+                    {
+                        return;
+                    }
+                }
 
                 FilterModelErrors();
 
@@ -430,6 +440,60 @@ namespace SIFEditor
 
                 TreeChanged();
             }
+        }
+
+        private bool TryRecoverFile(string fileName)
+        {
+            var text = File.ReadAllText(fileName);
+
+            var startTag = text.IndexOf("<InstanceHierarchy ");
+            var endTag = text.IndexOf("</InstanceHierarchy>");
+
+            if (startTag < 0)
+            {
+                MessageBox.Show("InstanceHierarchy start tag not found.", "Load CAEX file", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            if (endTag < startTag)
+            {
+                MessageBox.Show("InstanceHierarchy end tag not found.", "Load CAEX file", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            var recoveredText = RecoverFile(text.Substring(startTag, endTag - startTag + 20));
+
+            try
+            {
+                using (var stream = GenerateStreamFromString(recoveredText))
+                {
+                    _builder.LoadFromStream(stream);
+                }
+
+                return true;
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show($"An unexpected error occurred: {ex.Message}", "Load CAEX file", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        private static Stream GenerateStreamFromString(string s)
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(s);
+            writer.Flush();
+            stream.Position = 0;
+            return stream;
+        }
+
+        private string RecoverFile(string instanceHierarchy)
+        {
+            var startTag = Definition.Model.IndexOf("<SystemUnitClassLib ");
+
+            return $"{Definition.Model.Substring(0, startTag)}{instanceHierarchy}{Definition.Model.Substring(startTag)}";
         }
 
         private bool _hasChanges;

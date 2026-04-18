@@ -1,5 +1,4 @@
-﻿using Aml.Engine.AmlObjects;
-using Aml.Engine.CAEX;
+﻿using Aml.Engine.CAEX;
 using Sintef.Apos.Sif.Model;
 using System;
 using System.Collections.Generic;
@@ -43,6 +42,7 @@ namespace Sintef.Apos.Sif
         {
             Roots.PushAttributes();
         }
+
         public void LoadFromFile(string fileName)
         {
             Roots.Clear();

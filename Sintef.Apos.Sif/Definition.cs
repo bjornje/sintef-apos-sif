@@ -427,7 +427,7 @@ namespace Sintef.Apos.Sif
                 _additionlAttributes.Add(targetNode, attributes);
             }
 
-            if (_types.TryGetValue(refAttributeType, out var value))
+            if (refAttributeType != null && _types.TryGetValue(refAttributeType, out var value))
             {
                 if (isOrderedList)
                 {
