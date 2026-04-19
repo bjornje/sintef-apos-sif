@@ -405,6 +405,8 @@ namespace SIFEditor
         {
             treeView1.Focus();
 
+            var finalMessage = string.Empty;
+
             using var openFileDialog = new OpenFileDialog();
 
             openFileDialog.Filter = "AML-files|*.aml";
@@ -419,12 +421,14 @@ namespace SIFEditor
                 {
                     _builder.LoadFromFile(openFileDialog.FileName);
                 }
-                catch
+                catch(Exception ex)
                 {
                     if (!TryRecoverFile(openFileDialog.FileName))
                     {
                         return;
                     }
+
+                    finalMessage = $"There is a problem with this file. By extracting only the InstanceHierarchy part of the file and injecting it into a valid APOS AML template it was possible to load into the editor. Error message: {ex.Message}";
                 }
 
                 FilterModelErrors();
@@ -439,6 +443,11 @@ namespace SIFEditor
                 splitContainer2.Panel1.Controls.Add(_propertieBlankPage);
 
                 TreeChanged();
+
+                if (finalMessage != string.Empty)
+                {
+                    MessageBox.Show(finalMessage, "Load CAEX file", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
         }
 
