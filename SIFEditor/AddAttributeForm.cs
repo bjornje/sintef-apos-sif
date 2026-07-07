@@ -16,9 +16,9 @@ namespace SIFEditor
             var targets = new List<string>
             {
                 typeof(SafetyInstrumentedFunction).Name,
-                typeof(InputDeviceSubsystem).Name,
-                typeof(LogicSolverSubsystem).Name,
-                typeof(FinalElementSubsystem).Name,
+                //typeof(InputDeviceSubsystem).Name,
+                //typeof(LogicSolverSubsystem).Name,
+                //typeof(FinalElementSubsystem).Name,
                 typeof(InputDeviceRequirements).Name,
                 typeof(LogicSolverRequirements).Name,
                 typeof(FinalElementRequirements).Name

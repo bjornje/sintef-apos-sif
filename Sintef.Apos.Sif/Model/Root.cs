@@ -48,44 +48,23 @@ namespace Sintef.Apos.Sif.Model
 
             foreach(var sif in SIFs)
             {
-                if (!sif.Subsystems.Any())
+                if (!sif.Groups.Any())
                 {
                     list.Add(sif);
                 }
 
-                foreach(var subsystem in sif.Subsystems)
+                foreach(var group in sif.Groups)
                 {
-                    if (!subsystem.Groups.Any())
+                    if (!group.Components.Any())
                     {
-                        list.Add(subsystem);
+                        list.Add(group);
                     }
 
-                    foreach(var group in subsystem.Groups)
+                    foreach(var sisComponent in group.Components)
                     {
-                        if (!group.Components.Any())
-                        {
-                            list.Add(group);
-                        }
-
-                        foreach(var sisComponent in group.Components)
-                        {
-                            list.Add(sisComponent);
-                        }
+                        list.Add(sisComponent);
                     }
-                    
                 }
-            }
-
-            return list;
-        }
-
-        public IEnumerable<Subsystem> GetSIFSubsystems()
-        {
-            var list = new List<Subsystem>();
-
-            foreach(var sif in SIFs)
-            {
-                list.AddRange(sif.Subsystems);
             }
 
             return list;
@@ -97,7 +76,10 @@ namespace Sintef.Apos.Sif.Model
 
             foreach(var sif in SIFs)
             {
-                if (!sif.Subsystems.Any()) list.Add(new ModelError(sif, "Missing SIFSubsystem."));
+                if (!sif.Groups.Any())
+                {
+                    list.Add(new ModelError(sif, "Missing Groups."));
+                }
             }
 
             return list;
@@ -155,8 +137,6 @@ namespace Sintef.Apos.Sif.Model
                 }
             }
 
-            clonedRoots.SetCrossVotingGroups();
-
             return clonedRoots;
         }
 
@@ -164,38 +144,10 @@ namespace Sintef.Apos.Sif.Model
         {
             var clonedSif = clonedSIFs.Append();
             CopyAttributeValues(sif, clonedSif);
-
-            if (sif.InputDevice != null)
+            
+            foreach (var group in sif.Groups)
             {
-                var clonedInitiator = clonedSif.Subsystems.AppendInputDevice();
-                CopyAttributeValues(sif.InputDevice, clonedInitiator);
-
-                foreach (var group in sif.InputDevice.Groups)
-                {
-                    CloneGroup(clonedInitiator.Groups, group);
-                }
-            }
-
-            if (sif.LogicSolver != null)
-            {
-                var clonedSolver = clonedSif.Subsystems.AppendLogicSolver();
-                CopyAttributeValues(sif.LogicSolver, clonedSolver);
-
-                foreach (var group in sif.LogicSolver.Groups)
-                {
-                    CloneGroup(clonedSolver.Groups, group);
-                }
-            }
-
-            if (sif.FinalElement != null)
-            {
-                var clonedFinalElement = clonedSif.Subsystems.AppendFinalElement();
-                CopyAttributeValues(sif.FinalElement, clonedFinalElement);
-
-                foreach (var group in sif.FinalElement.Groups)
-                {
-                    CloneGroup(clonedFinalElement.Groups, group);
-                }
+                CloneGroup(clonedSif.Groups, group);
             }
         }
 
@@ -219,11 +171,6 @@ namespace Sintef.Apos.Sif.Model
         private static void CopyAttributeValues(Node fromNode, Node toNode)
         {
             toNode.PushAttributes();
-
-            //if (fromNode.Attributes.Count() != toNode.Attributes.Count())
-            //{
-            //    throw new Exception("Number of properties differ in fromNode and toNode.");
-            //}
 
             foreach (var fromProperty in fromNode.Attributes)
             {
@@ -287,17 +234,6 @@ namespace Sintef.Apos.Sif.Model
             foreach (var root in _items)
             {
                 root.PushAttributes();
-            }
-        }
-
-        public void SetCrossVotingGroups()
-        {
-            foreach (var root in _items)
-            {
-                foreach(var sif in root.SIFs)
-                {
-                    sif.SetCrossVotingGroups();
-                }
             }
         }
     }

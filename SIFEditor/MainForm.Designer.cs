@@ -40,6 +40,7 @@
             saveToolStripMenuItem = new ToolStripMenuItem();
             saveAsToolStripMenuItem = new ToolStripMenuItem();
             editToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItemAddAttribute = new ToolStripMenuItem();
             viewToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItemUMLModel = new ToolStripMenuItem();
             contextMenuStripSIFs = new ContextMenuStrip(components);
@@ -57,16 +58,12 @@
             addGroupToolStripMenuItem1 = new ToolStripMenuItem();
             addComponentToolStripMenuItem = new ToolStripMenuItem();
             removeComponentToolStripMenuItem = new ToolStripMenuItem();
-            setAsCrossVotingGroupToolStripMenuItem = new ToolStripMenuItem();
             contextMenuStripSISComponent = new ContextMenuStrip(components);
             removeComponentToolStripMenuItem1 = new ToolStripMenuItem();
-            contextMenuCrossGroup = new ContextMenuStrip(components);
-            removeFromCrossVotingToolStripMenuItem = new ToolStripMenuItem();
             contextMenuStripDocuments = new ContextMenuStrip(components);
             addDocumentToolStripMenuItem = new ToolStripMenuItem();
             contextMenuStripDocument = new ContextMenuStrip(components);
             removeDocumentToolStripMenuItem = new ToolStripMenuItem();
-            toolStripMenuItemAddAttribute = new ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -80,7 +77,6 @@
             contextMenuStripSubsystem.SuspendLayout();
             contextMenuStripGroup.SuspendLayout();
             contextMenuStripSISComponent.SuspendLayout();
-            contextMenuCrossGroup.SuspendLayout();
             contextMenuStripDocuments.SuspendLayout();
             contextMenuStripDocument.SuspendLayout();
             SuspendLayout();
@@ -100,7 +96,6 @@
             listBox1.Dock = DockStyle.Fill;
             listBox1.ForeColor = Color.Red;
             listBox1.FormattingEnabled = true;
-            listBox1.ItemHeight = 15;
             listBox1.Location = new Point(0, 0);
             listBox1.Name = "listBox1";
             listBox1.Size = new Size(734, 318);
@@ -157,28 +152,28 @@
             // newToolStripMenuItem
             // 
             newToolStripMenuItem.Name = "newToolStripMenuItem";
-            newToolStripMenuItem.Size = new Size(123, 22);
+            newToolStripMenuItem.Size = new Size(180, 22);
             newToolStripMenuItem.Text = "New";
             newToolStripMenuItem.Click += newToolStripMenuItem_Click;
             // 
             // openToolStripMenuItem
             // 
             openToolStripMenuItem.Name = "openToolStripMenuItem";
-            openToolStripMenuItem.Size = new Size(123, 22);
+            openToolStripMenuItem.Size = new Size(180, 22);
             openToolStripMenuItem.Text = "Open";
             openToolStripMenuItem.Click += openToolStripMenuItem_Click;
             // 
             // saveToolStripMenuItem
             // 
             saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            saveToolStripMenuItem.Size = new Size(123, 22);
+            saveToolStripMenuItem.Size = new Size(180, 22);
             saveToolStripMenuItem.Text = "Save";
             saveToolStripMenuItem.Click += saveToolStripMenuItem_Click;
             // 
             // saveAsToolStripMenuItem
             // 
             saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            saveAsToolStripMenuItem.Size = new Size(123, 22);
+            saveAsToolStripMenuItem.Size = new Size(180, 22);
             saveAsToolStripMenuItem.Text = "Save As...";
             saveAsToolStripMenuItem.Click += saveAsToolStripMenuItem_Click;
             // 
@@ -188,6 +183,13 @@
             editToolStripMenuItem.Name = "editToolStripMenuItem";
             editToolStripMenuItem.Size = new Size(39, 20);
             editToolStripMenuItem.Text = "Edit";
+            // 
+            // toolStripMenuItemAddAttribute
+            // 
+            toolStripMenuItemAddAttribute.Name = "toolStripMenuItemAddAttribute";
+            toolStripMenuItemAddAttribute.Size = new Size(155, 22);
+            toolStripMenuItemAddAttribute.Text = "Add Attribute...";
+            toolStripMenuItemAddAttribute.Click += toolStripMenuItemAddAttribute_Click;
             // 
             // viewToolStripMenuItem
             // 
@@ -279,37 +281,30 @@
             // 
             // contextMenuStripGroup
             // 
-            contextMenuStripGroup.Items.AddRange(new ToolStripItem[] { addGroupToolStripMenuItem1, addComponentToolStripMenuItem, removeComponentToolStripMenuItem, setAsCrossVotingGroupToolStripMenuItem });
+            contextMenuStripGroup.Items.AddRange(new ToolStripItem[] { addGroupToolStripMenuItem1, addComponentToolStripMenuItem, removeComponentToolStripMenuItem });
             contextMenuStripGroup.Name = "contextMenuStripGroup";
-            contextMenuStripGroup.Size = new Size(207, 92);
+            contextMenuStripGroup.Size = new Size(181, 92);
             // 
             // addGroupToolStripMenuItem1
             // 
             addGroupToolStripMenuItem1.Name = "addGroupToolStripMenuItem1";
-            addGroupToolStripMenuItem1.Size = new Size(206, 22);
+            addGroupToolStripMenuItem1.Size = new Size(180, 22);
             addGroupToolStripMenuItem1.Text = "Add Group";
             addGroupToolStripMenuItem1.Click += addGroupToolStripMenuItem1_Click;
             // 
             // addComponentToolStripMenuItem
             // 
             addComponentToolStripMenuItem.Name = "addComponentToolStripMenuItem";
-            addComponentToolStripMenuItem.Size = new Size(206, 22);
+            addComponentToolStripMenuItem.Size = new Size(180, 22);
             addComponentToolStripMenuItem.Text = "Add Component";
             addComponentToolStripMenuItem.Click += addComponentToolStripMenuItem_Click;
             // 
             // removeComponentToolStripMenuItem
             // 
             removeComponentToolStripMenuItem.Name = "removeComponentToolStripMenuItem";
-            removeComponentToolStripMenuItem.Size = new Size(206, 22);
+            removeComponentToolStripMenuItem.Size = new Size(180, 22);
             removeComponentToolStripMenuItem.Text = "Remove Group";
             removeComponentToolStripMenuItem.Click += removeComponentToolStripMenuItem_Click;
-            // 
-            // setAsCrossVotingGroupToolStripMenuItem
-            // 
-            setAsCrossVotingGroupToolStripMenuItem.Name = "setAsCrossVotingGroupToolStripMenuItem";
-            setAsCrossVotingGroupToolStripMenuItem.Size = new Size(206, 22);
-            setAsCrossVotingGroupToolStripMenuItem.Text = "Set as cross voting group";
-            setAsCrossVotingGroupToolStripMenuItem.Click += setAsCrossVotingGroupToolStripMenuItem_Click;
             // 
             // contextMenuStripSISComponent
             // 
@@ -323,19 +318,6 @@
             removeComponentToolStripMenuItem1.Size = new Size(184, 22);
             removeComponentToolStripMenuItem1.Text = "Remove Component";
             removeComponentToolStripMenuItem1.Click += removeComponentToolStripMenuItem1_Click;
-            // 
-            // contextMenuCrossGroup
-            // 
-            contextMenuCrossGroup.Items.AddRange(new ToolStripItem[] { removeFromCrossVotingToolStripMenuItem });
-            contextMenuCrossGroup.Name = "contextMenuCrossGroup";
-            contextMenuCrossGroup.Size = new Size(214, 26);
-            // 
-            // removeFromCrossVotingToolStripMenuItem
-            // 
-            removeFromCrossVotingToolStripMenuItem.Name = "removeFromCrossVotingToolStripMenuItem";
-            removeFromCrossVotingToolStripMenuItem.Size = new Size(213, 22);
-            removeFromCrossVotingToolStripMenuItem.Text = "Remove from cross voting";
-            removeFromCrossVotingToolStripMenuItem.Click += removeFromCrossVotingToolStripMenuItem_Click;
             // 
             // contextMenuStripDocuments
             // 
@@ -363,13 +345,6 @@
             removeDocumentToolStripMenuItem.Text = "Remove Document";
             removeDocumentToolStripMenuItem.Click += removeDocumentToolStripMenuItem_Click;
             // 
-            // toolStripMenuItemAddAttribute
-            // 
-            toolStripMenuItemAddAttribute.Name = "toolStripMenuItemAddAttribute";
-            toolStripMenuItemAddAttribute.Size = new Size(180, 22);
-            toolStripMenuItemAddAttribute.Text = "Add Attribute...";
-            toolStripMenuItemAddAttribute.Click += toolStripMenuItemAddAttribute_Click;
-            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -395,7 +370,6 @@
             contextMenuStripSubsystem.ResumeLayout(false);
             contextMenuStripGroup.ResumeLayout(false);
             contextMenuStripSISComponent.ResumeLayout(false);
-            contextMenuCrossGroup.ResumeLayout(false);
             contextMenuStripDocuments.ResumeLayout(false);
             contextMenuStripDocument.ResumeLayout(false);
             ResumeLayout(false);
@@ -433,9 +407,6 @@
         private ToolStripMenuItem inputDeviceToolStripMenuItem;
         private ToolStripMenuItem logicSolverToolStripMenuItem;
         private ToolStripMenuItem finalElementToolStripMenuItem;
-        private ToolStripMenuItem setAsCrossVotingGroupToolStripMenuItem;
-        private ContextMenuStrip contextMenuCrossGroup;
-        private ToolStripMenuItem removeFromCrossVotingToolStripMenuItem;
         private ContextMenuStrip contextMenuStripDocuments;
         private ContextMenuStrip contextMenuStripDocument;
         private ToolStripMenuItem removeDocumentToolStripMenuItem;

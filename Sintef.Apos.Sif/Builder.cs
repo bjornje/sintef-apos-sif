@@ -81,8 +81,6 @@ namespace Sintef.Apos.Sif
                 }
             }
 
-            Roots.SetCrossVotingGroups();
-
             Roots.Validate(_errors);
 
             _rootsClone = Roots.Clone();
@@ -107,20 +105,29 @@ namespace Sintef.Apos.Sif
                     break;
                 case "SIF Unit Classes/SIFComponent": // depricated, kept for backward compatibility
                 case "SIF Unit Classes/SIFSubsystem": // depricated, kept for backward compatibility
-                case "SIF Unit Classes/Subsystem":
+                case "SIF Unit Classes/Subsystem": // depricated, kept for backward compatibility
                     if (node is SafetyInstrumentedFunction sif)
                     {
                         if (ie.Name == "InputDeviceSubsystem" || ie.Name == "InputDevice" || ie.Name == "Initiator")
                         {
-                            childNode = sif.Subsystems.AppendInputDevice();
+                            var group1 = sif.Groups.Append();
+                            group1.Subsystem.Value = "input device subsystem";
+                            
+                            childNode = group1;
                         }
                         else if (ie.Name == "LogicSolverSubsystem" || ie.Name == "LogicSolver" || ie.Name == "Solver")
                         {
-                            childNode = sif.Subsystems.AppendLogicSolver();
+                            var group2 = sif.Groups.Append();
+                            group2.Subsystem.Value = "logic solver subsystem";
+
+                            childNode = group2;
                         }
                         else if (ie.Name == "FinalElementSubsystem" || ie.Name == "FinalElement")
                         {
-                            childNode = sif.Subsystems.AppendFinalElement();
+                            var group3 = sif.Groups.Append();
+                            group3.Subsystem.Value = "final element subsystem";
+
+                            childNode = group3;
                         }
                         else
                         {
@@ -133,21 +140,13 @@ namespace Sintef.Apos.Sif
                     }
                     break;
                 case "SIF Unit Classes/Group":
-                    if (node is InputDeviceSubsystem inputDevice)
-                    {
-                        childNode = inputDevice.Groups.Append();
-                    }
-                    else if (node is LogicSolverSubsystem logicSolver)
-                    {
-                        childNode = logicSolver.Groups.Append();
-                    }
-                    else if (node is FinalElementSubsystem finalElement)
-                    {
-                        childNode = finalElement.Groups.Append();
-                    }
-                    else if (node is Group group)
+                    if (node is Group group)
                     {
                         childNode = group.Groups.Append();
+                    }
+                    else if (node is SafetyInstrumentedFunction sif3)
+                    {
+                        childNode = sif3.Groups.Append();
                     }
                     else
                     {
@@ -211,20 +210,13 @@ namespace Sintef.Apos.Sif
                             document.MIMEType.StringValue = ReadAttribute(document.MIMEType.Name, ie.ExternalInterface.First);
                         }
                     }
-                    else if (node is Subsystem sifSubsystem && (ie.Name == "GroupVoter" || ie.Name == "ComponentVoter"))
-                    {
-                        var m = ReadAttribute("M", ie);
-
-                        sifSubsystem.MInVotingMooN.StringValue = m;
-                        return;
-                    }
-                    else if (node is Group group && (ie.Name == "ComponentVoter" || ie.Name == "GroupVoter"))
+                    else if (node is Group group2 && (ie.Name == "ComponentVoter" || ie.Name == "GroupVoter"))
                     {
                         var k = ReadAttribute("K", ie);
 
                         if (k == null) k = ReadAttribute("M", ie); // for backward compatibility
 
-                        group.MInVotingMooN.StringValue = k;
+                        group2.MInVotingMooN.StringValue = k;
                         return;
                     }
                     break;
@@ -550,9 +542,9 @@ namespace Sintef.Apos.Sif
                         WriteAttribute(item, sifElement);
                     }
 
-                    foreach (var subsystem in sif.Subsystems)
+                    foreach (var subsystem in sif.Groups)
                     {
-                        WriteSubsystem(subsystem, sifElement.InternalElement.Append());
+                        WriteGroup(subsystem, sifElement.InternalElement.Append());
                     }
 
                     if (sif.Documents.Any())
@@ -571,21 +563,6 @@ namespace Sintef.Apos.Sif
             return doc;
         }
 
-        private static void WriteSubsystem(Subsystem subsystem, InternalElementType subsystemElement)
-        {
-            subsystemElement.Name = subsystem.GetType().Name;
-            subsystemElement.RefBaseSystemUnitPath = $"{Definition.SIFUnitClasses}/{typeof(Subsystem).Name}";
-
-            foreach (var item in subsystem.Attributes)
-            {
-                WriteAttribute(item, subsystemElement);
-            }
-
-            foreach (var group in subsystem.Groups)
-            {
-                WriteGroup(group, subsystemElement.InternalElement.Append());
-            }
-        }
 
         private static void WriteDocument(Document document, InternalElementType documentElement)
         {

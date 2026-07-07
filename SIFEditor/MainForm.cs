@@ -1,9 +1,7 @@
 using Sintef.Apos.Sif;
 using Sintef.Apos.Sif.Model;
-using System;
 using System.ComponentModel;
 using System.Reflection;
-using System.Reflection.PortableExecutable;
 using System.Text;
 using ComboBox = System.Windows.Forms.ComboBox;
 using TextBox = System.Windows.Forms.TextBox;
@@ -96,7 +94,10 @@ namespace SIFEditor
 
             foreach (var treeNode in treeNodes)
             {
-                if (treeNode.Tag is not Node node) continue;
+                if (treeNode.Tag is not Node node)
+                {
+                    continue;
+                }
 
                 var text = node.NodeDisplayName(treeNode.Parent);
                 if (treeNode.Text != text)
@@ -138,35 +139,8 @@ namespace SIFEditor
                 childNode.Tag = sif;
                 node.Nodes.Add(childNode);
 
-                var crossSubsystemTreeNode = AppendTreeNode(sif.CrossSubsystemGroups, childNode, null);
-
-                AddCrossSubsystemGroups(sif.CrossSubsystemGroups, crossSubsystemTreeNode);
-                AddSubsystems(sif.Subsystems, childNode);
+                AddGroups(sif.Groups, childNode);
                 AddDocuments(sif.Documents, childNode);
-            }
-        }
-
-        private void AddSubsystems(Subsystems subsystems, TreeNode node)
-        {
-            foreach (var subsystem in subsystems)
-            {
-                var childNode = new TreeNode(subsystem.NodeDisplayName(node));
-                childNode.ContextMenuStrip = contextMenuStripSubsystem;
-                childNode.Tag = subsystem;
-                node.Nodes.Add(childNode);
-
-                AddGroups(subsystem.Groups, childNode);
-            }
-        }
-
-        private void AddCrossSubsystemGroups(CrossSubsystemGroups groups, TreeNode node)
-        {
-            foreach (var group in groups)
-            {
-                var childNode = new TreeNode(group.NodeDisplayName(node));
-                childNode.ContextMenuStrip = contextMenuCrossGroup;
-                childNode.Tag = group;
-                node.Nodes.Add(childNode);
             }
         }
 
@@ -225,7 +199,7 @@ namespace SIFEditor
             var list = new List<TreeNode>();
             FindAllTreeNodes(treeView1.TopNode, list);
 
-            var result = list.FirstOrDefault(x => x.Tag == error.Node && x.Parent?.Tag is not CrossSubsystemGroups);
+            var result = list.FirstOrDefault(x => x.Tag == error.Node);
 
 
             if (result == null)
@@ -309,40 +283,40 @@ namespace SIFEditor
                 if (string.IsNullOrEmpty(comboBox.Text)) attributeType2.StringValue = null;
                 else attributeType2.StringValue = comboBox.Text;
 
-                if (attributeType2.Owner is Group group && attributeType2 == group.AllowAnyComponents)
-                {
-                    var change = CrossVotingGroupChange(valueBefore as bool?, group.AllowAnyComponents.Value);
-                    if (change == 1)
-                    {
-                        var treeNodes = new List<TreeNode>();
-                        FindAllTreeNodes(treeView1.TopNode, treeNodes);
-                        var crossGroupsTreeNode = treeNodes.FirstOrDefault(x => x.Tag == group.GetSIF().CrossSubsystemGroups);
+                //if (attributeType2.Owner is Group group && attributeType2 == group.Subsystem)
+                //{
+                //    var change = CrossVotingGroupChange(valueBefore as bool?, group.Subsystem.Value);
+                //    if (change == 1)
+                //    {
+                //        var treeNodes = new List<TreeNode>();
+                //        FindAllTreeNodes(treeView1.TopNode, treeNodes);
+                //        var crossGroupsTreeNode = treeNodes.FirstOrDefault(x => x.Tag == group.GetSIF().CrossSubsystemGroups);
 
-                        if (crossGroupsTreeNode != null && crossGroupsTreeNode.Tag is CrossSubsystemGroups groups)
-                        {
-                            groups.Add(group);
-                            var childNode = new TreeNode(group.NodeDisplayName(crossGroupsTreeNode));
-                            childNode.ContextMenuStrip = contextMenuCrossGroup;
-                            childNode.Tag = group;
-                            crossGroupsTreeNode.Nodes.Add(childNode);
-                        }
-                    }
-                    else if (change == -1)
-                    {
-                        var treeNodes = new List<TreeNode>();
-                        FindAllTreeNodes(treeView1.TopNode, treeNodes);
-                        var crossGroupsTreeNode = treeNodes.FirstOrDefault(x => x.Tag == group.GetSIF().CrossSubsystemGroups);
-                        if (crossGroupsTreeNode != null && crossGroupsTreeNode.Tag is CrossSubsystemGroups groups)
-                        {
-                            var groupTreeNode = FindSubNode(crossGroupsTreeNode, group);
-                            if (groupTreeNode.Tag == group)
-                            {
-                                groups.Remove(group);
-                                crossGroupsTreeNode.Nodes.Remove(groupTreeNode);
-                            }
-                        }
-                    }
-                }
+                //        if (crossGroupsTreeNode != null && crossGroupsTreeNode.Tag is CrossSubsystemGroups groups)
+                //        {
+                //            groups.Add(group);
+                //            var childNode = new TreeNode(group.NodeDisplayName(crossGroupsTreeNode));
+                //            childNode.ContextMenuStrip = contextMenuCrossGroup;
+                //            childNode.Tag = group;
+                //            crossGroupsTreeNode.Nodes.Add(childNode);
+                //        }
+                //    }
+                //    else if (change == -1)
+                //    {
+                //        var treeNodes = new List<TreeNode>();
+                //        FindAllTreeNodes(treeView1.TopNode, treeNodes);
+                //        var crossGroupsTreeNode = treeNodes.FirstOrDefault(x => x.Tag == group.GetSIF().CrossSubsystemGroups);
+                //        if (crossGroupsTreeNode != null && crossGroupsTreeNode.Tag is CrossSubsystemGroups groups)
+                //        {
+                //            var groupTreeNode = FindSubNode(crossGroupsTreeNode, group);
+                //            if (groupTreeNode.Tag == group)
+                //            {
+                //                groups.Remove(group);
+                //                crossGroupsTreeNode.Nodes.Remove(groupTreeNode);
+                //            }
+                //        }
+                //    }
+                //}
             }
 
             TreeChanged();
@@ -377,7 +351,10 @@ namespace SIFEditor
             {
                 var result = MessageBox.Show("Save changes?", "APOS SIF Editor", MessageBoxButtons.YesNoCancel);
 
-                if (result == DialogResult.Cancel) return;
+                if (result == DialogResult.Cancel)
+                {
+                    return;
+                }
 
                 if (result == DialogResult.Yes)
                 {
@@ -543,56 +520,40 @@ namespace SIFEditor
                 var sif = root.SIFs.Append();
                 var sifTreeNode = AppendTreeNode(sif, treeView1.TopNode, contextMenuStripSIF);
 
-                _ = AppendTreeNode(sif.CrossSubsystemGroups, sifTreeNode, null);
-
                 //InputDeviceSubsystem
-                var inputDeviceSubsystem = sif.Subsystems.AppendInputDevice();
-                inputDeviceSubsystem.MInVotingMooN.ObjectValue = 1;
-                inputDeviceSubsystem.NumberOfGroups.ObjectValue = 1;
-
-                var inputDeviceSubsystemTreeNode = AppendTreeNode(inputDeviceSubsystem, sifTreeNode, contextMenuStripSubsystem);
-
-                var inputDeviceGroup = inputDeviceSubsystem.Groups.Append();
+                var inputDeviceGroup = sif.Groups.Append();
+                inputDeviceGroup.Subsystem.Value = "input device subsystem";
                 inputDeviceGroup.MInVotingMooN.ObjectValue = 1;
-                inputDeviceGroup.NumberOfDevicesWithinGroup.ObjectValue = 1;
+                inputDeviceGroup.NInVotingMooN.ObjectValue = 1;
 
-                var inputDeviceGroupTreeNode = AppendTreeNode(inputDeviceGroup, inputDeviceSubsystemTreeNode, contextMenuStripGroup);
+                var inputDeviceGroupTreeNode = AppendTreeNode(inputDeviceGroup, sifTreeNode, contextMenuStripGroup);
 
                 var initiatorComponent = inputDeviceGroup.Components.Append();
                 AppendTreeNode(initiatorComponent, inputDeviceGroupTreeNode, contextMenuStripSISComponent);
 
                 //LogicSolverSubsystem
-                var logicSolverSubsystem = sif.Subsystems.AppendLogicSolver();
-                logicSolverSubsystem.MInVotingMooN.ObjectValue = 1;
-                logicSolverSubsystem.NumberOfGroups.ObjectValue = 1;
-
-                var logicSolverSubsystemTreeNode = AppendTreeNode(logicSolverSubsystem, sifTreeNode, contextMenuStripSubsystem);
-
-                var logicSolverGroup = logicSolverSubsystem.Groups.Append();
+                var logicSolverGroup = sif.Groups.Append();
+                logicSolverGroup.Subsystem.Value = "logic solver subsystem";
                 logicSolverGroup.MInVotingMooN.ObjectValue = 1;
-                logicSolverGroup.NumberOfDevicesWithinGroup.ObjectValue = 1;
+                logicSolverGroup.NInVotingMooN.ObjectValue = 1;
 
-                var logicSolverGroupTreeNode = AppendTreeNode(logicSolverGroup, logicSolverSubsystemTreeNode, contextMenuStripGroup);
+                var logicSolverGroupTreeNode = AppendTreeNode(logicSolverGroup, sifTreeNode, contextMenuStripGroup);
 
                 var solverComponent = logicSolverGroup.Components.Append();
                 AppendTreeNode(solverComponent, logicSolverGroupTreeNode, contextMenuStripSISComponent);
 
                 //FinalElementSubsystem
-                var finalElementSubsystem = sif.Subsystems.AppendFinalElement();
-                finalElementSubsystem.MInVotingMooN.ObjectValue = 1;
-                finalElementSubsystem.NumberOfGroups.ObjectValue = 1;
-
-                var finalElementSubsystemTreeNode = AppendTreeNode(finalElementSubsystem, sifTreeNode, contextMenuStripSubsystem);
-
-                var finalElementGroup = finalElementSubsystem.Groups.Append();
+                var finalElementGroup = sif.Groups.Append();
+                finalElementGroup.Subsystem.Value = "final element subsystem";
                 finalElementGroup.MInVotingMooN.ObjectValue = 1;
-                finalElementGroup.NumberOfDevicesWithinGroup.ObjectValue = 1;
+                finalElementGroup.NInVotingMooN.ObjectValue = 1;
 
-                var finalElementGroupTreeNode = AppendTreeNode(finalElementGroup, finalElementSubsystemTreeNode, contextMenuStripGroup);
+                var finalElementGroupTreeNode = AppendTreeNode(finalElementGroup, sifTreeNode, contextMenuStripGroup);
 
                 var finalComponent = finalElementGroup.Components.Append();
                 AppendTreeNode(finalComponent, finalElementGroupTreeNode, contextMenuStripSISComponent);
 
+                //Documents
                 var documentsTreeNode = AppendTreeNode(sif.Documents, sifTreeNode, contextMenuStripDocuments);
                 var document = sif.Documents.Append();
                 AppendTreeNode(document, documentsTreeNode, contextMenuStripDocument);
@@ -633,13 +594,13 @@ namespace SIFEditor
             {
                 if (e.Node.Tag is SafetyInstrumentedFunction sif)
                 {
-                    AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "inputDeviceToolStripMenuItem", sif.InputDevice == null);
-                    AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "logicSolverToolStripMenuItem", sif.LogicSolver == null);
-                    AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "finalElementToolStripMenuItem", sif.FinalElement == null);
+                    //AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "inputDeviceToolStripMenuItem", sif.InputDevice == null);
+                    //AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "logicSolverToolStripMenuItem", sif.LogicSolver == null);
+                    //AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "finalElementToolStripMenuItem", sif.FinalElement == null);
                 }
                 else if (e.Node.Tag is Group group)
                 {
-                    AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "setAsCrossVotingGroupToolStripMenuItem", !group.AllowAnyComponents.Value.HasValue || group.AllowAnyComponents.Value == false);
+                    //AdjustMenuItemEnabled(e.Node.ContextMenuStrip, "setAsCrossVotingGroupToolStripMenuItem", !group.Subsystem.Value.HasValue || group.Subsystem.Value == false);
                 }
 
                 treeView1.SelectedNode = e.Node;
@@ -648,15 +609,15 @@ namespace SIFEditor
 
         private void addGroupToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode?.Tag is Sintef.Apos.Sif.Model.Subsystem subsystem)
-            {
-                var group = subsystem.Groups.Append();
-                group.MInVotingMooN.ObjectValue = 1;
-                group.NumberOfDevicesWithinGroup.ObjectValue = 1;
+            //if (treeView1.SelectedNode?.Tag is Sintef.Apos.Sif.Model.Subsystem subsystem)
+            //{
+            //    var group = subsystem.Groups.Append();
+            //    group.MInVotingMooN.ObjectValue = 1;
+            //    group.NumberOfDevicesWithinGroup.ObjectValue = 1;
 
-                AppendTreeNode(group, treeView1.SelectedNode, contextMenuStripGroup);
-                TreeChanged();
-            }
+            //    AppendTreeNode(group, treeView1.SelectedNode, contextMenuStripGroup);
+            //    TreeChanged();
+            //}
         }
 
         private void addComponentToolStripMenuItem_Click(object sender, EventArgs e)
@@ -687,18 +648,12 @@ namespace SIFEditor
                 treeView1.Nodes.Remove(treeView1.SelectedNode);
                 TreeChanged();
             }
-            else if (treeView1.SelectedNode.Tag is Group subsystemGroup && subsystemGroup.Parent is Sintef.Apos.Sif.Model.Subsystem subsystem)
-            {
-                subsystem.Groups.Remove(subsystemGroup);
-                treeView1.Nodes.Remove(treeView1.SelectedNode);
-                TreeChanged();
-            }
         }
 
 
         private void removeSubsystemToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode?.Tag is Sintef.Apos.Sif.Model.Subsystem subsystem && subsystem.Parent is SafetyInstrumentedFunction sif)
+            if (treeView1.SelectedNode?.Tag is Group subsystem && subsystem.Parent is SafetyInstrumentedFunction sif)
             {
                 sif.Remove(subsystem);
                 treeView1.Nodes.Remove(treeView1.SelectedNode);
@@ -774,14 +729,6 @@ namespace SIFEditor
 
                 }
 
-                foreach (var subsystem in sif.Subsystems)
-                {
-                    foreach (var attribute in subsystem.Attributes)
-                    {
-                        AppendLine(sb, subsystem.GetPath(sif.Parent), sif.SIFID.Value, "", attribute.Name, attribute.StringValue, attribute.TypeDisplayName(out _), attribute.RequirementText());
-                    }
-                }
-
                 foreach (var group in sif.GetAllGroups())
                 {
                     AppendGroup(sb, sif, group);
@@ -826,7 +773,7 @@ namespace SIFEditor
             {
                 var subGroup = group.Groups.Append();
                 subGroup.MInVotingMooN.ObjectValue = 1;
-                subGroup.NumberOfDevicesWithinGroup.ObjectValue = 1;
+                subGroup.NInVotingMooN.ObjectValue = 1;
 
                 AppendTreeNode(subGroup, treeView1.SelectedNode, contextMenuStripGroup);
 
@@ -862,12 +809,12 @@ namespace SIFEditor
         {
             if (treeView1.SelectedNode?.Tag is SafetyInstrumentedFunction sif)
             {
-                var subsystem = sif.Subsystems.AppendInputDevice();
-                subsystem.MInVotingMooN.ObjectValue = 1;
-                subsystem.NumberOfGroups.ObjectValue = 1;
+                //var subsystem = sif.Subsystems.AppendInputDevice();
+                //subsystem.MInVotingMooN.ObjectValue = 1;
+                //subsystem.NumberOfGroups.ObjectValue = 1;
 
-                AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
-                TreeChanged();
+                //AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
+                //TreeChanged();
             }
         }
 
@@ -875,12 +822,12 @@ namespace SIFEditor
         {
             if (treeView1.SelectedNode?.Tag is SafetyInstrumentedFunction sif)
             {
-                var subsystem = sif.Subsystems.AppendLogicSolver();
-                subsystem.MInVotingMooN.ObjectValue = 1;
-                subsystem.NumberOfGroups.ObjectValue = 1;
+                //var subsystem = sif.Subsystems.AppendLogicSolver();
+                //subsystem.MInVotingMooN.ObjectValue = 1;
+                //subsystem.NumberOfGroups.ObjectValue = 1;
 
-                AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
-                TreeChanged();
+                //AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
+                //TreeChanged();
             }
         }
 
@@ -888,46 +835,46 @@ namespace SIFEditor
         {
             if (treeView1.SelectedNode?.Tag is SafetyInstrumentedFunction sif)
             {
-                var subsystem = sif.Subsystems.AppendFinalElement();
-                subsystem.MInVotingMooN.ObjectValue = 1;
-                subsystem.NumberOfGroups.ObjectValue = 1;
+                //var subsystem = sif.Subsystems.AppendFinalElement();
+                //subsystem.MInVotingMooN.ObjectValue = 1;
+                //subsystem.NumberOfGroups.ObjectValue = 1;
 
-                AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
-                TreeChanged();
+                //AppendTreeNode(subsystem, treeView1.SelectedNode, contextMenuStripSubsystem);
+                //TreeChanged();
             }
         }
 
         private void setAsCrossVotingGroupToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode?.Tag is Group group)
-            {
-                group.AllowAnyComponents.Value = true;
-                var treeNodes = new List<TreeNode>();
-                FindAllTreeNodes(treeView1.TopNode, treeNodes);
-                var crossGroupsTreeNode = treeNodes.FirstOrDefault(x => x.Tag == group.GetSIF().CrossSubsystemGroups);
+            //if (treeView1.SelectedNode?.Tag is Group group)
+            //{
+            //    group.Subsystem.Value = true;
+            //    var treeNodes = new List<TreeNode>();
+            //    FindAllTreeNodes(treeView1.TopNode, treeNodes);
+            //    var crossGroupsTreeNode = treeNodes.FirstOrDefault(x => x.Tag == group.GetSIF().CrossSubsystemGroups);
 
-                if (crossGroupsTreeNode != null && crossGroupsTreeNode.Tag is CrossSubsystemGroups groups)
-                {
-                    groups.Add(group);
-                    var childNode = new TreeNode(group.NodeDisplayName(crossGroupsTreeNode));
-                    childNode.ContextMenuStrip = contextMenuCrossGroup;
-                    childNode.Tag = group;
-                    crossGroupsTreeNode.Nodes.Add(childNode);
-                }
+            //    if (crossGroupsTreeNode != null && crossGroupsTreeNode.Tag is CrossSubsystemGroups groups)
+            //    {
+            //        groups.Add(group);
+            //        var childNode = new TreeNode(group.NodeDisplayName(crossGroupsTreeNode));
+            //        childNode.ContextMenuStrip = contextMenuCrossGroup;
+            //        childNode.Tag = group;
+            //        crossGroupsTreeNode.Nodes.Add(childNode);
+            //    }
 
-                TreeChanged();
-            }
+            //    TreeChanged();
+            //}
         }
 
         private void removeFromCrossVotingToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (treeView1.SelectedNode.Tag is Group group)
             {
-                group.AllowAnyComponents.Value = null;
-                var crossGroups = group.GetSIF().CrossSubsystemGroups;
-                crossGroups.Remove(group);
-                treeView1.Nodes.Remove(treeView1.SelectedNode);
-                TreeChanged();
+                //group.Subsystem.Value = null;
+                //var crossGroups = group.GetSIF().CrossSubsystemGroups;
+                //crossGroups.Remove(group);
+                //treeView1.Nodes.Remove(treeView1.SelectedNode);
+                //TreeChanged();
             }
         }
 

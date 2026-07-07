@@ -51,18 +51,7 @@ namespace Sintef.Apos.Sif.Model
                     index++;
                 }
             }
-            else if (Parent is Subsystem parentSubsystem)
-            {
-                foreach (var item in parentSubsystem.Groups)
-                {
-                    if (item == this)
-                    {
-                        return GetType().Name + index;
-                    }
 
-                    index++;
-                }
-            }
             else if (Parent is SafetyInstrumentedFunction)
             {
                 var name = GetType().Name;
@@ -72,7 +61,24 @@ namespace Sintef.Apos.Sif.Model
                     return name;
                 }
 
-                return name.Substring(0, name.Length - 9);
+                if (this is Group group)
+                {
+                    switch(group.Subsystem.Value)
+                    {
+                        case "input device subsystem":
+                            return "InputDevice";
+                        case "logic solver subsystem":
+                            return "LogicSolver";
+                        case "final element subsystem":
+                            return "FinalElement";
+                        case "composite subsystem":
+                            return "Composite";
+                        default:
+                            return "Unspecificed";
+                    }
+                }
+
+                return name;
             }
             else if (Parent is Documents documents)
             {

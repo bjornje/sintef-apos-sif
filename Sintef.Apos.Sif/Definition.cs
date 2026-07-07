@@ -465,14 +465,15 @@ namespace Sintef.Apos.Sif
         {
             var attributes = new List<IAttribute>();
 
-            if (node is Subsystem)
-            {
-                if (_attributes.TryGetValue("Subsystem", out var sifComponentAttributes))
-                {
-                    attributes.AddRange(sifComponentAttributes);
-                }
-            }
-            else if (node is SISDeviceRequirements)
+            //if (node is Subsystem)
+            //{
+            //    if (_attributes.TryGetValue("Subsystem", out var sifComponentAttributes))
+            //    {
+            //        attributes.AddRange(sifComponentAttributes);
+            //    }
+            //}
+            //else 
+            if (node is SISDeviceRequirements)
             {
                 if (_attributes.TryGetValue("SISDeviceRequirements", out var sisComponentAttributes))
                 {
@@ -538,14 +539,14 @@ namespace Sintef.Apos.Sif
 <CAEXFile SchemaVersion=""3.0"" FileName="""" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""
     xmlns=""http://www.dke.de/CAEX""
     xsi:schemaLocation=""http://www.dke.de/CAEX CAEX_ClassModel_V.3.0.xsd"">
-    <Description>This document is generated from the APOS_SIF.qea model version 31 by the
+    <Description>This document is generated from the APOS_SIF.qea model version 33 by the
         EA_UML_to_AML.js transformation script.
         The model and transformation script are derived from initial SIF model and transformation
         script from Kongsberg.</Description>
     <AdditionalInformation />
     <SuperiorStandardVersion>AutomationML 2.10</SuperiorStandardVersion>
-    <SourceDocumentInformation OriginName=""APOS_SIF.qea"" OriginID="""" OriginVersion=""31""
-        LastWritingDateTime=""2026-03-02T08:25:25.000Z"" OriginVendor=""SINTEF""
+    <SourceDocumentInformation OriginName=""APOS_SIF.qea"" OriginID="""" OriginVersion=""33""
+        LastWritingDateTime=""2026-07-07T07:48:47.000Z"" OriginVendor=""SINTEF""
         OriginVendorURL=""www.sintef.no"" />
     <ExternalReference
         Path=""https://9t4kqL7NX8JsW6o@automationml.ovgu.de/public.php/webdav/AutomationML_Base_Libraries_AMLEd2_2.11.0.aml""
@@ -567,20 +568,30 @@ namespace Sintef.Apos.Sif
                     </UnknownType>
                 </Constraint>
             </Attribute>
-            <Attribute Name=""NumberOfDevicesWithinGroup"" ID=""{F034ACC7-4B73-42c5-A89E-4EC61DCC639A}""
+            <Attribute Name=""PFDBudget"" ID=""{659C7645-93DB-438d-961E-A514F4E9722F}""
+                RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/percent"">
+                <Description>budget (in percentage) of the total PFD for the SIF that is allocated
+                    to a component or device a group of devices</Description>
+                <Constraint Name=""ModellingRule"">
+                    <UnknownType>
+                        <Requirements>Optional</Requirements>
+                    </UnknownType>
+                </Constraint>
+            </Attribute>
+            <Attribute Name=""NInVotingMooN"" ID=""{F034ACC7-4B73-42c5-A89E-4EC61DCC639A}""
                 RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/integer"">
-                <Description>number of devices within an input device group, logic solver group, or
-                    final element group</Description>
+                <Description>""N"" in a ""MooN"" system that is functioning if at least M out of its N
+                    redundant channels are functioning</Description>
                 <Constraint Name=""ModellingRule"">
                     <UnknownType>
                         <Requirements>Mandatory</Requirements>
                     </UnknownType>
                 </Constraint>
             </Attribute>
-            <Attribute Name=""AllowAnyComponents"" ID=""{ABC76BF3-4F15-4456-A05A-74C0E18A1ABB}""
-                RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/boolean"">
-                <Description>specifies if a group of components can comprise components from two or
-                    more SIF subsystems (input devices, logic solvers and final elements)</Description>
+            <Attribute Name=""Subsystem"" ID=""{ABC76BF3-4F15-4456-A05A-74C0E18A1ABB}""
+                RefAttributeType=""APOS.SIFTypes_AttributeTypeLib/subsystem"">
+                <Description>independent part of a SIS whose disabling dangerous failure results in
+                    a disabling dangerous failure of the SIS</Description>
                 <Constraint Name=""ModellingRule"">
                     <UnknownType>
                         <Requirements>Optional</Requirements>
@@ -899,57 +910,6 @@ namespace Sintef.Apos.Sif
                         RefBaseRoleClassPath=""AutomationMLBaseLibrariesAMLEd22_11_0@AutomationMLBaseRoleClassLib/AutomationMLBaseRole/ExternalData"" />
                 </InternalElement>
             </InternalElement>
-            <InternalElement Name=""InputDeviceSubsystem"" ID=""{63D8A4F8-DEF5-4ead-BA95-B3F8399A1B77}""
-                RefBaseSystemUnitPath=""SIF Unit Classes/Subsystem"">
-                <Description>part of the BPCS or SIS that measures or detects the process condition
-                    and/or provides input information for the logic solver</Description>
-            </InternalElement>
-            <InternalElement Name=""LogicSolverSubsystem"" ID=""{E8D9FD92-23B6-4ed8-8E97-088523E92953}""
-                RefBaseSystemUnitPath=""SIF Unit Classes/Subsystem"">
-                <Description>part of either a BPCS or SIS that performs one or more logic
-                    function(s)</Description>
-            </InternalElement>
-            <InternalElement Name=""FinalElementSubsystem""
-                ID=""{8A647C27-BADF-4690-85BC-4FE8DE6B7178}""
-                RefBaseSystemUnitPath=""SIF Unit Classes/Subsystem"">
-                <Description>part of the BPCS or SIS that implements the physical action necessary
-                    to achieve or maintain a safe state</Description>
-            </InternalElement>
-        </SystemUnitClass>
-        <SystemUnitClass Name=""Subsystem"" ID=""{CF723864-9C1F-4347-98E5-1F4F1044E931}"">
-            <Description>independent part of a SIS whose disabling dangerous failure results in a
-                disabling dangerous failure of the SIS</Description>
-            <Version>1.0</Version>
-            <Attribute Name=""PFDBudget"" ID=""{659C7645-93DB-438d-961E-A514F4E9722F}""
-                RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/percent"">
-                <Description>budget (in percentage) of the total PFD for the SIF that is allocated
-                    to a component or device a group of devices</Description>
-                <Constraint Name=""ModellingRule"">
-                    <UnknownType>
-                        <Requirements>Optional</Requirements>
-                    </UnknownType>
-                </Constraint>
-            </Attribute>
-            <Attribute Name=""MInVotingMooN"" ID=""{67DD139F-A86B-45c5-ABD8-92801CAACD51}""
-                RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/integer"">
-                <Description>""M"" in a ""MooN"" system that is functioning if at least M out of its N
-                    redundant channels are functioning</Description>
-                <Constraint Name=""ModellingRule"">
-                    <UnknownType>
-                        <Requirements>Mandatory</Requirements>
-                    </UnknownType>
-                </Constraint>
-            </Attribute>
-            <Attribute Name=""NumberOfGroups"" ID=""{A89B3118-0E72-4a5b-AA43-83064A7CB188}""
-                RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/integer"">
-                <Description>total number of input device groups, logic solver groups and final
-                    element groups specified for a safety instrumented function (SIF)</Description>
-                <Constraint Name=""ModellingRule"">
-                    <UnknownType>
-                        <Requirements>Mandatory</Requirements>
-                    </UnknownType>
-                </Constraint>
-            </Attribute>
         </SystemUnitClass>
     </SystemUnitClassLib>
     <SystemUnitClassLib Name=""SIS Unit Classes"">
@@ -1009,6 +969,17 @@ namespace Sintef.Apos.Sif
                         <Requirements>Mandatory</Requirements>
                     </UnknownType>
                 </Constraint>
+            </Attribute>
+            <Attribute Name=""AssociatedDevice"" ID=""{494EFB75-0198-4705-93E9-8DBB1B695BF2}""
+                RefAttributeType=""AutomationMLBaseLibrariesAMLEd22_11_0@AutomationMLBaseAttributeTypeLib/OrderedListType"">
+                <Description>another SIS device that is functionally, physically, or logically
+                    associated with the SIS device under consideration</Description>
+                <Constraint Name=""ModellingRule"">
+                    <UnknownType>
+                        <Requirements>Optional</Requirements>
+                    </UnknownType>
+                </Constraint>
+                <Attribute Name=""1"" RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/string"" />
             </Attribute>
         </SystemUnitClass>
         <SystemUnitClass Name=""InputDeviceRequirements"" ID=""{D0101401-669D-4476-8960-CB1FE6BE378E}""
@@ -1128,6 +1099,16 @@ namespace Sintef.Apos.Sif
                 RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/boolean"">
                 <Description>requirements for reset of a final element after shutdown, such as if it
                     is required a physical reset in field </Description>
+                <Constraint Name=""ModellingRule"">
+                    <UnknownType>
+                        <Requirements>Optional</Requirements>
+                    </UnknownType>
+                </Constraint>
+            </Attribute>
+            <Attribute Name=""StandbyRedundancyType"" ID=""{8218FA65-3C6A-4564-9ABC-A6BAA4FD2C65}""
+                RefAttributeType=""APOS.SISDeviceTypes_AttributeTypeLib/standbyRedundancyType"">
+                <Description>describes how ready the standby device in a standby configuration is to
+                    take over</Description>
                 <Constraint Name=""ModellingRule"">
                     <UnknownType>
                         <Requirements>Optional</Requirements>
@@ -1508,6 +1489,17 @@ namespace Sintef.Apos.Sif
                     </UnknownType>
                 </Constraint>
             </Attribute>
+            <Attribute Name=""AvailabilityStandby"" ID=""{AAD6DCA8-7B7F-42b1-A63E-6B805925C2E1}""
+                RefAttributeType=""APOS.BasicUnits_AttributeTypeLib/boolean"">
+                <Description>specifies whether the device is installed and available as a backup and
+                    not the primary active item during normal operation</Description>
+                <Constraint Name=""ModellingRule"">
+                    <UnknownType>
+                        <Requirements>Mandatory</Requirements>
+                    </UnknownType>
+                </Constraint>
+                <DefaultValue>False</DefaultValue>
+            </Attribute>
         </SystemUnitClass>
     </SystemUnitClassLib>
     <AttributeTypeLib Name=""APOS.BasicUnits_AttributeTypeLib"">
@@ -1732,6 +1724,20 @@ namespace Sintef.Apos.Sif
                     <RequiredValue>SIL 3</RequiredValue>
                     <RequiredValue>SIL 4</RequiredValue>
                     <RequiredValue>SIL 0</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""subsystem"" ID=""{90067414-4057-6B96-9B49-FBF557AAA84B}""
+            AttributeDataType=""xs:string"">
+            <Description>independent part of a SIS whose disabling dangerous failure results in a
+                disabling dangerous failure of the SIS</Description>
+            <Version>1.0</Version>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>input device subsystem</RequiredValue>
+                    <RequiredValue>logic solver subsystem</RequiredValue>
+                    <RequiredValue>final element subsystem</RequiredValue>
+                    <RequiredValue>composite subsystem</RequiredValue>
                 </NominalScaledType>
             </Constraint>
         </AttributeType>
@@ -1968,6 +1974,18 @@ namespace Sintef.Apos.Sif
                     <RequiredValue>SC 2</RequiredValue>
                     <RequiredValue>SC 3</RequiredValue>
                     <RequiredValue>SC 4</RequiredValue>
+                </NominalScaledType>
+            </Constraint>
+        </AttributeType>
+        <AttributeType Name=""standbyRedundancyType"" ID=""{A7E6DF09-6778-0A8B-8D41-E3DF662CC18E}""
+            AttributeDataType=""xs:string"">
+            <Description>describes how ready the standby device in a standby configuration is to
+                take over</Description>
+            <Version>1.0</Version>
+            <Constraint Name=""Enumeration"">
+                <NominalScaledType>
+                    <RequiredValue>hot</RequiredValue>
+                    <RequiredValue>cold</RequiredValue>
                 </NominalScaledType>
             </Constraint>
         </AttributeType>

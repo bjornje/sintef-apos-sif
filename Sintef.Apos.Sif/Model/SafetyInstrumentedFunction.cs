@@ -8,47 +8,11 @@ namespace Sintef.Apos.Sif.Model
 {
     public class SafetyInstrumentedFunction : Node
     {
-        public Subsystems Subsystems { get; }
-
-        public CrossSubsystemGroups CrossSubsystemGroups { get; }
-
-        public InputDeviceSubsystem InputDevice => Subsystems.SingleOrDefault(x => x is InputDeviceSubsystem) as InputDeviceSubsystem;
-        public LogicSolverSubsystem LogicSolver => Subsystems.SingleOrDefault(x => x is LogicSolverSubsystem) as LogicSolverSubsystem;
-        public FinalElementSubsystem FinalElement => Subsystems.SingleOrDefault(x => x is FinalElementSubsystem) as FinalElementSubsystem;
+        public Groups Groups { get; }
 
         public Documents Documents { get; }
 
         //Attributes
-
-        //public FrequecyPerYear MaximumAllowableDemandRate { get; private set; }
-        //public DurationSeconds MaximumAllowableSIFResponseTime { get; private set; }
-        //public String SafeStateOfProcess { get; private set; }
-        //public SILLevel SafetyIntegrityLevelRequirement { get; private set; }
-        //public String SILAllocationMethod { get; private set; }
-        //public String SIFDescription { get; private set; }
-        //public ModeOfOperation ModeOfOperation { get; private set; }
-        //public EnvironmentalIntegrityLevel EnvironmentalIntegrityLevelRequirement { get; private set; }
-        //public AssetIntegrityLevel AssetIntegrityLevelRequirement { get; private set; }
-        //public Probability PFDRequirement { get; private set; }
-        //public String SIFName { get; private set; }
-        //public SIFType SIFType { get; private set; }
-        //public String SIFID { get; private set; }
-        //public String Cause { get; private set; }
-        //public String Effect { get; private set; }
-        //public FrequecyPerHour MaximumAllowableSpuriousTripRate { get; private set; }
-        //public String ManuallyActivatedShutdownRequirement { get; private set; }
-        //public String Effect4 { get; private set; }
-        //public FrequecyPerHour PFHRequirement { get; private set; }
-        //public String DemandSource { get; private set; }
-        //public String SIFTypicalID { get; private set; }
-        //public String SIFVersion { get; private set; }
-        //public OrderedList<string, String> IndependentProtectionLayer { get; private set; }
-        //public OrderedList<string, String> MeasureToAvoidCommonCauseFailures { get; private set; }
-        //public OrderedList<string, String> PlantOperatingMode { get; private set; }
-        //public OrderedList<string, String> QuantificationMethodOrTool { get; private set; }
-        //public OrderedList<string, String> ReferenceToBarrier { get; private set; }
-        //public OrderedList<string, String> ReferenceToEquipmentUnderControl { get; private set; }
-        //public OrderedList<string, String> SurvivabilityRequirement { get; private set; }
 
         public Attribute<double?> MaximumAllowableDemandRate { get; protected set; }
         public Attribute<double?> MaximumAllowableSIFResponseTime { get; protected set; }
@@ -84,18 +48,15 @@ namespace Sintef.Apos.Sif.Model
         {
             SetAttributes(Definition.GetAttributes(this, 28));
 
-            Subsystems = new Subsystems(this);
-
-            CrossSubsystemGroups = new CrossSubsystemGroups(this);
-            CrossSubsystemGroups.VoteBetweenGroups(1, 1);
+            Groups = new Groups(this);
 
             Documents = new Documents(this);
         }
 
  
-        public bool Remove(Subsystem item)
+        public bool Remove(Group item)
         {
-            return Subsystems.Remove(item);
+            return Groups.Remove(item);
         }
 
         public bool IsSameAs(SafetyInstrumentedFunction sif)
@@ -105,7 +66,7 @@ namespace Sintef.Apos.Sif.Model
                 return false;
             }
 
-            if (!Subsystems.IsSameAs(sif.Subsystems))
+            if (!Groups.IsSameAs(sif.Groups))
             {
                 return false;
             }
@@ -120,38 +81,19 @@ namespace Sintef.Apos.Sif.Model
                 property.Validate(this, errors);
             }
 
-            CrossSubsystemGroups.Validate(errors);
-
-            if (!Subsystems.Any())
+            if (!Groups.Any())
             {
-                errors.Add(new ModelError(this, "Missing Subsystem."));
+                errors.Add(new ModelError(this, "Missing groups."));
             }
 
-            Subsystems.Validate(errors);
+            Groups.Validate(errors);
 
             Documents.Validate(errors);
         }
 
         public IEnumerable<Group> GetAllGroups()
         {
-            var groups = new List<Group>();
-
-            foreach (var subsystem in Subsystems)
-            {
-                groups.AddRange(subsystem.GetAllGroups());
-            }
-
-            return groups;
-        }
-
-        public void SetCrossVotingGroups()
-        {
-            CrossSubsystemGroups.Clear();
-
-            foreach (var group in GetAllGroups().Where(x => x.AllowAnyComponents.Value.HasValue && x.AllowAnyComponents.Value.Value))
-            {
-                CrossSubsystemGroups.Add(group);
-            }
+            return Groups;
         }
 
         public override void PushAttributes()
@@ -161,7 +103,7 @@ namespace Sintef.Apos.Sif.Model
                 TryAddAttribute(attribute.Clone(this));
             }
 
-            Subsystems.PushAttributes();
+            Groups.PushAttributes();
         }
     }
 

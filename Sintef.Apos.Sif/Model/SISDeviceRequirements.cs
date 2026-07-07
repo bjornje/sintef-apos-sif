@@ -8,41 +8,42 @@ namespace Sintef.Apos.Sif.Model
 {
     public class SISDeviceRequirements : Node
     {
-        public AttributeList<string> AdditionalDiagnosticRequirementForImplementation { get; protected set; } //1
+        public Attribute<bool?> AvailabilityStandby { get; protected set; } //1
+        public AttributeList<string> AdditionalDiagnosticRequirementForImplementation { get; protected set; } 
         public Attribute<bool?> BypassAdministrativeControlRequired { get; protected set; }
         public AttributeList<string> DiagnosticRequired { get; protected set; }
-        public Attribute<string> EnvironmentalExtremes { get; protected set; }
-        public Attribute<string> EquipmentType { get; protected set; } //5
+        public Attribute<string> EnvironmentalExtremes { get; protected set; } //5
+        public Attribute<string> EquipmentType { get; protected set; }
         public Attribute<double?> ExpectedRepairTime { get; protected set; }
         public AttributeList<string> FailCriterion { get; protected set; }
         public AttributeList<string> FailureModeResponses { get; protected set; }
-        public Attribute<string> FailurePhilosophy { get; protected set; }
-        public Attribute<double?> MaximumAllowableBypassTime { get; protected set; } //10
+        public Attribute<string> FailurePhilosophy { get; protected set; } //10
+        public Attribute<double?> MaximumAllowableBypassTime { get; protected set; }
         public Attribute<double?> MaximumAllowableSISDeviceResponseTime { get; protected set; }
         public Attribute<double?> MaximumPermittedRepairTime { get; protected set; }
         public Attribute<double?> MaximumTestIntervalForSILCompliance { get; protected set; }
-        public Attribute<double?> MeanTimeToRestoration { get; protected set; }
-        public Attribute<double?> MinimumTestIntervalOperatorSpecification { get; protected set; } //15
+        public Attribute<double?> MeanTimeToRestoration { get; protected set; } //15
+        public Attribute<double?> MinimumTestIntervalOperatorSpecification { get; protected set; }
         public Attribute<string> NumericFailCriterionDescriptionOfMeasurement { get; protected set; }
         public Attribute<string> NumericFailCriterionOperator { get; protected set; }
         public Attribute<string> NumericFailCriterionValue { get; protected set; }
-        public Attribute<double?> PFDBudget { get; protected set; }
-        public Attribute<double?> PFHBudget { get; protected set; } //20
+        public Attribute<double?> PFDBudget { get; protected set; } //20
+        public Attribute<double?> PFHBudget { get; protected set; }
         public AttributeList<string> RequirementsForTesting { get; protected set; }
         public Attribute<string> SafeStateOfDevice { get; protected set; }
         public Attribute<string> SISDeviceRequirementsVersion { get; protected set; }
-        public AttributeList<string> SurvivabilityRequirement { get; protected set; }
-        public Attribute<string> SystematicCapabilityRequirement { get; protected set; } //25
+        public AttributeList<string> SurvivabilityRequirement { get; protected set; } //25
+        public Attribute<string> SystematicCapabilityRequirement { get; protected set; }
         public Attribute<string> TagInformation { get; protected set; }
         public Attribute<string> TagName { get; protected set; }
         public Attribute<double?> TestCoverage { get; protected set; }
-        public AttributeList<double?> TimeDelayOfAction { get; protected set; }
-        public Attribute<string> TripEnergyMode { get; protected set; } //30
-        public Attribute<string> TypeAOrB { get; protected set; } //31
+        public AttributeList<double?> TimeDelayOfAction { get; protected set; } //30
+        public Attribute<string> TripEnergyMode { get; protected set; }
+        public Attribute<string> TypeAOrB { get; protected set; } //32
 
         public SISDeviceRequirements(Group parent, string name, int expectedNumberOfAttributes) : base(parent, name)
         {
-            SetAttributes(Definition.GetAttributes(this, expectedNumberOfAttributes + 31));
+            SetAttributes(Definition.GetAttributes(this, expectedNumberOfAttributes + 32));
 
             TagName.StringValue = name;
         }
@@ -85,35 +86,35 @@ namespace Sintef.Apos.Sif.Model
 
         public SISDeviceRequirements Append(string name = null)
         {
-            SISDeviceRequirements component;
+            SISDeviceRequirements component = null;
 
-            var parent = _parent as Node;
+            var parent = _parent;
 
-            while(parent is Group)
+
+            while(parent.Parent is Group)
             {
-                parent = parent.Parent;
+                parent = parent.Parent as Group;
             }
 
+            switch(parent.Subsystem.Value)
+            {
+                case "input device subsystem":
+                    component = new InputDeviceRequirements(_parent, name);
+                    component.TagName.StringValue = name ?? "New input component";
+                    break;
+                case "logic solver subsystem":
+                    component = new LogicSolverRequirements(_parent, name);
+                    component.TagName.StringValue = name ?? "New solver component";
+                    break;
+                case "final element subsystem":
+                    component = new FinalElementRequirements(_parent, name);
+                    component.TagName.StringValue = name ?? "New final component";
+                    break;
+            }
 
-
-            if (parent is InputDeviceSubsystem)
+            if (component == null)
             {
-                component = new InputDeviceRequirements(_parent, name);
-                component.TagName.StringValue = name ?? "New input component";
-            }
-            else if (parent is LogicSolverSubsystem)
-            {
-                component = new LogicSolverRequirements(_parent, name);
-                component.TagName.StringValue = name ?? "New solver component";
-            }
-            else if (parent is FinalElementSubsystem)
-            {
-                component = new FinalElementRequirements(_parent, name);
-                component.TagName.StringValue = name ?? "New final component";
-            }
-            else
-            {
-                throw new Exception($"Unexpeced type for having a group: {_parent.GetType()}");
+                return null;
             }
 
             _items.Add(component); 

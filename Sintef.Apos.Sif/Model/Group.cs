@@ -10,24 +10,25 @@ namespace Sintef.Apos.Sif.Model
         public Groups Groups { get; }
         public SISComponents Components { get; }
         public Attribute<int?> MInVotingMooN { get; protected set; }
-        public Attribute<int?> NumberOfDevicesWithinGroup { get; protected set; }
-        public Attribute<bool?> AllowAnyComponents { get; protected set; }
+        public Attribute<int?> NInVotingMooN { get; protected set; }
+        public Attribute<string> Subsystem { get; protected set; }
+        public Attribute<double?> PFDBudget { get; protected set; }
 
         private readonly Voter _voter;
 
         public Group(Node parent, string name) : base(parent, name)
         {
-            SetAttributes(Definition.GetAttributes(this, 3));
+            SetAttributes(Definition.GetAttributes(this, 4));
             Components = new SISComponents(this);
             Groups = new Groups(this);
 
-            _voter = new Voter(this, MInVotingMooN, "M", NumberOfDevicesWithinGroup, "N");
+            _voter = new Voter(this, MInVotingMooN, "M", NInVotingMooN, "N");
         }
 
         public void VoteWithinGroup(int M, int N)
         {
             MInVotingMooN.Value = M;
-            NumberOfDevicesWithinGroup.Value = N;
+            NInVotingMooN.Value = N;
         }
 
         public bool Remove(SISDeviceRequirements item)
@@ -177,71 +178,5 @@ namespace Sintef.Apos.Sif.Model
                 group.PushAttributes();
             }
         }
-    }
-
-    public class CrossSubsystemGroups : Node, IEnumerable<Group>
-    {
-        public Attribute<int?> VoteBetweenGroups_M_in_MooN { get; protected set; }
-        public Attribute<int?> NumberOfGroups_N { get; protected set; }
-
-        private readonly Voter _voter;
-
-        private readonly Collection<Group> _items = new Collection<Group>();
-        public CrossSubsystemGroups(Node parent) : base(parent, "CrossSubsystemGroups")
-        {
-            NumberOfGroups_N = new Attribute<int?>("NumberOfGroups_N", "", "", false, true, this);
-            VoteBetweenGroups_M_in_MooN = new Attribute<int?>("VoteBetweenGroups_M_in_MooN", "", "", false, true, this);
-
-            _voter = new Voter(this, VoteBetweenGroups_M_in_MooN, "M", NumberOfGroups_N, "N");
-
-        }
-
-        public void VoteBetweenGroups(int M, int N)
-        {
-            VoteBetweenGroups_M_in_MooN.Value = M;
-            NumberOfGroups_N.Value = N;
-        }
-
-        public override int GetNumberOfElements()
-        {
-            return _items.Count;
-        }
-
-        public void Validate(Collection<ModelError> errors)
-        {
-            if (!_items.Any()) return;
-            _voter.Validate(errors);
-        }
-
-        public bool Add(Group item)
-        {
-            if (_items.Contains(item)) return false;
-
-            _items.Add(item);
-            return true;
-        }
-
-
-
-        public bool Remove(Group item)
-        {
-            return _items.Remove(item);
-        }
-
-        public void Clear()
-        {
-            _items.Clear();
-        }
-
-        public IEnumerator<Group> GetEnumerator()
-        {
-            return _items.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return _items.GetEnumerator();
-        }
-
     }
 }
