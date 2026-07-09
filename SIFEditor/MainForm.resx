@@ -126,9 +126,6 @@
   <metadata name="contextMenuStripSIF.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>389, 17</value>
   </metadata>
-  <metadata name="contextMenuStripSubsystem.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>571, 14</value>
-  </metadata>
   <metadata name="contextMenuStripGroup.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>793, 14</value>
   </metadata>

@@ -158,7 +158,7 @@ namespace Sintef.Apos.Sif.Model
 
             foreach (var component in group.Components)
             {
-                var clonedComponent = clonedGroup.Components.Append(component.TagName.StringValue);
+                var clonedComponent = clonedGroup.Components.Append(component.TagName.StringValue, component.Subsystem);
                 CopyAttributeValues(component, clonedComponent);
             }
 

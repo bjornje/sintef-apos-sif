@@ -13,8 +13,11 @@
         public AttributeList<double?> TripPointValue { get; protected set; }
         public Attribute<string> UnitOfMeasure { get; protected set; } //10
 
+        public override string Subsystem => v_subsystem.input_device_subsystem;
         public InputDeviceRequirements(Group parent, string name) : base(parent, name, 10)
         {
         }
+
+
     }
 }

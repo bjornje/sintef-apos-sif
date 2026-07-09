@@ -50,13 +50,14 @@
             inputDeviceToolStripMenuItem = new ToolStripMenuItem();
             logicSolverToolStripMenuItem = new ToolStripMenuItem();
             finalElementToolStripMenuItem = new ToolStripMenuItem();
+            compositeToolStripMenuItem = new ToolStripMenuItem();
             removeSIFToolStripMenuItem = new ToolStripMenuItem();
-            contextMenuStripSubsystem = new ContextMenuStrip(components);
-            addGroupToolStripMenuItem = new ToolStripMenuItem();
-            removeSubsystemToolStripMenuItem = new ToolStripMenuItem();
             contextMenuStripGroup = new ContextMenuStrip(components);
             addGroupToolStripMenuItem1 = new ToolStripMenuItem();
             addComponentToolStripMenuItem = new ToolStripMenuItem();
+            inputDeviceToolStripMenuItem1 = new ToolStripMenuItem();
+            logicSolverToolStripMenuItem1 = new ToolStripMenuItem();
+            finalElementToolStripMenuItem1 = new ToolStripMenuItem();
             removeComponentToolStripMenuItem = new ToolStripMenuItem();
             contextMenuStripSISComponent = new ContextMenuStrip(components);
             removeComponentToolStripMenuItem1 = new ToolStripMenuItem();
@@ -74,7 +75,6 @@
             menuStrip1.SuspendLayout();
             contextMenuStripSIFs.SuspendLayout();
             contextMenuStripSIF.SuspendLayout();
-            contextMenuStripSubsystem.SuspendLayout();
             contextMenuStripGroup.SuspendLayout();
             contextMenuStripSISComponent.SuspendLayout();
             contextMenuStripDocuments.SuspendLayout();
@@ -152,28 +152,28 @@
             // newToolStripMenuItem
             // 
             newToolStripMenuItem.Name = "newToolStripMenuItem";
-            newToolStripMenuItem.Size = new Size(180, 22);
+            newToolStripMenuItem.Size = new Size(123, 22);
             newToolStripMenuItem.Text = "New";
             newToolStripMenuItem.Click += newToolStripMenuItem_Click;
             // 
             // openToolStripMenuItem
             // 
             openToolStripMenuItem.Name = "openToolStripMenuItem";
-            openToolStripMenuItem.Size = new Size(180, 22);
+            openToolStripMenuItem.Size = new Size(123, 22);
             openToolStripMenuItem.Text = "Open";
             openToolStripMenuItem.Click += openToolStripMenuItem_Click;
             // 
             // saveToolStripMenuItem
             // 
             saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            saveToolStripMenuItem.Size = new Size(180, 22);
+            saveToolStripMenuItem.Size = new Size(123, 22);
             saveToolStripMenuItem.Text = "Save";
             saveToolStripMenuItem.Click += saveToolStripMenuItem_Click;
             // 
             // saveAsToolStripMenuItem
             // 
             saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            saveAsToolStripMenuItem.Size = new Size(180, 22);
+            saveAsToolStripMenuItem.Size = new Size(123, 22);
             saveAsToolStripMenuItem.Text = "Save As...";
             saveAsToolStripMenuItem.Click += saveAsToolStripMenuItem_Click;
             // 
@@ -226,7 +226,7 @@
             // 
             // addSubsystemToolStripMenuItem
             // 
-            addSubsystemToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { inputDeviceToolStripMenuItem, logicSolverToolStripMenuItem, finalElementToolStripMenuItem });
+            addSubsystemToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { inputDeviceToolStripMenuItem, logicSolverToolStripMenuItem, finalElementToolStripMenuItem, compositeToolStripMenuItem });
             addSubsystemToolStripMenuItem.Name = "addSubsystemToolStripMenuItem";
             addSubsystemToolStripMenuItem.Size = new Size(171, 22);
             addSubsystemToolStripMenuItem.Text = "Add SIFSubsystem";
@@ -252,32 +252,19 @@
             finalElementToolStripMenuItem.Text = "FinalElement";
             finalElementToolStripMenuItem.Click += finalElementToolStripMenuItem_Click;
             // 
+            // compositeToolStripMenuItem
+            // 
+            compositeToolStripMenuItem.Name = "compositeToolStripMenuItem";
+            compositeToolStripMenuItem.Size = new Size(142, 22);
+            compositeToolStripMenuItem.Text = "Composite";
+            compositeToolStripMenuItem.Click += compositeToolStripMenuItem_Click;
+            // 
             // removeSIFToolStripMenuItem
             // 
             removeSIFToolStripMenuItem.Name = "removeSIFToolStripMenuItem";
             removeSIFToolStripMenuItem.Size = new Size(171, 22);
             removeSIFToolStripMenuItem.Text = "Remove SIF";
             removeSIFToolStripMenuItem.Click += removeSIFToolStripMenuItem_Click;
-            // 
-            // contextMenuStripSubsystem
-            // 
-            contextMenuStripSubsystem.Items.AddRange(new ToolStripItem[] { addGroupToolStripMenuItem, removeSubsystemToolStripMenuItem });
-            contextMenuStripSubsystem.Name = "contextMenuStripSIFComponent";
-            contextMenuStripSubsystem.Size = new Size(178, 48);
-            // 
-            // addGroupToolStripMenuItem
-            // 
-            addGroupToolStripMenuItem.Name = "addGroupToolStripMenuItem";
-            addGroupToolStripMenuItem.Size = new Size(177, 22);
-            addGroupToolStripMenuItem.Text = "Add Group";
-            addGroupToolStripMenuItem.Click += addGroupToolStripMenuItem_Click;
-            // 
-            // removeSubsystemToolStripMenuItem
-            // 
-            removeSubsystemToolStripMenuItem.Name = "removeSubsystemToolStripMenuItem";
-            removeSubsystemToolStripMenuItem.Size = new Size(177, 22);
-            removeSubsystemToolStripMenuItem.Text = "Remove Subsystem";
-            removeSubsystemToolStripMenuItem.Click += removeSubsystemToolStripMenuItem_Click;
             // 
             // contextMenuStripGroup
             // 
@@ -294,10 +281,32 @@
             // 
             // addComponentToolStripMenuItem
             // 
+            addComponentToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { inputDeviceToolStripMenuItem1, logicSolverToolStripMenuItem1, finalElementToolStripMenuItem1 });
             addComponentToolStripMenuItem.Name = "addComponentToolStripMenuItem";
             addComponentToolStripMenuItem.Size = new Size(180, 22);
             addComponentToolStripMenuItem.Text = "Add Component";
             addComponentToolStripMenuItem.Click += addComponentToolStripMenuItem_Click;
+            // 
+            // inputDeviceToolStripMenuItem1
+            // 
+            inputDeviceToolStripMenuItem1.Name = "inputDeviceToolStripMenuItem1";
+            inputDeviceToolStripMenuItem1.Size = new Size(180, 22);
+            inputDeviceToolStripMenuItem1.Text = "Input Device";
+            inputDeviceToolStripMenuItem1.Click += inputDeviceToolStripMenuItem1_Click;
+            // 
+            // logicSolverToolStripMenuItem1
+            // 
+            logicSolverToolStripMenuItem1.Name = "logicSolverToolStripMenuItem1";
+            logicSolverToolStripMenuItem1.Size = new Size(180, 22);
+            logicSolverToolStripMenuItem1.Text = "Logic Solver";
+            logicSolverToolStripMenuItem1.Click += logicSolverToolStripMenuItem1_Click;
+            // 
+            // finalElementToolStripMenuItem1
+            // 
+            finalElementToolStripMenuItem1.Name = "finalElementToolStripMenuItem1";
+            finalElementToolStripMenuItem1.Size = new Size(180, 22);
+            finalElementToolStripMenuItem1.Text = "Final Element";
+            finalElementToolStripMenuItem1.Click += finalElementToolStripMenuItem1_Click;
             // 
             // removeComponentToolStripMenuItem
             // 
@@ -367,7 +376,6 @@
             menuStrip1.PerformLayout();
             contextMenuStripSIFs.ResumeLayout(false);
             contextMenuStripSIF.ResumeLayout(false);
-            contextMenuStripSubsystem.ResumeLayout(false);
             contextMenuStripGroup.ResumeLayout(false);
             contextMenuStripSISComponent.ResumeLayout(false);
             contextMenuStripDocuments.ResumeLayout(false);
@@ -395,9 +403,6 @@
         private ContextMenuStrip contextMenuStripSIF;
         private ToolStripMenuItem addSubsystemToolStripMenuItem;
         private ToolStripMenuItem removeSIFToolStripMenuItem;
-        private ContextMenuStrip contextMenuStripSubsystem;
-        private ToolStripMenuItem addGroupToolStripMenuItem;
-        private ToolStripMenuItem removeSubsystemToolStripMenuItem;
         private ContextMenuStrip contextMenuStripGroup;
         private ToolStripMenuItem addComponentToolStripMenuItem;
         private ToolStripMenuItem removeComponentToolStripMenuItem;
@@ -414,5 +419,9 @@
         private ToolStripMenuItem viewToolStripMenuItem;
         private ToolStripMenuItem toolStripMenuItemUMLModel;
         private ToolStripMenuItem toolStripMenuItemAddAttribute;
+        private ToolStripMenuItem compositeToolStripMenuItem;
+        private ToolStripMenuItem logicSolverToolStripMenuItem1;
+        private ToolStripMenuItem finalElementToolStripMenuItem1;
+        private ToolStripMenuItem inputDeviceToolStripMenuItem1;
     }
 }

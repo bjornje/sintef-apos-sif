@@ -1,4 +1,6 @@
-﻿namespace SIFEditor
+﻿using System.ComponentModel;
+
+namespace SIFEditor
 {
     public partial class OrderedListBox : UserControl
     {
@@ -10,6 +12,7 @@
             InitializeComponent();
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public new string Text
         {
             get => label1.Text;

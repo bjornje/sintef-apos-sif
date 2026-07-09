@@ -9,6 +9,11 @@ namespace Sintef.Apos.Sif.Model
     public class SafetyInstrumentedFunction : Node
     {
         public Groups Groups { get; }
+        public Group InputDevice => Groups.SingleOrDefault(x => x.Subsystem.Value == v_subsystem.input_device_subsystem);
+        public Group LogicSolver => Groups.SingleOrDefault(x => x.Subsystem.Value == v_subsystem.logic_solver_subsystem);
+        public Group FinalElement => Groups.SingleOrDefault(x => x.Subsystem.Value == v_subsystem.final_element_subsystem);
+        public Group Composite => Groups.SingleOrDefault(x => x.Subsystem.Value == v_subsystem.composite_subsystem);
+
 
         public Documents Documents { get; }
 

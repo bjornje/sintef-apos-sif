@@ -16,6 +16,7 @@ namespace Sintef.Apos.Sif
         const string SIFTypesLib = "APOS.SIFTypes_AttributeTypeLib";
         const string SISDeviceTypesLib = "APOS.SISDeviceTypes_AttributeTypeLib";
         const string AutomationMLBaseAttributeTypeLib = "AutomationMLBaseLibrariesAMLEd22_11_0@AutomationMLBaseAttributeTypeLib";
+
         static Definition()
         {
             ModelCAEX = CAEXDocument.LoadFromString(Model);
@@ -140,7 +141,48 @@ namespace Sintef.Apos.Sif
                 }
             }
 
+#if DEBUG
+            var fileName = $@"{System.IO.Directory.GetCurrentDirectory()}\AttributeValues.cs";
 
+            using (var stream = System.IO.File.CreateText(fileName))
+            {
+                stream.WriteLine("namespace Sintef.Apos.Sif.Model");
+                stream.WriteLine("{");
+                stream.WriteLine("    public static class AttributeValues");
+                stream.WriteLine("    {");
+                stream.WriteLine($"        public const string Version = \"{Version}\";");
+                stream.WriteLine("    }");
+                stream.WriteLine();
+
+                foreach (var keyValue in _typeValues)
+                {
+                    var keySplit = keyValue.Key.Split('/');
+                    var name = keySplit[keySplit.Length - 1];
+
+                    stream.WriteLine($"    public static class v_{name}");
+                    stream.WriteLine("    {");
+
+                    foreach (var value in keyValue.Value)
+                    {
+                        var suffix = "";
+
+                        if (value == "true" || value == "false")
+                        {
+                            suffix = "_";
+                        }
+
+                        var valueAsName = $"{value.Replace(' ', '_').Replace('-', '_').Replace(':', '_').Replace('/', '_').Replace(",", "").Replace("(", "").Replace(")", "")}{suffix}";
+                        stream.WriteLine($"        public const string {valueAsName} = \"{value}\";");
+                    }
+
+                    stream.WriteLine("    }");
+                    stream.WriteLine();
+                }
+
+                stream.WriteLine("}");
+            }
+
+#endif
         }
 
         private static Dictionary<string, AttributeFamilyType> _types = new Dictionary<string, AttributeFamilyType>();
@@ -465,20 +507,9 @@ namespace Sintef.Apos.Sif
         {
             var attributes = new List<IAttribute>();
 
-            //if (node is Subsystem)
-            //{
-            //    if (_attributes.TryGetValue("Subsystem", out var sifComponentAttributes))
-            //    {
-            //        attributes.AddRange(sifComponentAttributes);
-            //    }
-            //}
-            //else 
-            if (node is SISDeviceRequirements)
+            if (node is SISDeviceRequirements && _attributes.TryGetValue("SISDeviceRequirements", out var sisComponentAttributes))
             {
-                if (_attributes.TryGetValue("SISDeviceRequirements", out var sisComponentAttributes))
-                {
-                    attributes.AddRange(sisComponentAttributes);
-                }
+                attributes.AddRange(sisComponentAttributes);
             }
 
             var name = node.GetType().Name;
@@ -488,12 +519,12 @@ namespace Sintef.Apos.Sif
                 attributes.AddRange(ownAttributes);
             }
 
-            foreach (var item in attributes)
+            var duplicateNames = attributes.GroupBy(attribute => attribute.Name)
+                                 .FirstOrDefault(group => group.Count() > 1);
+
+            if (duplicateNames != null)
             {
-                if (attributes.Count(x => x.Name == item.Name) > 1)
-                {
-                    throw new Exception("Duplicate attribute name: " + item.Name);
-                }
+                throw new FormatException("Duplicate attribute name: " + duplicateNames.Key);
             }
 
             return attributes;
@@ -513,7 +544,7 @@ namespace Sintef.Apos.Sif
                     }
                 }
 
-                throw new Exception($"Expected {expectedNumberOfAttributes} attributes but got {attributes.Count()}.");
+                throw new FormatException($"Expected {expectedNumberOfAttributes} attributes but got {attributes.Count()}.");
             }
 
 
@@ -524,7 +555,7 @@ namespace Sintef.Apos.Sif
                 var propertyInfo = type.GetProperty(attribute.Name);
                 if (propertyInfo == null)
                 {
-                    throw new Exception($"No property exists for attribute {attribute.Name}.");
+                    throw new FormatException($"No property exists for attribute {attribute.Name}.");
                 }
 
                 var attributeClone = attribute.Clone(target);

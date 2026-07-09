@@ -7,6 +7,7 @@
         public Attribute<double?> MaximumAllowableLeakageRate { get; protected set; }
         public Attribute<string> ResetAfterShutdownRequirement { get; protected set; }
         public Attribute<bool?> TightShutoffIsRequired { get; protected set; }
+        public override string Subsystem => v_subsystem.final_element_subsystem;
 
         public FinalElementRequirements(Group parent, string name) : base(parent, name, 5)
         {

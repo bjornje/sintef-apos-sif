@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -43,10 +44,20 @@ namespace Sintef.Apos.Sif.Model
 
         public bool IsSameAs(Group group)
         {
-            if (!HaveSameAttributeValues(group)) return false;
+            if (!HaveSameAttributeValues(group))
+            {
+                return false;
+            }
 
-            if (!Components.IsSameAs(group.Components)) return false;
-            if (!Groups.IsSameAs(group.Groups)) return false;
+            if (!Components.IsSameAs(group.Components))
+            {
+                return false;
+            }
+
+            if (!Groups.IsSameAs(group.Groups))
+            {
+                return false;
+            }
 
             return true;
         }
@@ -121,6 +132,57 @@ namespace Sintef.Apos.Sif.Model
             return group;
         }
 
+        public Group AppendInputDevice()
+        {
+            if (_parent is SafetyInstrumentedFunction sif && sif.InputDevice != null)
+            {
+                throw new FormatException("InputDevice already exists.");
+            }
+
+            var group = Append();
+            group.Subsystem.Value = v_subsystem.input_device_subsystem;
+
+            return group;
+        }
+
+        public Group AppendLogicSolver()
+        {
+            if (_parent is SafetyInstrumentedFunction sif && sif.LogicSolver != null)
+            {
+                throw new FormatException("LogicSolver already exists.");
+            }
+
+            var group = Append();
+            group.Subsystem.Value = v_subsystem.logic_solver_subsystem;
+
+            return group;
+        }
+
+        public Group AppendFinalElement()
+        {
+            if (_parent is SafetyInstrumentedFunction sif && sif.FinalElement != null)
+            {
+                throw new FormatException("FinalElement already exists.");
+            }
+
+            var group = Append();
+            group.Subsystem.Value = v_subsystem.final_element_subsystem;
+
+            return group;
+        }
+
+        public Group AppendComposite()
+        {
+            if (_parent is SafetyInstrumentedFunction sif && sif.Composite != null)
+            {
+                throw new FormatException("Composite already exists.");
+            }
+
+            var group = Append();
+            group.Subsystem.Value = v_subsystem.composite_subsystem;
+
+            return group;
+        }
 
 
         public bool Remove(Group item)

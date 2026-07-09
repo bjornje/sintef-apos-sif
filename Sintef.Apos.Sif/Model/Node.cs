@@ -65,13 +65,13 @@ namespace Sintef.Apos.Sif.Model
                 {
                     switch(group.Subsystem.Value)
                     {
-                        case "input device subsystem":
+                        case v_subsystem.input_device_subsystem:
                             return "InputDevice";
-                        case "logic solver subsystem":
+                        case v_subsystem.logic_solver_subsystem:
                             return "LogicSolver";
-                        case "final element subsystem":
+                        case v_subsystem.final_element_subsystem:
                             return "FinalElement";
-                        case "composite subsystem":
+                        case v_subsystem.composite_subsystem:
                             return "Composite";
                         default:
                             return "Unspecificed";

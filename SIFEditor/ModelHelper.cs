@@ -7,7 +7,15 @@ namespace SIFEditor
     {
         public static string NodeDisplayName(this Node node, TreeNode parent)
         {
-            if (node is Root) return "SIFs";
+            if (node == null)
+            {
+                return "null";
+            }
+
+            if (node is Root)
+            {
+                return "SIFs";
+            }
 
             if (node is SafetyInstrumentedFunction sif)
             {

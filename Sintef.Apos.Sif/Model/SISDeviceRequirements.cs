@@ -41,6 +41,8 @@ namespace Sintef.Apos.Sif.Model
         public Attribute<string> TripEnergyMode { get; protected set; }
         public Attribute<string> TypeAOrB { get; protected set; } //32
 
+        public virtual string Subsystem { get; }
+
         public SISDeviceRequirements(Group parent, string name, int expectedNumberOfAttributes) : base(parent, name)
         {
             SetAttributes(Definition.GetAttributes(this, expectedNumberOfAttributes + 32));
@@ -84,29 +86,23 @@ namespace Sintef.Apos.Sif.Model
             _parent = parent;
         }
 
-        public SISDeviceRequirements Append(string name = null)
+        public SISDeviceRequirements Append(string name = null, string subsystem = null)
         {
             SISDeviceRequirements component = null;
 
-            var parent = _parent;
+            var parent = FindRootParent();
 
-
-            while(parent.Parent is Group)
+            switch (subsystem ?? parent.Subsystem.Value)
             {
-                parent = parent.Parent as Group;
-            }
-
-            switch(parent.Subsystem.Value)
-            {
-                case "input device subsystem":
+                case v_subsystem.input_device_subsystem:
                     component = new InputDeviceRequirements(_parent, name);
                     component.TagName.StringValue = name ?? "New input component";
                     break;
-                case "logic solver subsystem":
+                case v_subsystem.logic_solver_subsystem:
                     component = new LogicSolverRequirements(_parent, name);
                     component.TagName.StringValue = name ?? "New solver component";
                     break;
-                case "final element subsystem":
+                case v_subsystem.final_element_subsystem:
                     component = new FinalElementRequirements(_parent, name);
                     component.TagName.StringValue = name ?? "New final component";
                     break;
@@ -117,9 +113,65 @@ namespace Sintef.Apos.Sif.Model
                 return null;
             }
 
-            _items.Add(component); 
+            _items.Add(component);
             return component;
         }
+
+
+
+        public SISDeviceRequirements AppendInputDevice(string name = null)
+        {
+
+            var parent = FindRootParent();
+
+            SISDeviceRequirements component;
+            component = new InputDeviceRequirements(_parent, name);
+            component.TagName.StringValue = name ?? "New input component";
+
+            _items.Add(component);
+            return component;
+        }
+
+
+        public SISDeviceRequirements AppendLogicSolver(string name = null)
+        {
+
+            var parent = FindRootParent();
+
+            SISDeviceRequirements component;
+            component = new LogicSolverRequirements(_parent, name);
+            component.TagName.StringValue = name ?? "New solver component";
+
+            _items.Add(component);
+            return component;
+        }
+
+        public SISDeviceRequirements AppendFinalElement(string name = null)
+        {
+
+            var parent = FindRootParent();
+
+            SISDeviceRequirements component;
+            component = new FinalElementRequirements(_parent, name);
+            component.TagName.StringValue = name ?? "New final component";
+
+            _items.Add(component);
+            return component;
+        }
+
+
+        private Group FindRootParent()
+        {
+            var parent = _parent;
+
+            while (parent.Parent is Group)
+            {
+                parent = parent.Parent as Group;
+            }
+
+            return parent;
+        }
+
 
         public bool Remove(SISDeviceRequirements item)
         {
@@ -138,14 +190,22 @@ namespace Sintef.Apos.Sif.Model
 
         public bool IsSameAs(SISComponents components)
         {
-            if (_items.Count != components.Count()) return false;
+            if (_items.Count != components.Count())
+            {
+                return false;
+            }
 
             var alreadyMatchedComponents = new List<SISDeviceRequirements>();
 
             foreach (var component in components)
             {
                 var myComponent = _items.FirstOrDefault(x => !alreadyMatchedComponents.Contains(x) && x.IsSameAs(component));
-                if (myComponent == null) return false;
+
+                if (myComponent == null)
+                {
+                    return false;
+                }
+
                 alreadyMatchedComponents.Add(myComponent);
             }
 
@@ -157,7 +217,12 @@ namespace Sintef.Apos.Sif.Model
             foreach (var component in _items)
             {
                 var duplicates = _items.Where(x => x.TagName.StringValue == component.TagName.StringValue);
-                if (duplicates.Count() > 1) errors.Add(new ModelError(component, component.TagName, $"{component.TagName.Name} must be unique."));
+
+                if (duplicates.Count() > 1)
+                {
+                    errors.Add(new ModelError(component, component.TagName, $"{component.TagName.Name} must be unique."));
+                }
+
                 component.Validate(errors);
             }
         }

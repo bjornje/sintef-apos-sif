@@ -111,21 +111,21 @@ namespace Sintef.Apos.Sif
                         if (ie.Name == "InputDeviceSubsystem" || ie.Name == "InputDevice" || ie.Name == "Initiator")
                         {
                             var group1 = sif.Groups.Append();
-                            group1.Subsystem.Value = "input device subsystem";
+                            group1.Subsystem.Value = v_subsystem.input_device_subsystem;
                             
                             childNode = group1;
                         }
                         else if (ie.Name == "LogicSolverSubsystem" || ie.Name == "LogicSolver" || ie.Name == "Solver")
                         {
                             var group2 = sif.Groups.Append();
-                            group2.Subsystem.Value = "logic solver subsystem";
+                            group2.Subsystem.Value = v_subsystem.logic_solver_subsystem;
 
                             childNode = group2;
                         }
                         else if (ie.Name == "FinalElementSubsystem" || ie.Name == "FinalElement")
                         {
                             var group3 = sif.Groups.Append();
-                            group3.Subsystem.Value = "final element subsystem";
+                            group3.Subsystem.Value = v_subsystem.final_element_subsystem;
 
                             childNode = group3;
                         }
@@ -158,7 +158,7 @@ namespace Sintef.Apos.Sif
                 case "SIS Unit Classes/InputDeviceRequirements":
                     if (node is Group initiatorGroup)
                     {
-                        childNode = initiatorGroup.Components.Append(ie.Name) as InputDeviceRequirements;
+                        childNode = initiatorGroup.Components.AppendInputDevice(ie.Name);
                     }
                     else
                     {
@@ -170,7 +170,7 @@ namespace Sintef.Apos.Sif
                 case "SIS Unit Classes/LogicSolverRequirements":
                     if (node is Group logicSolverGroup)
                     {
-                        childNode = logicSolverGroup.Components.Append(ie.Name);
+                        childNode = logicSolverGroup.Components.AppendLogicSolver(ie.Name);
                     }
                     else
                     {
@@ -182,7 +182,7 @@ namespace Sintef.Apos.Sif
                 case "SIS Unit Classes/FinalElementRequirements":
                     if (node is Group finalElementGroup)
                     {
-                        childNode = finalElementGroup.Components.Append(ie.Name) as FinalElementRequirements;
+                        childNode = finalElementGroup.Components.AppendFinalElement(ie.Name);
                     }
                     else
                     {
@@ -239,10 +239,10 @@ namespace Sintef.Apos.Sif
                     switch (att.Name)  //for backward compatibility
                     {
                         case "NumberOfGroups_N":
-                            attributeName = "NumberOfGroups";
-                            break;
+                        case "NumberOfGroups":
                         case "NumberOfComponentsOrSubgroups_N":
-                            attributeName = "NumberOfDevicesWithinGroup";
+                        case "NumberOfDevicesWithinGroup":
+                            attributeName = "NInVotingMooN";
                             break;
                         case "VoteWithinGroup_K_in_KooN":
                         case "VoteBetweenGroups_M_in_MooN":

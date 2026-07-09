@@ -18,7 +18,7 @@ APOS 2.0 - Automated process for monitoring instrumented security systems. The i
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aml.Engine" Version="4.5.0" />
+    <PackageReference Include="Aml.Engine" Version="4.5.2" />
   </ItemGroup>
 
 </Project>
