@@ -23,7 +23,15 @@ namespace SIFEditor
             Type = node.GetType();
             richTextBox1.SelectionColor = Color.White;
             richTextBox1.SelectionBackColor = Color.Gray;
-            richTextBox1.AppendText($"{node.Path.Substring(5)}");
+
+            if (node.Path.StartsWith("Root/"))
+            {
+                richTextBox1.AppendText($"{node.Path.Substring(5)}");
+            }
+            else
+            {
+                richTextBox1.AppendText($"{node.Path}");
+            }
 
             richTextBox1.SelectionBackColor = SystemColors.Window;
             richTextBox1.AppendText("  ");
