@@ -14,12 +14,22 @@ namespace SIFEditor
         {
             InitializeComponent();
 
+
             if (node == null)
             {
                 return;
             }
 
             Type = node.GetType();
+            richTextBox1.SelectionColor = Color.White;
+            richTextBox1.SelectionBackColor = Color.Gray;
+            richTextBox1.AppendText($"{node.Path.Substring(5)}");
+
+            richTextBox1.SelectionBackColor = SystemColors.Window;
+            richTextBox1.AppendText("  ");
+
+            richTextBox1.SelectionBackColor = Color.Green;
+            richTextBox1.AppendText($"{Type.Name}");
 
             foreach (var property in node.Attributes.OrderByDescending(x => x.IsMandatory).ThenBy(x => x.Name))
             {

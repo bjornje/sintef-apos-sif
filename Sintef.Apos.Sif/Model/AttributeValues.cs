@@ -2,7 +2,7 @@ namespace Sintef.Apos.Sif.Model
 {
     public static class AttributeValues
     {
-        public const string Version = "33";
+        public const string Version = "34";
     }
 
     public static class v_comparison

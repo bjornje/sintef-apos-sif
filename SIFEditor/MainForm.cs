@@ -779,6 +779,11 @@ namespace SIFEditor
                     AppendLine(sb, component.GetPath(sif.Parent), sif.SIFID.Value, component.TagName.Value, attribute.Name, attribute.StringValue, attribute.TypeDisplayName(out _), attribute.RequirementText());
                 }
             }
+
+            foreach(var subGroup in group.Groups)
+            {
+                AppendGroup(sb, sif, subGroup);
+            }
         }
 
         private static void AppendLine(StringBuilder sb, string col1, string col2, string col3, string col4, string col5, string col6, string col7)
@@ -793,6 +798,11 @@ namespace SIFEditor
                 var subGroup = group.Groups.Append();
                 subGroup.MInVotingMooN.ObjectValue = 1;
                 subGroup.NInVotingMooN.ObjectValue = 1;
+
+                if (group.Subsystem.Value == v_subsystem.composite_subsystem)
+                {
+                    subGroup.Subsystem.Value = v_subsystem.composite_subsystem;
+                }
 
                 AppendTreeNode(subGroup, treeView1.SelectedNode, contextMenuStripGroup);
 
