@@ -412,6 +412,10 @@ namespace Sintef.Apos.Sif
                             attributeName = "EquipmentType";
                             itemRefAttributeType = "APOS.BasicUnits_AttributeTypeLib/string";
                             break;
+                        case "TripAction":
+                            attributeName = "SafeStateOfDevice";
+                            itemRefAttributeType = "APOS.BasicUnits_AttributeTypeLib/string";
+                            break;
                     }
 
 
