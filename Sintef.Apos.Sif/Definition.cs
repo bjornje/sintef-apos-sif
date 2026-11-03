@@ -403,7 +403,7 @@ namespace Sintef.Apos.Sif
             }
         }
 
-        public static bool IstOldTypeRef(string oldRefAttributeType, out string refAttributeType)
+        public static bool IsOldTypeRef(string oldRefAttributeType, out string refAttributeType)
         {
             if (oldRefAttributeType == null || !oldRefAttributeType.StartsWith("Types/"))
             {

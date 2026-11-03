@@ -21,28 +21,6 @@ namespace SIFEditor
             }
 
             Type = node.GetType();
-            richTextBox1.SelectionColor = Color.White;
-            richTextBox1.SelectionBackColor = Color.Gray;
-
-            if (node.Path.StartsWith("Root/"))
-            {
-                richTextBox1.AppendText($"{node.Path.Substring(5)}");
-            }
-            else
-            {
-                richTextBox1.AppendText($"{node.Path}");
-            }
-
-            richTextBox1.SelectionBackColor = SystemColors.Window;
-            richTextBox1.AppendText("  ");
-
-            richTextBox1.SelectionBackColor = Color.Green;
-            richTextBox1.AppendText($"{Type.Name}");
-
-            foreach (var property in node.Attributes.OrderByDescending(x => x.IsMandatory).ThenBy(x => x.Name))
-            {
-                AddControl(property);
-            }
         }
 
         private PropertyEditorControl AddControl(IAttribute property)
@@ -73,6 +51,26 @@ namespace SIFEditor
 
         public void Show(Node node)
         {
+            richTextBox1.Clear();
+
+            richTextBox1.SelectionColor = Color.White;
+            richTextBox1.SelectionBackColor = Color.Gray;
+
+            if (node.Path.StartsWith("Root/"))
+            {
+                richTextBox1.AppendText($"{node.Path.Substring(5)}");
+            }
+            else
+            {
+                richTextBox1.AppendText($"{node.Path}");
+            }
+
+            richTextBox1.SelectionBackColor = SystemColors.Window;
+            richTextBox1.AppendText("  ");
+
+            richTextBox1.SelectionBackColor = Color.Green;
+            richTextBox1.AppendText($"{Type.Name}");
+
             var sortNeeded = false;
 
             foreach (var property in node.Attributes)

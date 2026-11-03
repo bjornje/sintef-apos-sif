@@ -75,9 +75,11 @@ namespace Sintef.Apos.Sif
                     _errors.Add(new ModelError(root, $"Expected UML model version {Definition.Version}. Loaded document has UML model version {originVersion}."));
                 }
 
+                var readerToken = new ReaderToken();
+
                 foreach (var ie in ih.InternalElement)
                 {
-                    ReadInternalElement(root, ie, _errors);
+                    ReadInternalElement(root, ie, _errors, readerToken);
                 }
             }
 
@@ -86,7 +88,7 @@ namespace Sintef.Apos.Sif
             _rootsClone = Roots.Clone();
         }
 
-        private static void ReadInternalElement(Node node, InternalElementType ie, Collection<ModelError> errors)
+        private static void ReadInternalElement(Node node, InternalElementType ie, Collection<ModelError> errors, ReaderToken readerToken)
         {
             Node childNode = null;
 
@@ -114,6 +116,7 @@ namespace Sintef.Apos.Sif
                             group1.Subsystem.Value = v_subsystem.input_device_subsystem;
                             
                             childNode = group1;
+                            readerToken.SkipNextGroup = true;
                         }
                         else if (ie.Name == "LogicSolverSubsystem" || ie.Name == "LogicSolver" || ie.Name == "Solver")
                         {
@@ -121,6 +124,7 @@ namespace Sintef.Apos.Sif
                             group2.Subsystem.Value = v_subsystem.logic_solver_subsystem;
 
                             childNode = group2;
+                            readerToken.SkipNextGroup = true;
                         }
                         else if (ie.Name == "FinalElementSubsystem" || ie.Name == "FinalElement")
                         {
@@ -128,6 +132,7 @@ namespace Sintef.Apos.Sif
                             group3.Subsystem.Value = v_subsystem.final_element_subsystem;
 
                             childNode = group3;
+                            readerToken.SkipNextGroup = true;
                         }
                         else
                         {
@@ -142,7 +147,15 @@ namespace Sintef.Apos.Sif
                 case "SIF Unit Classes/Group":
                     if (node is Group group)
                     {
-                        childNode = group.Groups.Append();
+                        if (readerToken.SkipNextGroup && group.Parent is SafetyInstrumentedFunction)
+                        {
+                            childNode = group;
+                            readerToken.SkipNextGroup = false;
+                        }
+                        else
+                        {
+                            childNode = group.Groups.Append();
+                        }
                     }
                     else if (node is SafetyInstrumentedFunction sif3)
                     {
@@ -395,10 +408,14 @@ namespace Sintef.Apos.Sif
                             attributeName = "ReferenceToEquipmentUnderControl";
                             itemRefAttributeType = "APOS.BasicUnits_AttributeTypeLib/string";
                             break;
+                        case "APOSL2Group":
+                            attributeName = "EquipmentType";
+                            itemRefAttributeType = "APOS.BasicUnits_AttributeTypeLib/string";
+                            break;
                     }
 
 
-                    if (Definition.IstOldTypeRef(refAttributeType, out var newRefAttributeType)) // for backward compatibility
+                    if (Definition.IsOldTypeRef(refAttributeType, out var newRefAttributeType)) // for backward compatibility
                     {
                         refAttributeType = newRefAttributeType;
                     }
@@ -460,7 +477,7 @@ namespace Sintef.Apos.Sif
 
             foreach (var childIe in ie.InternalElement)
             {
-                ReadInternalElement(childNode, childIe, errors);
+                ReadInternalElement(childNode, childIe, errors, readerToken);
             }
         }
 
